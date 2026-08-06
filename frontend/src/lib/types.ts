@@ -55,4 +55,10 @@ export type DashboardMetrics = {
   failedProjects: number
   sdksPublished: number
   docsServed: number
+  usage: {
+    docs: number
+    sdks: number
+    cli: number
+    mcp: number
+  }
 }

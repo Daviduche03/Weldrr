@@ -48,15 +48,17 @@ let projects: Project[] = [
   },
 ]
 
-const members: Member[] = [
+let members: Member[] = [
   { id: 'mem_1', email: 'you@acme.com', role: 'owner', joinedAt: '2026-07-01T00:00:00Z' },
   { id: 'mem_2', email: 'alex@acme.com', role: 'admin', joinedAt: '2026-07-10T00:00:00Z' },
   { id: 'mem_3', email: 'sam@acme.com', role: 'member', joinedAt: '2026-07-15T00:00:00Z' },
 ]
 
-const apiKeys: ApiKey[] = [
+let apiKeys: ApiKey[] = [
   { id: 'key_1', name: 'CI pipeline', prefix: 'wr_7f3a', createdAt: '2026-07-12T00:00:00Z', lastUsedAt: '2026-08-03T10:00:00Z' },
 ]
+
+const profile = { name: 'You', email: 'you@acme.com' }
 
 const activity: Activity[] = [
   {
@@ -163,11 +165,76 @@ export const api = {
       failedProjects: projects.filter((p) => p.status === 'failed').length,
       sdksPublished: 128,
       docsServed: 20_000_000,
+      usage: {
+        docs: 1_200_000,
+        sdks: 486_000,
+        cli: 92_000,
+        mcp: 41_000,
+      },
     }
   },
 
   updatePlan: async (plan: Plan): Promise<void> => {
     await delay(300)
     workspace.plan = plan
+  },
+
+  getProfile: async (): Promise<{ name: string; email: string }> => {
+    await delay(150)
+    return { ...profile }
+  },
+
+  updateProfile: async (input: { name: string }): Promise<{ name: string; email: string }> => {
+    await delay(300)
+    profile.name = input.name
+    return { ...profile }
+  },
+
+  updateWorkspace: async (input: { name: string; slug: string }): Promise<Workspace> => {
+    await delay(300)
+    workspace.name = input.name
+    workspace.slug = input.slug
+    return { ...workspace }
+  },
+
+  inviteMember: async (email: string): Promise<Member> => {
+    await delay(300)
+    const member: Member = {
+      id: `mem_${members.length + 1}`,
+      email,
+      role: 'member',
+      joinedAt: new Date().toISOString(),
+    }
+    members = [member, ...members]
+    return member
+  },
+
+  updateMemberRole: async (id: string, role: Member['role']): Promise<void> => {
+    await delay(200)
+    members = members.map((m) => (m.id === id ? { ...m, role } : m))
+  },
+
+  removeMember: async (id: string): Promise<void> => {
+    await delay(250)
+    members = members.filter((m) => m.id !== id)
+  },
+
+  createApiKey: async (name: string): Promise<ApiKey & { secret: string }> => {
+    await delay(350)
+    const secret = `wr_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`
+    const key: ApiKey = {
+      id: `key_${apiKeys.length + 1}`,
+      name,
+      prefix: secret.slice(0, 10),
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+    }
+    apiKeys = [key, ...apiKeys]
+    return { ...key, secret }
+  },
+
+  revokeApiKey: async (id: string): Promise<void> => {
+    await delay(250)
+    apiKeys = apiKeys.filter((k) => k.id !== id)
   },
 }

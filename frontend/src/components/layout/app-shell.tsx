@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/auth-provider'
 
 const mainNav = [
-  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Projects', to: '/projects', icon: Rocket },
 ]
 
@@ -43,19 +43,9 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'grid cursor-pointer items-center rounded-lg border border-border bg-background text-left transition-[width,height] duration-300 hover:bg-muted',
-            collapsed
-              ? 'size-10 grid-cols-[minmax(0,1fr)]'
-              : 'w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_1.5rem]',
-          )}
+          className="grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1.5rem)] items-center rounded-lg border border-border bg-background text-left transition-colors duration-300 hover:bg-muted"
         >
-          <span
-            className={cn(
-              'flex size-full items-center justify-center',
-              collapsed ? 'col-span-1' : 'col-span-1',
-            )}
-          >
+          <span className="flex size-full items-center justify-center">
             <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
               <Building2 className="size-4" />
             </span>
@@ -151,9 +141,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
       <NavLink
         to="/onboarding"
         title={collapsed ? 'New project' : undefined}
-        className={cn(
-          'relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90',
-        )}
+        className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
       >
         <span className="flex size-full items-center justify-center">
           <Plus className="size-4 shrink-0" />
@@ -201,7 +189,7 @@ export function AppShell() {
                 aria-label="Close menu"
                 className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-             
+                <PanelLeftClose className="size-5" />
               </button>
             </div>
             <SidebarNav collapsed={false} />
@@ -250,33 +238,30 @@ export function AppShell() {
               className="text-muted-foreground hover:text-foreground"
             >
               {collapsed ? (
-                <PanelLeftOpen className="size-4" />
+                <PanelLeftOpen className="size-4 mr-4" />
               ) : (
-                <PanelLeftClose className="size-4" />
+                <PanelLeftClose className="size-4 " />
               )}
             </Button>
           </span>
         </div>
 
-        <div className={cn('py-2 transition-[padding] duration-300', collapsed ? 'flex justify-center px-0' : 'px-3')}>
+        <div className={cn('py-2 transition-[padding] duration-300', collapsed ? 'px-2' : 'px-3')}>
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
         <SidebarNav collapsed={collapsed} />
 
-        <div className={cn('transition-[padding] duration-300', collapsed ? 'flex justify-center p-1' : 'p-3')}>
-          <div
-            className={cn(
-              'flex items-center justify-start rounded-lg bg-muted/60 transition-[width,height,padding] duration-300',
-              collapsed ? 'size-10 p-1' : 'w-full gap-2.5 p-2.5',
-            )}
-          >
-            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
-              {(user?.email ?? '?').charAt(0).toUpperCase()}
+        <div className={cn('py-3 transition-[padding] duration-300', collapsed ? 'px-2' : 'px-3')}>
+          <div className="grid w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-2.5">
+            <span className="flex size-9 items-center justify-center">
+              <span className="inline-flex size-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
+                {(user?.email ?? '?').charAt(0).toUpperCase()}
+              </span>
             </span>
             <span
               className={cn(
-                'min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+                'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
                 collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
               )}
             >

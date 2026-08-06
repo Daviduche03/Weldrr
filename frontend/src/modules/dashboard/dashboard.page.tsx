@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  AlertTriangle,
   ArrowUpRight,
+  BadgeCheck,
   BookOpen,
-  CheckCircle2,
-  Clock,
+  CircleAlert,
+  LoaderCircle,
   Plus,
   RefreshCw,
 } from 'lucide-react'
@@ -32,29 +32,101 @@ function relativeTime(iso: string): string {
   return `${days}d ago`
 }
 
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}k`
+  return String(n)
+}
+
+const usageColors = ['#8d54ff', '#06b6d4', '#f59e0b', '#10b981'] as const
+
 const statusCards = [
   {
     label: 'Ready',
     value: (m: DashboardMetrics) => m.readyProjects,
     hint: 'Docs, SDKs, and CLI are live',
     to: '/projects',
-    icon: CheckCircle2,
+    icon: BadgeCheck,
   },
   {
     label: 'Generating',
     value: (m: DashboardMetrics) => m.generatingProjects,
     hint: 'Regenerating from latest spec',
     to: '/projects',
-    icon: Clock,
+    icon: LoaderCircle,
   },
   {
     label: 'Needs attention',
     value: (m: DashboardMetrics) => m.failedProjects,
     hint: 'Generation failed — check the spec',
     to: '/projects',
-    icon: AlertTriangle,
+    icon: CircleAlert,
   },
 ]
+
+function UsageDonut({ usage }: { usage: DashboardMetrics['usage'] }) {
+  const slices = [
+    { label: 'Docs served', value: usage.docs },
+    { label: 'SDK downloads', value: usage.sdks },
+    { label: 'CLI installs', value: usage.cli },
+    { label: 'MCP calls', value: usage.mcp },
+  ]
+  const total = slices.reduce((sum, s) => sum + s.value, 0)
+  const radius = 40
+  const circumference = 2 * Math.PI * radius
+  let offset = 0
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative size-24 shrink-0">
+        <svg viewBox="0 0 100 100" className="size-full -rotate-90">
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth="12"
+          />
+          {slices.map((slice, i) => {
+            const dash = (slice.value / total) * circumference
+            const segment = (
+              <circle
+                key={slice.label}
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke={usageColors[i]}
+                strokeWidth="12"
+                strokeDasharray={`${dash} ${circumference - dash}`}
+                strokeDashoffset={-offset}
+              />
+            )
+            offset += dash
+            return segment
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-base font-semibold tracking-tight">{formatNumber(total)}</span>
+          <span className="text-[10px] text-muted-foreground">requests</span>
+        </div>
+      </div>
+      <ul className="min-w-0 flex-1 space-y-1.5">
+        {slices.map((slice, i) => (
+          <li key={slice.label} className="flex items-center gap-2 text-xs">
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: usageColors[i] }}
+            />
+            <span className="truncate text-muted-foreground">{slice.label}</span>
+            <span className="ml-auto font-medium tabular-nums">{formatNumber(slice.value)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
@@ -77,7 +149,7 @@ export function DashboardPage() {
     <div>
       <div className="flex items-center justify-between gap-4 px-6 sm:px-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here&apos;s what needs attention across your projects.
           </p>
@@ -90,8 +162,8 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {/* Status + metrics */}
-      <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">
+      {/* Status + metrics + usage */}
+      <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 xl:grid-cols-4">
         {statusCards.map((card) => {
           const Icon = card.icon
           return (
@@ -115,6 +187,20 @@ export function DashboardPage() {
             </Link>
           )
         })}
+
+        <div className="flex min-h-36 flex-col justify-between gap-3 bg-background p-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm text-muted-foreground">Usage</div>
+            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
+              30d
+            </span>
+          </div>
+          {metrics ? (
+            <UsageDonut usage={metrics.usage} />
+          ) : (
+            <p className="text-sm text-muted-foreground">—</p>
+          )}
+        </div>
       </div>
 
       {/* Recent activity */}
