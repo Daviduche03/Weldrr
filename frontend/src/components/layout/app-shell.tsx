@@ -44,30 +44,39 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         <button
           type="button"
           className={cn(
-            'flex cursor-pointer items-center rounded-lg border border-border bg-background text-left transition-[width,height,padding] duration-300 hover:bg-muted',
+            'grid cursor-pointer items-center rounded-lg border border-border bg-background text-left transition-[width,height] duration-300 hover:bg-muted',
             collapsed
-              ? 'size-9 justify-center gap-0 p-2'
-              : 'w-full justify-start gap-2.5 p-2.5',
+              ? 'size-10 grid-cols-[minmax(0,1fr)]'
+              : 'w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_1.5rem]',
           )}
         >
-          <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
-            <Building2 className="size-4" />
+          <span
+            className={cn(
+              'flex size-full items-center justify-center',
+              collapsed ? 'col-span-1' : 'col-span-1',
+            )}
+          >
+            <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+              <Building2 className="size-4" />
+            </span>
           </span>
           <span
             className={cn(
-              'min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+              'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
               collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
             )}
           >
             <span className="block truncate text-sm font-medium">{current.name}</span>
             <span className="block text-xs text-muted-foreground">{current.plan}</span>
           </span>
-          <ChevronsUpDown
+          <span
             className={cn(
-              'size-4 shrink-0 text-muted-foreground transition-[max-width,opacity] duration-300',
+              'flex justify-center overflow-hidden transition-[max-width,opacity] duration-300',
               collapsed ? 'max-w-0 opacity-0' : 'max-w-4 opacity-100',
             )}
-          />
+          >
+            <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+          </span>
         </button>
       </DropdownMenuTrigger>
 
@@ -110,20 +119,19 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
           title={collapsed ? item.label : undefined}
           className={({ isActive }) =>
             cn(
-              'flex cursor-pointer items-center rounded-lg text-sm font-medium transition-[width,height,padding] duration-300',
-              collapsed
-                ? 'size-9 justify-center p-2'
-                : 'w-full justify-start gap-3 px-3 py-2',
+              'grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg text-sm font-medium transition-colors duration-300',
               isActive
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
             )
           }
         >
-          <Icon className="size-4 shrink-0" />
+          <span className="flex size-full items-center justify-center">
+            <Icon className="size-4 shrink-0" />
+          </span>
           <span
             className={cn(
-              'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+              'min-w-0 truncate text-left transition-[max-width,opacity] duration-300',
               collapsed ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100',
             )}
           >
@@ -137,23 +145,22 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
     <nav
       className={cn(
         'flex-1 space-y-1 overflow-y-auto p-3 transition-[padding] duration-300',
-        collapsed && 'flex flex-col items-center px-0',
+        collapsed && 'px-2',
       )}
     >
       <NavLink
         to="/onboarding"
         title={collapsed ? 'New project' : undefined}
         className={cn(
-          'relative flex cursor-pointer items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-[width,height,padding] duration-300 hover:bg-brand/90',
-          collapsed
-            ? 'size-9 justify-center p-2'
-            : 'w-full justify-start gap-2 px-3 py-2',
+          'relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90',
         )}
       >
-        <Plus className="size-4 shrink-0" />
+        <span className="flex size-full items-center justify-center">
+          <Plus className="size-4 shrink-0" />
+        </span>
         <span
           className={cn(
-            'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+            'min-w-0 truncate text-left transition-[max-width,opacity] duration-300',
             collapsed ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100',
           )}
         >
@@ -194,7 +201,7 @@ export function AppShell() {
                 aria-label="Close menu"
                 className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <PanelLeftClose className="size-5" />
+             
               </button>
             </div>
             <SidebarNav collapsed={false} />
@@ -222,39 +229,33 @@ export function AppShell() {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-40 hidden flex-col bg-background transition-[width] duration-300 lg:flex',
-          collapsed ? 'w-14' : 'w-72',
+          collapsed ? 'w-16' : 'w-72',
         )}
       >
-        <div
-          className={cn(
-            'flex items-center py-4 transition-[padding] duration-300',
-            collapsed ? 'justify-center px-0' : 'justify-between px-5',
-          )}
-        >
-          {collapsed ? (
+        <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center py-4 pl-5 pr-2">
+          <span
+            className={cn(
+              'min-w-0 overflow-hidden transition-[max-width,opacity] duration-300',
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
+            )}
+          >
+            <Logo />
+          </span>
+          <span className="flex justify-center">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCollapsed(false)}
-              title="Expand"
+              onClick={() => setCollapsed((v) => !v)}
+              title={collapsed ? 'Expand' : 'Collapse'}
               className="text-muted-foreground hover:text-foreground"
             >
-              <PanelLeftOpen className="size-4" />
-            </Button>
-          ) : (
-            <>
-              <Logo />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCollapsed(true)}
-                title="Collapse"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              {collapsed ? (
+                <PanelLeftOpen className="size-4" />
+              ) : (
                 <PanelLeftClose className="size-4" />
-              </Button>
-            </>
-          )}
+              )}
+            </Button>
+          </span>
         </div>
 
         <div className={cn('py-2 transition-[padding] duration-300', collapsed ? 'flex justify-center px-0' : 'px-3')}>
@@ -267,7 +268,7 @@ export function AppShell() {
           <div
             className={cn(
               'flex items-center justify-start rounded-lg bg-muted/60 transition-[width,height,padding] duration-300',
-              collapsed ? 'size-9 gap-0 p-2' : 'w-full gap-2.5 p-2.5',
+              collapsed ? 'size-10 p-1' : 'w-full gap-2.5 p-2.5',
             )}
           >
             <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
@@ -294,7 +295,7 @@ export function AppShell() {
 
       <div
         className={cn(
-          collapsed ? 'lg:pl-14' : 'lg:pl-72',
+          collapsed ? 'lg:pl-16' : 'lg:pl-72',
         )}
       >
         <main className="mx-auto max-w-full py-3 lg:px-4">
