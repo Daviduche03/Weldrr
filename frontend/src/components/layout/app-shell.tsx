@@ -43,20 +43,31 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex w-full cursor-pointer items-center justify-start gap-2.5 rounded-lg border border-border bg-background p-2.5 text-left transition-colors hover:bg-muted"
+          className={cn(
+            'flex cursor-pointer items-center rounded-lg border border-border bg-background text-left transition-[width,height,padding] duration-300 hover:bg-muted',
+            collapsed
+              ? 'size-9 justify-center gap-0 p-2'
+              : 'w-full justify-start gap-2.5 p-2.5',
+          )}
         >
           <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
             <Building2 className="size-4" />
           </span>
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{current.name}</div>
-                <div className="text-xs text-muted-foreground">{current.plan}</div>
-              </div>
-              <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
-            </>
-          )}
+          <span
+            className={cn(
+              'min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
+            )}
+          >
+            <span className="block truncate text-sm font-medium">{current.name}</span>
+            <span className="block text-xs text-muted-foreground">{current.plan}</span>
+          </span>
+          <ChevronsUpDown
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-[max-width,opacity] duration-300',
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-4 opacity-100',
+            )}
+          />
         </button>
       </DropdownMenuTrigger>
 
@@ -99,7 +110,10 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
           title={collapsed ? item.label : undefined}
           className={({ isActive }) =>
             cn(
-              'flex w-full cursor-pointer items-center justify-start gap-3 rounded-lg px-3 py-2 text-sm font-medium',
+              'flex cursor-pointer items-center rounded-lg text-sm font-medium transition-[width,height,padding] duration-300',
+              collapsed
+                ? 'size-9 justify-center p-2'
+                : 'w-full justify-start gap-3 px-3 py-2',
               isActive
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -107,20 +121,44 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
           }
         >
           <Icon className="size-4 shrink-0" />
-          {!collapsed && item.label}
+          <span
+            className={cn(
+              'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100',
+            )}
+          >
+            {item.label}
+          </span>
         </NavLink>
       )
     })
 
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+    <nav
+      className={cn(
+        'flex-1 space-y-1 overflow-y-auto p-3 transition-[padding] duration-300',
+        collapsed && 'flex flex-col items-center px-0',
+      )}
+    >
       <NavLink
         to="/onboarding"
         title={collapsed ? 'New project' : undefined}
-        className="relative flex w-full cursor-pointer items-center justify-start gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-brand-foreground transition-colors hover:bg-brand/90"
+        className={cn(
+          'relative flex cursor-pointer items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-[width,height,padding] duration-300 hover:bg-brand/90',
+          collapsed
+            ? 'size-9 justify-center p-2'
+            : 'w-full justify-start gap-2 px-3 py-2',
+        )}
       >
         <Plus className="size-4 shrink-0" />
-        {!collapsed && <span className="flex items-center leading-none">New project</span>}
+        <span
+          className={cn(
+            'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+            collapsed ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100',
+          )}
+        >
+          New project
+        </span>
       </NavLink>
       <div className="h-3" />
       {renderItems(mainNav)}
@@ -219,29 +257,37 @@ export function AppShell() {
           )}
         </div>
 
-        <div className="px-3 py-2">
+        <div className={cn('py-2 transition-[padding] duration-300', collapsed ? 'flex justify-center px-0' : 'px-3')}>
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
         <SidebarNav collapsed={collapsed} />
 
-        <div className="p-3">
-          <div className="flex items-center justify-start gap-2.5 rounded-lg bg-muted/60 p-2.5">
+        <div className={cn('transition-[padding] duration-300', collapsed ? 'flex justify-center p-1' : 'p-3')}>
+          <div
+            className={cn(
+              'flex items-center justify-start rounded-lg bg-muted/60 transition-[width,height,padding] duration-300',
+              collapsed ? 'size-9 gap-0 p-2' : 'w-full gap-2.5 p-2.5',
+            )}
+          >
             <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
               {(user?.email ?? '?').charAt(0).toUpperCase()}
             </span>
-            {!collapsed && (
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{user?.email}</div>
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
+            <span
+              className={cn(
+                'min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300',
+                collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
+              )}
+            >
+              <div className="truncate text-sm font-medium">{user?.email}</div>
+              <button
+                type="button"
+                onClick={signOut}
+                className="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </span>
           </div>
         </div>
       </aside>
