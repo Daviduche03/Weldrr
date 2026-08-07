@@ -5,8 +5,64 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1785805190004,
-      "tag": "0000_daily_jamie_braddock",
+      "when": 1786014086824,
+      "tag": "0000_lively_mathemanic",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786037089392,
+      "tag": "0001_dashing_shaman",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786042119681,
+      "tag": "0002_early_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786042229400,
+      "tag": "0003_woozy_moon_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786045930545,
+      "tag": "0004_nervous_loners",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786046208110,
+      "tag": "0005_white_ultimo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786055025488,
+      "tag": "0006_chunky_ink",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786061684663,
+      "tag": "0007_acoustic_luke_cage",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786064477650,
+      "tag": "0008_wealthy_bromley",
       "breakpoints": true
     }
   ]

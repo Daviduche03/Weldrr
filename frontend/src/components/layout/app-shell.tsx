@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/auth-provider'
+import { planLabel, useWorkspace } from '@/modules/workspace/workspace-provider'
+import { CreateWorkspaceDialog } from '@/modules/workspace/create-workspace-dialog'
 
 const mainNav = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
@@ -30,15 +32,12 @@ const mainNav = [
 
 const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings }]
 
-const workspaces = [
-  { id: 'acme', name: 'Acme Corp', plan: 'Pro plan' },
-  { id: 'personal', name: 'Personal', plan: 'Free plan' },
-]
-
 function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
-  const [current, setCurrent] = useState(workspaces[0])
+  const { workspace } = useWorkspace()
+  const [createOpen, setCreateOpen] = useState(false)
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
@@ -56,8 +55,10 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
               collapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100',
             )}
           >
-            <span className="block truncate text-sm font-medium">{current.name}</span>
-            <span className="block text-xs text-muted-foreground">{current.plan}</span>
+            <span className="block truncate text-sm font-medium">{workspace?.name ?? '…'}</span>
+            <span className="block text-xs text-muted-foreground">
+              {workspace ? planLabel(workspace.plan) : 'Loading'}
+            </span>
           </span>
           <span
             className={cn(
@@ -79,22 +80,24 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           Workspaces
         </div>
         <DropdownMenuSeparator />
-        {workspaces.map((workspace) => (
-          <DropdownMenuItem key={workspace.id} onClick={() => setCurrent(workspace)}>
+        {workspace && (
+          <DropdownMenuItem>
             <span className="inline-flex size-5 items-center justify-center rounded bg-muted text-muted-foreground">
               <Building2 className="size-3" />
             </span>
             <span className="min-w-0 flex-1 truncate">{workspace.name}</span>
-            {workspace.id === current.id && <Check className="size-4" />}
+            <Check className="size-4" />
           </DropdownMenuItem>
-        ))}
+        )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
           Create workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
+    </>
   )
 }
 
@@ -139,7 +142,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
       )}
     >
       <NavLink
-        to="/onboarding"
+        to="/projects/new"
         title={collapsed ? 'New project' : undefined}
         className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
       >
@@ -293,15 +296,9 @@ export function AppShell() {
             <PanelLeftOpen className="size-4" />
             Menu
           </button>
-          <div className="flex min-h-[calc(100vh-1.5rem)] flex-col rounded-2xl border border-border bg-card p-1">
+          <div className="flex min-h-[calc(100vh-1.5rem)] flex-col rounded-2xl border border-border bg-muted p-1">
             <div className="flex h-full flex-1 flex-col rounded-xl border border-border bg-background">
-              <div
-                className="flex h-12 items-center gap-2 rounded-t-xl border-b border-border bg-card px-6"
-                style={{
-                  backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-                  backgroundSize: '12px 12px',
-                }}
-              >
+              <div className="flex h-12 items-center gap-2 rounded-t-xl border-b border-border bg-muted px-6">
                 {currentPage && (
                   <span className="text-sm font-medium text-muted-foreground">
                     {currentPage}
@@ -311,13 +308,7 @@ export function AppShell() {
               <div className="flex-1 py-5 sm:py-7">
                 <Outlet />
               </div>
-              <div
-                className="rounded-b-xl border-t border-border bg-card px-6 py-3"
-                style={{
-                  backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-                  backgroundSize: '12px 12px',
-                }}
-              />
+              <div className="rounded-b-xl border-t border-border bg-muted px-6 py-3" />
             </div>
           </div>
         </main>

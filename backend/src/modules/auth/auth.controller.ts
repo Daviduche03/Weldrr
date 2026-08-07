@@ -1,4 +1,4 @@
-import type { Response, NextFunction } from 'express'
+import type { Request, Response } from 'express'
 import { authService } from '@/modules/auth/auth.service'
 import {
   registerSchema,
@@ -11,139 +11,92 @@ import {
   resendVerificationSchema,
   updateUserSchema,
 } from '@/modules/auth/auth.schema'
-import type { AuthRequest } from '@/modules/auth/auth.types'
+import type { UserRequest } from '@/shared/types/request'
+import type { ApiMessageResponse, ApiResponse } from '@/shared/types/response'
+import type { LoginResponse, RefreshResponse, UserResponse } from '@/modules/auth/auth.types'
 
 export const authController = {
-  async register(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email, password, name, accountType, company, avatarUrl } =
-        registerSchema.parse(req.body)
-      const data = await authService.register(
-        email,
-        password,
-        name,
-        accountType,
-        company,
-        avatarUrl,
-      )
-      res.status(201).json({ status: 'success', data })
-    } catch (err) {
-      next(err)
-    }
+  async register(req: Request, res: Response<ApiResponse<LoginResponse>>) {
+    const input = registerSchema.parse(req.body)
+    const data = await authService.register(
+      input.email,
+      input.password,
+      input.name,
+      input.accountType,
+      input.company,
+      input.avatarUrl,
+    )
+    res.status(201).json({ status: 'success', data })
   },
 
-  async login(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email, password } = loginSchema.parse(req.body)
-      const data = await authService.login(email, password)
-      res.json({ status: 'success', data })
-    } catch (err) {
-      next(err)
-    }
+  async login(req: Request, res: Response<ApiResponse<LoginResponse>>) {
+    const input = loginSchema.parse(req.body)
+    const data = await authService.login(input.email, input.password)
+    res.json({ status: 'success', data })
   },
 
-  async oauth(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { provider, token } = oauthSchema.parse(req.body)
-      const data = await authService.oauth(provider, token)
-      res.json({ status: 'success', data })
-    } catch (err) {
-      next(err)
-    }
+  async oauth(req: Request, res: Response<ApiResponse<LoginResponse>>) {
+    const input = oauthSchema.parse(req.body)
+    const data = await authService.oauth(input.provider, input.token)
+    res.json({ status: 'success', data })
   },
 
-  async refresh(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { refreshToken } = refreshSchema.parse(req.body)
-      const data = await authService.refresh(refreshToken)
-      res.json({ status: 'success', data })
-    } catch (err) {
-      next(err)
-    }
+  async refresh(req: Request, res: Response<ApiResponse<RefreshResponse>>) {
+    const input = refreshSchema.parse(req.body)
+    const data = await authService.refresh(input.refreshToken)
+    res.json({ status: 'success', data })
   },
 
-  async logout(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { refreshToken } = refreshSchema.parse(req.body)
-      await authService.logout(refreshToken)
-      res.json({ status: 'success', message: 'Logged out' })
-    } catch (err) {
-      next(err)
-    }
+  async logout(req: Request, res: Response<ApiMessageResponse>) {
+    const input = refreshSchema.parse(req.body)
+    await authService.logout(input.refreshToken)
+    res.json({ status: 'success', message: 'Logged out' })
   },
 
-  async forgotPassword(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email } = forgotPasswordSchema.parse(req.body)
-      await authService.forgotPassword(email)
-      res.json({
-        status: 'success',
-        message: 'If an account exists for that email, a reset code has been sent',
-      })
-    } catch (err) {
-      next(err)
-    }
+  async forgotPassword(req: Request, res: Response<ApiMessageResponse>) {
+    const input = forgotPasswordSchema.parse(req.body)
+    await authService.forgotPassword(input.email)
+    res.json({
+      status: 'success',
+      message: 'If an account exists for that email, a reset code has been sent',
+    })
   },
 
-  async resetPassword(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email, code, password } = resetPasswordSchema.parse(req.body)
-      await authService.resetPassword(email, code, password)
-      res.json({ status: 'success', message: 'Password updated successfully' })
-    } catch (err) {
-      next(err)
-    }
+  async resendPasswordResetCode(req: Request, res: Response<ApiMessageResponse>) {
+    const input = forgotPasswordSchema.parse(req.body)
+    await authService.resendPasswordResetCode(input.email)
+    res.json({
+      status: 'success',
+      message: 'If an account exists for that email, a reset code has been sent',
+    })
   },
 
-  async verifyEmail(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email, code } = verifyEmailSchema.parse(req.body)
-      const user = await authService.verifyEmail(email, code)
-      res.json({ status: 'success', data: user })
-    } catch (err) {
-      next(err)
-    }
+  async resetPassword(req: Request, res: Response<ApiMessageResponse>) {
+    const body = resetPasswordSchema.parse(req.body)
+    await authService.resetPassword(body.email, body.code, body.password)
+    res.json({ status: 'success', message: 'Password updated successfully' })
   },
 
-  async resendVerification(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email } = resendVerificationSchema.parse(req.body)
-      await authService.resendVerification(email)
-      res.json({ status: 'success', message: 'Verification code sent' })
-    } catch (err) {
-      next(err)
-    }
+  async verifyEmail(req: Request, res: Response<ApiResponse<UserResponse>>) {
+    const body = verifyEmailSchema.parse(req.body)
+    const user = await authService.verifyEmail(body.email, body.code)
+    res.json({ status: 'success', data: user })
   },
 
-  async resendPasswordResetCode(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { email } = resendVerificationSchema.parse(req.body)
-      await authService.resendPasswordResetCode(email)
-      res.json({
-        status: 'success',
-        message: 'If an account exists for that email, a reset code has been sent',
-      })
-    } catch (err) {
-      next(err)
-    }
+  async resendVerification(req: Request, res: Response<ApiMessageResponse>) {
+    const input = resendVerificationSchema.parse(req.body)
+    await authService.resendVerification(input.email)
+    res.json({ status: 'success', message: 'Verification code sent' })
   },
 
-  async updateMe(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const data = updateUserSchema.parse(req.body)
-      const user = await authService.updateProfile(req.user!.sub, data)
-      res.json({ status: 'success', data: user })
-    } catch (err) {
-      next(err)
-    }
+  async me(req: UserRequest, res: Response<ApiResponse<UserResponse>>) {
+    const user = await authService.getProfile(req.user.sub)
+    res.json({ status: 'success', data: user })
   },
 
-  async me(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const user = await authService.getProfile(req.user!.sub)
-      res.json({ status: 'success', data: user })
-    } catch (err) {
-      next(err)
-    }
+  async updateMe(req: UserRequest, res: Response<ApiResponse<UserResponse>>) {
+    const data = updateUserSchema.parse(req.body)
+    const user = await authService.updateProfile(req.user.sub, data)
+    res.json({ status: 'success', data: user })
   },
 }

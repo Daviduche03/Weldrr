@@ -1,11 +1,11 @@
-import { getDb } from '@/config/database'
+import { getDb } from '@/db/client'
 import {
   users,
   oauthAccounts,
   refreshTokens,
   passwordResetTokens,
   emailVerificationTokens,
-} from '@/modules/auth/auth.schema'
+} from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import type {
   User,
@@ -15,7 +15,8 @@ import type {
   RefreshToken,
   PasswordResetToken,
   EmailVerificationToken,
-} from '@/modules/auth/auth.schema'
+} from '@/db/schema'
+import type { AuthProvider } from '@/modules/auth/auth.types'
 
 function db() {
   return getDb()
@@ -46,13 +47,11 @@ export const authRepository = {
     return user
   },
 
-  async findOAuthAccount(provider: 'google' | 'apple', providerId: string): Promise<OAuthAccount | undefined> {
+  async findOAuthAccount(provider: AuthProvider, providerId: string): Promise<OAuthAccount | undefined> {
     const result = await db()
       .select()
       .from(oauthAccounts)
-      .where(
-        and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.providerId, providerId)),
-      )
+      .where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.providerId, providerId)))
     return result[0]
   },
 
@@ -64,25 +63,16 @@ export const authRepository = {
     const result = await db()
       .select()
       .from(refreshTokens)
-      .where(
-        and(eq(refreshTokens.tokenHash, tokenHash), isNull(refreshTokens.revokedAt)),
-      )
+      .where(and(eq(refreshTokens.tokenHash, tokenHash), isNull(refreshTokens.revokedAt)))
     return result[0]
   },
 
-  async createRefreshToken(data: {
-    userId: string
-    tokenHash: string
-    expiresAt: Date
-  }): Promise<void> {
+  async createRefreshToken(data: { userId: string; tokenHash: string; expiresAt: Date }): Promise<void> {
     await db().insert(refreshTokens).values(data)
   },
 
   async revokeRefreshToken(id: string): Promise<void> {
-    await db()
-      .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(eq(refreshTokens.id, id))
+    await db().update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, id))
   },
 
   async revokeAllUserRefreshTokens(userId: string): Promise<void> {
@@ -92,11 +82,7 @@ export const authRepository = {
       .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)))
   },
 
-  async createPasswordResetToken(data: {
-    userId: string
-    tokenHash: string
-    expiresAt: Date
-  }): Promise<void> {
+  async createPasswordResetToken(data: { userId: string; tokenHash: string; expiresAt: Date }): Promise<void> {
     await db().insert(passwordResetTokens).values(data)
   },
 
@@ -104,21 +90,13 @@ export const authRepository = {
     const result = await db()
       .select()
       .from(passwordResetTokens)
-      .where(
-        and(
-          eq(passwordResetTokens.userId, userId),
-          isNull(passwordResetTokens.usedAt),
-        ),
-      )
+      .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)))
       .orderBy(passwordResetTokens.createdAt)
     return result[result.length - 1]
   },
 
   async usePasswordResetToken(id: string): Promise<void> {
-    await db()
-      .update(passwordResetTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.id, id))
+    await db().update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, id))
   },
 
   async revokeUnusedPasswordResetTokens(userId: string): Promise<void> {
@@ -126,10 +104,7 @@ export const authRepository = {
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(
-        and(
-          eq(passwordResetTokens.userId, userId),
-          isNull(passwordResetTokens.usedAt),
-        ),
+        and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)),
       )
   },
 
@@ -140,11 +115,7 @@ export const authRepository = {
       .where(eq(users.id, userId))
   },
 
-  async createEmailVerificationToken(data: {
-    userId: string
-    codeHash: string
-    expiresAt: Date
-  }): Promise<void> {
+  async createEmailVerificationToken(data: { userId: string; codeHash: string; expiresAt: Date }): Promise<void> {
     await db().insert(emailVerificationTokens).values(data)
   },
 
@@ -152,12 +123,7 @@ export const authRepository = {
     const result = await db()
       .select()
       .from(emailVerificationTokens)
-      .where(
-        and(
-          eq(emailVerificationTokens.userId, userId),
-          isNull(emailVerificationTokens.usedAt),
-        ),
-      )
+      .where(and(eq(emailVerificationTokens.userId, userId), isNull(emailVerificationTokens.usedAt)))
       .orderBy(emailVerificationTokens.createdAt)
     return result[result.length - 1]
   },
@@ -166,18 +132,10 @@ export const authRepository = {
     await db()
       .update(emailVerificationTokens)
       .set({ usedAt: new Date() })
-      .where(
-        and(
-          eq(emailVerificationTokens.userId, userId),
-          isNull(emailVerificationTokens.usedAt),
-        ),
-      )
+      .where(and(eq(emailVerificationTokens.userId, userId), isNull(emailVerificationTokens.usedAt)))
   },
 
   async useEmailVerificationToken(id: string): Promise<void> {
-    await db()
-      .update(emailVerificationTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(emailVerificationTokens.id, id))
+    await db().update(emailVerificationTokens).set({ usedAt: new Date() }).where(eq(emailVerificationTokens.id, id))
   },
 }

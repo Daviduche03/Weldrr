@@ -1,48 +1,87 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import { authApi, type RegisterInput } from '@/lib/api/auth'
+import { clearTokens, getTokens, setTokens } from '@/lib/tokens'
+import type { User } from '@/lib/types'
 
-type User = {
-  email: string
-  name: string
-  provider: 'github' | 'google'
-}
+type AuthStatus = 'loading' | 'authenticated' | 'anonymous'
 
 type AuthState = {
   user: User | null
-  signIn: (provider: 'github' | 'google') => void
-  signOut: () => void
+  status: AuthStatus
+  login: (email: string, password: string) => Promise<void>
+  register: (input: RegisterInput) => Promise<void>
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
-const STORAGE_KEY = 'weldrr_user'
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    return stored ? (JSON.parse(stored) as User) : null
-  })
+  const [user, setUser] = useState<User | null>(null)
+  const [status, setStatus] = useState<AuthStatus>(() => (getTokens() ? 'loading' : 'anonymous'))
 
-  const signIn = useCallback((provider: 'github' | 'google') => {
-    const next: User = {
-      email: provider === 'github' ? 'you@github.com' : 'you@gmail.com',
-      name: 'You',
-      provider,
+  useEffect(() => {
+    if (!getTokens()) return
+    let active = true
+    authApi
+      .me()
+      .then((me) => {
+        if (active) {
+          setUser(me)
+          setStatus('authenticated')
+        }
+      })
+      .catch(() => {
+        if (active) {
+          clearTokens()
+          setUser(null)
+          setStatus('anonymous')
+        }
+      })
+    return () => {
+      active = false
     }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    setUser(next)
   }, [])
 
-  const signOut = useCallback(() => {
-    window.localStorage.removeItem(STORAGE_KEY)
+  const login = useCallback(async (email: string, password: string) => {
+    const result = await authApi.login(email, password)
+    setTokens(result.tokens)
+    setUser(result.user)
+    setStatus('authenticated')
+  }, [])
+
+  const register = useCallback(async (input: RegisterInput) => {
+    const result = await authApi.register(input)
+    setTokens(result.tokens)
+    setUser(result.user)
+    setStatus('authenticated')
+  }, [])
+
+  const signOut = useCallback(async () => {
+    const tokens = getTokens()
+    try {
+      if (tokens) await authApi.logout(tokens.refreshToken)
+    } catch {
+      // Best-effort — clear locally regardless.
+    }
+    clearTokens()
     setUser(null)
+    setStatus('anonymous')
   }, [])
 
-  return (
-    <AuthContext.Provider value={{ user, signIn, signOut }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, status, login, register, signOut }),
+    [user, status, login, register, signOut],
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

@@ -1,24 +1,35 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowUpRight,
   BadgeCheck,
   BookOpen,
   CircleAlert,
+  History,
   LoaderCircle,
   Plus,
   RefreshCw,
 } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api'
+import { Skeleton } from '@/components/ui/skeleton'
+import { dashboardApi } from '@/lib/api/dashboard'
 import type { Activity, DashboardMetrics } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useAsyncData } from '@/lib/hooks'
 
-const activityMeta: Record<Activity['action'], { label: string; dot: string }> = {
+const activityMeta: Record<string, { label: string; dot: string }> = {
   generated: { label: 'Generated', dot: 'bg-emerald-500' },
   spec_updated: { label: 'Spec updated', dot: 'bg-sky-500' },
   failed: { label: 'Failed', dot: 'bg-rose-500' },
   released: { label: 'Released', dot: 'bg-brand' },
+  created: { label: 'Created', dot: 'bg-emerald-500' },
+  deleted: { label: 'Deleted', dot: 'bg-rose-500' },
+  member_added: { label: 'Member added', dot: 'bg-sky-500' },
+  member_removed: { label: 'Member removed', dot: 'bg-rose-500' },
+  role_changed: { label: 'Role changed', dot: 'bg-amber-500' },
+  api_key_created: { label: 'API key created', dot: 'bg-sky-500' },
+  api_key_revoked: { label: 'API key revoked', dot: 'bg-rose-500' },
+  plan_changed: { label: 'Plan changed', dot: 'bg-brand' },
 }
 
 function relativeTime(iso: string): string {
@@ -128,22 +139,42 @@ function UsageDonut({ usage }: { usage: DashboardMetrics['usage'] }) {
   )
 }
 
-export function DashboardPage() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [activity, setActivity] = useState<Activity[]>([])
+function StatusCardSkeleton() {
+  return (
+    <div className="flex min-h-36 items-center gap-4 bg-background px-6">
+      <Skeleton className="size-11 shrink-0 rounded-xl" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-6 w-10" />
+        <Skeleton className="h-3.5 w-24" />
+        <Skeleton className="h-3 w-32" />
+      </div>
+    </div>
+  )
+}
 
-  useEffect(() => {
-    let mounted = true
-    Promise.all([api.getDashboardMetrics(), api.listActivity()]).then(([m, a]) => {
-      if (mounted) {
-        setMetrics(m)
-        setActivity(a)
-      }
-    })
-    return () => {
-      mounted = false
-    }
-  }, [])
+function ActivityRowSkeleton() {
+  return (
+    <tr>
+      <td className="px-6 py-3.5">
+        <Skeleton className="h-4 w-36" />
+      </td>
+      <td className="border-l border-border px-6 py-3.5">
+        <Skeleton className="h-4 w-56" />
+      </td>
+      <td className="border-l border-border px-6 py-3.5">
+        <Skeleton className="h-4 w-16" />
+      </td>
+      <td className="border-l border-border px-6 py-3.5">
+        <Skeleton className="ml-auto h-4 w-14" />
+      </td>
+    </tr>
+  )
+}
+
+export function DashboardPage() {
+  const { data, loading } = useAsyncData(() => dashboardApi.get(), [])
+  const metrics = data?.metrics ?? null
+  const activity: Activity[] = data?.activity ?? []
 
   return (
     <div>
@@ -155,7 +186,7 @@ export function DashboardPage() {
           </p>
         </div>
         <Button size="lg" asChild>
-          <Link to="/onboarding">
+          <Link to="/projects/new">
             <Plus />
             New project
           </Link>
@@ -164,55 +195,53 @@ export function DashboardPage() {
 
       {/* Status + metrics + usage */}
       <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 xl:grid-cols-4">
-        {statusCards.map((card) => {
-          const Icon = card.icon
-          return (
-            <Link
-              key={card.label}
-              to={card.to}
-              className="flex min-h-36 items-center gap-4 bg-background px-6 transition-colors duration-300 ease-in-out hover:bg-muted"
-            >
-              <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
-                <Icon className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <div className="text-2xl font-semibold tracking-tight">
-                  {metrics ? card.value(metrics) : '—'}
-                </div>
-                <div className="mt-0.5 text-sm text-muted-foreground">{card.label}</div>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground/70">
-                  {card.hint}
-                </div>
-              </div>
-            </Link>
-          )
-        })}
+        {loading
+          ? Array.from({ length: 4 }, (_, i) => <StatusCardSkeleton key={i} />)
+          : statusCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <Link
+                  key={card.label}
+                  to={card.to}
+                  className="flex min-h-36 items-center gap-4 bg-background px-6 transition-colors duration-300 ease-in-out hover:bg-muted"
+                >
+                  <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-2xl font-semibold tracking-tight">
+                      {metrics ? card.value(metrics) : '—'}
+                    </div>
+                    <div className="mt-0.5 text-sm text-muted-foreground">{card.label}</div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground/70">
+                      {card.hint}
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
 
-        <div className="flex min-h-36 flex-col justify-between gap-3 bg-background p-6">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-sm text-muted-foreground">Usage</div>
-            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              30d
-            </span>
+        {!loading && (
+          <div className="flex min-h-36 flex-col justify-between gap-3 bg-background p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm text-muted-foreground">Usage</div>
+              <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                30d
+              </span>
+            </div>
+            {metrics ? (
+              <UsageDonut usage={metrics.usage} />
+            ) : (
+              <p className="text-sm text-muted-foreground">—</p>
+            )}
           </div>
-          {metrics ? (
-            <UsageDonut usage={metrics.usage} />
-          ) : (
-            <p className="text-sm text-muted-foreground">—</p>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Recent activity */}
-      <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-background">
-        <div
-          className="flex items-center justify-between border-b border-border bg-card px-6 py-3"
-          style={{
-            backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-            backgroundSize: '12px 12px',
-          }}
-        >
-          <h2 className="text-sm font-medium text-muted-foreground">Recent activity</h2>
+      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
+        <div className="flex items-center justify-between border-b border-border bg-muted px-6 py-3">
+          <h2 className="text-[13px] font-medium text-foreground">Recent activity</h2>
           <Link
             to="/projects"
             className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-muted"
@@ -231,34 +260,44 @@ export function DashboardPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {activity.map((item) => {
-              const meta = activityMeta[item.action]
-              return (
-                <tr key={item.id} className="transition-colors hover:bg-muted">
-                  <td className="px-6 py-3.5 text-sm font-medium">{item.projectName}</td>
-                  <td className="border-l border-border px-6 py-3.5 text-sm text-muted-foreground">
-                    {item.detail}
-                  </td>
-                  <td className="border-l border-border px-6 py-3.5">
-                    <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={cn('size-1.5 rounded-full', meta.dot)} />
-                      {meta.label}
-                    </span>
-                  </td>
-                  <td className="border-l border-border px-6 py-3.5 text-right text-sm text-muted-foreground">
-                    {relativeTime(item.at)}
-                  </td>
-                </tr>
-              )
-            })}
+            {loading
+              ? Array.from({ length: 4 }, (_, i) => <ActivityRowSkeleton key={i} />)
+              : activity.map((item) => {
+                  const meta = activityMeta[item.action] ?? { label: item.action, dot: 'bg-muted' }
+                  return (
+                    <tr key={item.id} className="transition-colors hover:bg-muted">
+                      <td className="px-6 py-3.5 text-sm font-medium">{item.projectName}</td>
+                      <td className="border-l border-border px-6 py-3.5 text-sm text-muted-foreground">
+                        {item.detail}
+                      </td>
+                      <td className="border-l border-border px-6 py-3.5">
+                        <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className={cn('size-1.5 rounded-full', meta.dot)} />
+                          {meta.label}
+                        </span>
+                      </td>
+                      <td className="border-l border-border px-6 py-3.5 text-right text-sm text-muted-foreground">
+                        {relativeTime(item.at)}
+                      </td>
+                    </tr>
+                  )
+                })}
           </tbody>
         </table>
+        {!loading && activity.length === 0 && (
+          <EmptyState
+            icon={<History className="size-6" />}
+            title="No activity yet"
+            description="Connect your first spec to get started."
+            className="py-12"
+          />
+        )}
       </div>
 
       {/* Quick actions */}
       <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border">
         {[
-          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/onboarding', icon: Plus },
+          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: Plus },
           { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpen },
           { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: RefreshCw },
         ].map((action) => {

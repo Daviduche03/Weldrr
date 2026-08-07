@@ -1,54 +1,82 @@
 import { sdkRepository } from '@/modules/sdks/sdk.repository'
-import { AppError } from '@/middleware/errorHandler'
-import type { NewSdk } from '@/modules/sdks/sdk.schema'
+import { projectRepository } from '@/modules/projects/projects.repository'
+import { activityService } from '@/modules/activity/activity.service'
+import { NotFoundError } from '@/middleware/errorHandler'
+import type { SdkResponse, CreateSdkInput, UpdateSdkInput } from '@/modules/sdks/sdk.types'
+import type { SdkRow } from '@/db/schema'
+
+function toResponse(sdk: SdkRow): SdkResponse {
+  return {
+    id: sdk.id,
+    projectId: sdk.projectId,
+    name: sdk.name,
+    language: sdk.language,
+    status: sdk.status,
+    createdAt: sdk.createdAt,
+    updatedAt: sdk.updatedAt,
+  }
+}
+
+async function assertProjectInWorkspace(workspaceId: string, projectId: string): Promise<void> {
+  const project = await projectRepository.findById(workspaceId, projectId)
+  if (!project) throw new NotFoundError('Project not found')
+}
 
 export const sdkService = {
-  async list(
-    userId: string,
-    opts: {
-      page: number
-      limit: number
-      status?: string
-      language?: string
-      sortBy: string
-      sortOrder: string
-    },
-  ) {
-    const offset = (opts.page - 1) * opts.limit
-    const { data, total } = await sdkRepository.findAll({ ...opts, userId, offset })
-
-    return {
-      data,
-      meta: {
-        page: opts.page,
-        limit: opts.limit,
-        total,
-        totalPages: Math.ceil(total / opts.limit),
-      },
-    }
+  async list(workspaceId: string, projectId: string): Promise<SdkResponse[]> {
+    await assertProjectInWorkspace(workspaceId, projectId)
+    const rows = await sdkRepository.listForProject(workspaceId, projectId)
+    return rows.map(toResponse)
   },
 
-  async getById(userId: string, id: string) {
-    const sdk = await sdkRepository.findById(id)
-    if (!sdk || sdk.userId !== userId) throw new AppError(404, 'SDK not found')
-    return sdk
+  async create(workspaceId: string, projectId: string, input: CreateSdkInput): Promise<SdkResponse> {
+    await assertProjectInWorkspace(workspaceId, projectId)
+
+    const sdk = await sdkRepository.create(workspaceId, projectId, {
+      name: input.name,
+      language: input.language ?? 'typescript',
+      spec: input.spec ?? null,
+      status: 'generating',
+    })
+
+    await activityService.record({
+      workspaceId,
+      projectId,
+      projectName: sdk.name,
+      action: 'generated',
+      detail: `Started generating ${sdk.language} SDK "${sdk.name}"`,
+    })
+
+    return toResponse(sdk)
   },
 
-  async create(userId: string, data: Record<string, unknown>) {
-    return sdkRepository.create(userId, data as NewSdk)
+  async update(
+    workspaceId: string,
+    projectId: string,
+    id: string,
+    input: UpdateSdkInput,
+  ): Promise<SdkResponse> {
+    await assertProjectInWorkspace(workspaceId, projectId)
+
+    const existing = await sdkRepository.findById(workspaceId, id)
+    if (!existing || existing.projectId !== projectId) throw new NotFoundError('SDK not found')
+
+    const sdk = await sdkRepository.update(workspaceId, id, {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.language !== undefined ? { language: input.language } : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+    })
+    if (!sdk) throw new NotFoundError('SDK not found')
+
+    return toResponse(sdk)
   },
 
-  async update(userId: string, id: string, data: Record<string, unknown>) {
-    const existing = await sdkRepository.findById(id)
-    if (!existing || existing.userId !== userId) throw new AppError(404, 'SDK not found')
-    const updated = await sdkRepository.update(id, data as Partial<NewSdk>)
-    if (!updated) throw new AppError(500, 'Failed to update SDK')
-    return updated
-  },
+  async delete(workspaceId: string, projectId: string, id: string): Promise<void> {
+    await assertProjectInWorkspace(workspaceId, projectId)
 
-  async delete(userId: string, id: string) {
-    const existing = await sdkRepository.findById(id)
-    if (!existing || existing.userId !== userId) throw new AppError(404, 'SDK not found')
-    await sdkRepository.delete(id)
+    const existing = await sdkRepository.findById(workspaceId, id)
+    if (!existing || existing.projectId !== projectId) throw new NotFoundError('SDK not found')
+
+    await sdkRepository.delete(workspaceId, id)
   },
 }

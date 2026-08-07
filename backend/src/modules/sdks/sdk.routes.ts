@@ -1,13 +1,43 @@
 import { Router } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import { sdkController } from '@/modules/sdks/sdk.controller'
 import { authenticate } from '@/middleware/auth'
+import { requireWorkspace, requireRole } from '@/middleware/authorize'
+import { asyncHandler } from '@/shared/utils/async-handler'
+import { z } from 'zod'
+
+const sdkParamsSchema = z.object({
+  projectId: z.string().uuid('Invalid project id'),
+  id: z.string().uuid('Invalid sdk id').optional(),
+})
+
+function validateParams(req: Request, _res: Response, next: NextFunction): void {
+  sdkParamsSchema.parse(req.params)
+  next()
+}
 
 const router = Router()
 
-router.get('/', authenticate, sdkController.list)
-router.get('/:id', authenticate, sdkController.getById)
-router.post('/', authenticate, sdkController.create)
-router.patch('/:id', authenticate, sdkController.update)
-router.delete('/:id', authenticate, sdkController.delete)
+router.use(authenticate, requireWorkspace)
+
+router.get('/:projectId/sdks', validateParams, asyncHandler(sdkController.list))
+router.post(
+  '/:projectId/sdks',
+  requireRole('owner', 'admin'),
+  validateParams,
+  asyncHandler(sdkController.create),
+)
+router.patch(
+  '/:projectId/sdks/:id',
+  requireRole('owner', 'admin'),
+  validateParams,
+  asyncHandler(sdkController.update),
+)
+router.delete(
+  '/:projectId/sdks/:id',
+  requireRole('owner', 'admin'),
+  validateParams,
+  asyncHandler(sdkController.remove),
+)
 
 export { router as sdkRoutes }

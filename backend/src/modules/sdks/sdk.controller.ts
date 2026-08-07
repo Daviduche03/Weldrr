@@ -1,61 +1,39 @@
-import type { Response, NextFunction } from 'express'
+import type { Response } from 'express'
 import { sdkService } from '@/modules/sdks/sdk.service'
-import {
-  createSdkSchema,
-  updateSdkSchema,
-  sdkQuerySchema,
-} from '@/modules/sdks/sdk.schema'
-import type { AuthRequest } from '@/modules/auth/auth.types'
+import { createSdkSchema, updateSdkSchema } from '@/modules/sdks/sdk.schema'
+import type { WorkspaceRequest } from '@/shared/types/request'
+import type { ApiMessageResponse, ApiResponse } from '@/shared/types/response'
+import type { SdkResponse } from '@/modules/sdks/sdk.types'
+import { z } from 'zod'
+
+const idParamSchema = z.string().uuid('Invalid sdk id')
+
+function parseProjectId(req: WorkspaceRequest): string {
+  return req.params.projectId as string
+}
 
 export const sdkController = {
-  async list(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const query = sdkQuerySchema.parse(req.query)
-      const { data, meta } = await sdkService.list(req.user!.sub, query)
-      res.json({ status: 'success', data, meta })
-    } catch (err) {
-      next(err)
-    }
+  async list(req: WorkspaceRequest, res: Response<ApiResponse<SdkResponse[]>>) {
+    const data = await sdkService.list(req.workspace.workspaceId, parseProjectId(req))
+    res.json({ status: 'success', data })
   },
 
-  async getById(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const id = req.params.id as string
-      const sdk = await sdkService.getById(req.user!.sub, id)
-      res.json({ status: 'success', data: sdk })
-    } catch (err) {
-      next(err)
-    }
+  async create(req: WorkspaceRequest, res: Response<ApiResponse<SdkResponse>>) {
+    const input = createSdkSchema.parse(req.body)
+    const data = await sdkService.create(req.workspace.workspaceId, parseProjectId(req), input)
+    res.status(201).json({ status: 'success', data })
   },
 
-  async create(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const data = createSdkSchema.parse(req.body)
-      const sdk = await sdkService.create(req.user!.sub, data)
-      res.status(201).json({ status: 'success', data: sdk })
-    } catch (err) {
-      next(err)
-    }
+  async update(req: WorkspaceRequest, res: Response<ApiResponse<SdkResponse>>) {
+    const id = idParamSchema.parse(req.params.id)
+    const input = updateSdkSchema.parse(req.body)
+    const data = await sdkService.update(req.workspace.workspaceId, parseProjectId(req), id, input)
+    res.json({ status: 'success', data })
   },
 
-  async update(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const id = req.params.id as string
-      const data = updateSdkSchema.parse(req.body)
-      const sdk = await sdkService.update(req.user!.sub, id, data)
-      res.json({ status: 'success', data: sdk })
-    } catch (err) {
-      next(err)
-    }
-  },
-
-  async delete(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const id = req.params.id as string
-      await sdkService.delete(req.user!.sub, id)
-      res.status(204).send()
-    } catch (err) {
-      next(err)
-    }
+  async remove(req: WorkspaceRequest, res: Response<ApiMessageResponse>) {
+    const id = idParamSchema.parse(req.params.id)
+    await sdkService.delete(req.workspace.workspaceId, parseProjectId(req), id)
+    res.status(204).json({ status: 'success', message: 'SDK deleted' })
   },
 }

@@ -1,53 +1,53 @@
-import 'dotenv/config'
-import express from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import swaggerJsdoc from 'swagger-jsdoc'
-import swaggerUi from 'swagger-ui-express'
+import type { Server } from 'node:http'
 import { config } from '@/config'
-import { authRoutes } from '@/modules/auth/auth.routes'
-import { uploadRoutes } from '@/modules/upload/upload.routes'
-import { sdkRoutes } from '@/modules/sdks/sdk.routes'
+import { createApp } from '@/app'
+import { getPool, closePool } from '@/db/client'
+import { runMigrations } from '@/db/migrate'
 import { seedAll } from '@/db/seed'
-import { errorHandler } from '@/middleware/errorHandler'
-import { notFound } from '@/middleware/notFound'
 import { logger } from '@/utils/logger'
 
-const app = express()
+async function bootstrap(): Promise<void> {
+  const pool = getPool()
 
-app.use(helmet())
-app.use(cors())
-app.use(express.json())
+  await pool.query('SELECT 1')
+  logger.info('Database connection established')
 
-const swaggerSpec = swaggerJsdoc({
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Weldrr API',
-      version: '1.0.0',
-      description: 'API documentation for Weldrr backend',
-    },
-    servers: [{ url: config.appUrl }],
-  },
-  apis: ['./src/modules/**/*.docs.ts'],
+  await runMigrations()
+  logger.info('Migrations applied')
+
+  await seedAll()
+
+  const app = createApp()
+  const server: Server = app.listen(config.port, () => {
+    logger.info(`Server running on port ${config.port} (${config.nodeEnv})`)
+  })
+
+  const shutdown = async (signal: string): Promise<void> => {
+    logger.info(`Received ${signal} — shutting down gracefully`)
+    server.close(async () => {
+      await closePool()
+      process.exit(0)
+    })
+    setTimeout(() => {
+      logger.warn('Forced shutdown after timeout')
+      process.exit(1)
+    }, 10_000).unref()
+  }
+
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
+  process.on('unhandledRejection', (reason) => {
+    logger.error({ reason }, 'Unhandled promise rejection')
+  })
+  process.on('uncaughtException', (err) => {
+    logger.error({ err }, 'Uncaught exception')
+    process.exit(1)
+  })
+}
+
+bootstrap().catch((err) => {
+  logger.error({ err }, 'Failed to start server')
+  process.exit(1)
 })
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' })
-})
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
-app.use('/api/auth', authRoutes)
-app.use('/api/uploads', uploadRoutes)
-app.use('/api/sdks', sdkRoutes)
-
-seedAll().catch((err) => logger.error({ err }, 'Failed to seed data'))
-
-app.use(notFound)
-app.use(errorHandler)
-
-app.listen(config.port, () => {
-  logger.info(`Server running on port ${config.port}`)
-})
-
-export default app
+export { createApp }

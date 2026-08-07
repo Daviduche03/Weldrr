@@ -1,7 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import '@fontsource-variable/space-grotesk';
-@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+@import '@fontsource-variable/bricolage-grotesque';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -115,8 +116,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -132,6 +134,11 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'ss01', 'cv01', 'cv11';
@@ -144,6 +151,48 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
+}
+
+@keyframes wf-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.985);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes wf-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--wf-dx, 20px));
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+.wf-enter {
+  animation: wf-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wf-step {
+  animation: wf-slide-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wf-step--back {
+  --wf-dx: -20px;
+}
+
+.wf-step--fwd {
+  --wf-dx: 20px;
 }
 
 @keyframes shimmer-sweep {

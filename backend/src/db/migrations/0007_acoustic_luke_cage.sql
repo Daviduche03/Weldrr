@@ -1,0 +1,1 @@
+ALTER TABLE "sandboxes" ADD COLUMN "artifact_url" text;

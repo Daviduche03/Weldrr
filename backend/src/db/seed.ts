@@ -1,69 +1,235 @@
 import bcrypt from 'bcrypt'
-import { getDb } from '@/config/database'
-import { users } from '@/modules/auth/auth.schema'
-import { sdks } from '@/modules/sdks/sdk.schema'
-import { eq } from 'drizzle-orm'
+import crypto from 'node:crypto'
+import { getDb } from '@/db/client'
+import { projects as projectsTable, activity as activityTable } from '@/db/schema'
+import { authRepository } from '@/modules/auth/auth.repository'
+import { workspaceRepository } from '@/modules/workspace/workspace.repository'
+import { projectRepository } from '@/modules/projects/projects.repository'
+import { activityRepository } from '@/modules/activity/activity.repository'
+import { apiKeyRepository } from '@/modules/api-keys/api-keys.repository'
+import { sdkRepository } from '@/modules/sdks/sdk.repository'
 import { logger } from '@/utils/logger'
+import type { Workspace, Project } from '@/db/schema'
 
-const sdkData = [
+const OWNER_EMAIL = 'admin@weldrr.app'
+const OWNER_PASSWORD = 'admin123'
+
+const WORKSPACE = {
+  name: 'Acme Corp',
+  slug: 'acme',
+  plan: 'pro' as const,
+  docsServed: 20_000_000,
+  sdksPublished: 128,
+  usageDocs: 1_200_000,
+  usageSdks: 486_000,
+  usageCli: 92_000,
+  usageMcp: 41_000,
+}
+
+const PROJECTS = [
   {
-    name: 'Payments API Client',
-    description: 'TypeScript client generated from the Payments OpenAPI spec',
-    language: 'typescript' as const,
-    framework: 'axios',
+    name: 'Voice Agents API',
+    specType: 'openapi' as const,
+    specSource: 'url' as const,
     status: 'ready' as const,
-    spec: {
-      openapi: '3.0.0',
-      info: { title: 'Payments API', version: '1.0.0' },
-      paths: { '/payments': { get: { responses: { '200': { description: 'ok' } } } } },
-    },
+    docsUrl: 'https://docs.example.com',
+    sdkLanguages: ['typescript', 'python', 'go'],
+    cliEnabled: true,
+    createdAt: new Date('2026-07-02T10:00:00Z'),
+    updatedAt: new Date('2026-08-01T14:30:00Z'),
   },
   {
-    name: 'Analytics Python SDK',
-    description: 'Python SDK for the Analytics events API',
-    language: 'python' as const,
-    framework: 'httpx',
-    status: 'draft' as const,
-    spec: {
-      openapi: '3.0.0',
-      info: { title: 'Analytics API', version: '2.1.0' },
-      paths: {},
-    },
+    name: 'Payments SDK',
+    specType: 'graphql' as const,
+    specSource: 'paste' as const,
+    status: 'generating' as const,
+    docsUrl: '',
+    sdkLanguages: ['typescript'],
+    cliEnabled: false,
+    createdAt: new Date('2026-07-20T09:00:00Z'),
+    updatedAt: new Date('2026-08-04T11:00:00Z'),
+  },
+  {
+    name: 'Realtime Events',
+    specType: 'asyncapi' as const,
+    specSource: 'upload' as const,
+    status: 'failed' as const,
+    docsUrl: '',
+    sdkLanguages: [],
+    cliEnabled: false,
+    createdAt: new Date('2026-07-28T16:00:00Z'),
+    updatedAt: new Date('2026-07-28T16:05:00Z'),
   },
 ]
 
-async function seedUser(): Promise<string> {
-  const db = getDb()
-  const existing = await db.select().from(users).where(eq(users.email, 'admin@weldrr.app'))
-  if (existing.length > 0) return existing[0].id
+const ACTIVITY = [
+  {
+    projectName: 'Payments SDK',
+    action: 'generated' as const,
+    detail: 'TypeScript SDK v2.1 generated',
+    createdAt: new Date('2026-08-04T11:00:00Z'),
+  },
+  {
+    projectName: 'Voice Agents API',
+    action: 'spec_updated' as const,
+    detail: 'OpenAPI spec updated with 4 new endpoints',
+    createdAt: new Date('2026-08-01T14:30:00Z'),
+  },
+  {
+    projectName: 'Realtime Events',
+    action: 'failed' as const,
+    detail: 'AsyncAPI spec failed to validate',
+    createdAt: new Date('2026-07-28T16:05:00Z'),
+  },
+  {
+    projectName: 'Voice Agents API',
+    action: 'released' as const,
+    detail: 'Python SDK v3.4 published to PyPI',
+    createdAt: new Date('2026-07-25T09:00:00Z'),
+  },
+  {
+    projectName: 'Voice Agents API',
+    action: 'generated' as const,
+    detail: 'CLI v1.2 generated',
+    createdAt: new Date('2026-07-20T15:00:00Z'),
+  },
+]
 
-  const passwordHash = await bcrypt.hash('admin123', 12)
-  const [user] = await db
-    .insert(users)
-    .values({
-      email: 'admin@weldrr.app',
+async function seedUserAndWorkspace(): Promise<Workspace> {
+  let user = await authRepository.findUserByEmail(OWNER_EMAIL)
+
+  if (!user) {
+    const passwordHash = await bcrypt.hash(OWNER_PASSWORD, 12)
+    user = await authRepository.createUser({
+      email: OWNER_EMAIL,
       name: 'Weldrr Admin',
       accountType: 'team',
       passwordHash,
       isEmailVerified: true,
     })
-    .returning()
-  return user.id
-}
-
-async function seedSdks(userId: string) {
-  const db = getDb()
-  const existing = await db.select({ id: sdks.id }).from(sdks).limit(1)
-  if (existing.length > 0) {
-    logger.info('SDKs already seeded, skipping')
-    return
+    logger.info('Seeded owner user')
   }
 
-  await db.insert(sdks).values(sdkData.map((s) => ({ ...s, userId })))
-  logger.info(`Seeded ${sdkData.length} SDKs`)
+  const membership = await workspaceRepository.findMembershipByUserId(user.id)
+  if (membership) {
+    const existing = await workspaceRepository.findById(membership.workspaceId)
+    if (existing) return existing
+  }
+
+  const workspace = await workspaceRepository.create({ ...WORKSPACE })
+  await workspaceRepository.addMember({
+    workspaceId: workspace.id,
+    userId: user.id,
+    email: user.email,
+    role: 'owner',
+  })
+  logger.info('Seeded workspace and owner membership')
+
+  return workspace
 }
 
-export async function seedAll() {
-  const userId = await seedUser()
-  await seedSdks(userId)
+async function seedMembers(workspace: Workspace): Promise<void> {
+  const members = [
+    { email: 'alex@acme.com', role: 'admin' as const },
+    { email: 'sam@acme.com', role: 'member' as const },
+  ]
+
+  for (const member of members) {
+    const existing = await workspaceRepository.findMembershipByEmail(workspace.id, member.email)
+    if (!existing) {
+      await workspaceRepository.addMember({
+        workspaceId: workspace.id,
+        email: member.email,
+        role: member.role,
+        userId: null,
+      })
+      logger.info(`Seeded member ${member.email}`)
+    }
+  }
+}
+
+async function seedProjects(workspace: Workspace): Promise<Project[]> {
+  const existing = await getDb().select().from(projectsTable)
+  if (existing.length > 0) return existing
+
+  const created: Project[] = []
+  for (const project of PROJECTS) {
+    const row = await projectRepository.create(workspace.id, {
+      name: project.name,
+      specType: project.specType,
+      specSource: project.specSource,
+      status: project.status,
+      docsUrl: project.docsUrl,
+      sdkLanguages: project.sdkLanguages,
+      cliEnabled: project.cliEnabled,
+      spec: null,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    })
+    created.push(row)
+  }
+  logger.info(`Seeded ${created.length} projects`)
+  return created
+}
+
+async function seedActivity(workspace: Workspace): Promise<void> {
+  const db = getDb()
+  const existing = await db.select({ id: activityTable.id }).from(activityTable)
+  if (existing.length > 0) return
+
+  for (const item of ACTIVITY) {
+    await activityRepository.create({
+      workspaceId: workspace.id,
+      projectId: null,
+      projectName: item.projectName,
+      action: item.action,
+      detail: item.detail,
+      createdAt: item.createdAt,
+    })
+  }
+  logger.info('Seeded activity')
+}
+
+async function seedApiKeys(workspace: Workspace): Promise<void> {
+  const existing = await apiKeyRepository.listActive(workspace.id)
+  if (existing.length > 0) return
+
+  const secret = `wr_${crypto.randomBytes(24).toString('base64url')}`
+  await apiKeyRepository.create(workspace.id, {
+    name: 'CI pipeline',
+    prefix: 'wr_7f3a',
+    secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
+    lastUsedAt: new Date('2026-08-03T10:00:00Z'),
+  })
+  logger.info('Seeded api key')
+}
+
+async function seedSdks(workspace: Workspace, projects: Project[]): Promise<void> {
+  const firstProject = projects[0]
+  if (!firstProject) return
+
+  const existing = await sdkRepository.listForProject(workspace.id, firstProject.id)
+  if (existing.length > 0) return
+
+  await sdkRepository.create(workspace.id, firstProject.id, {
+    name: 'typescript-client',
+    language: 'typescript',
+    status: 'ready',
+  })
+  await sdkRepository.create(workspace.id, firstProject.id, {
+    name: 'python-client',
+    language: 'python',
+    status: 'ready',
+  })
+  logger.info('Seeded sdks')
+}
+
+export async function seedAll(): Promise<void> {
+  const workspace = await seedUserAndWorkspace()
+  await seedMembers(workspace)
+  const projects = await seedProjects(workspace)
+  await seedActivity(workspace)
+  await seedApiKeys(workspace)
+  await seedSdks(workspace, projects)
+  logger.info('Seed complete')
 }

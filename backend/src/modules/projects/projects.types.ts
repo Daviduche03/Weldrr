@@ -1,0 +1,56 @@
+export type SpecType = 'openapi' | 'graphql' | 'grpc' | 'asyncapi'
+
+export type SpecSource = 'paste' | 'url' | 'upload' | 'github'
+
+export type GitRepo = {
+  provider: string
+  fullName: string
+  cloneUrl: string
+  defaultBranch: string
+  private: boolean
+}
+
+export type ProjectStatus = 'generating' | 'ready' | 'failed'
+
+export type ProjectResponse = {
+  id: string
+  name: string
+  specType: SpecType
+  specSource: SpecSource
+  status: ProjectStatus
+  docsUrl: string
+  sdkVersion: string | null
+  docsVersion: string | null
+  sdkLanguages: string[]
+  cliEnabled: boolean
+  gitRepo: GitRepo | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type CreateProjectInput = {
+  name: string
+  specType: SpecType
+  specSource: SpecSource
+  specUrl?: string
+  spec?: Record<string, unknown>
+  specRaw?: string
+  gitRepo?: GitRepo
+  sdkLanguages?: string[]
+  cliEnabled?: boolean
+}
+
+export type UpdateProjectInput = Partial<CreateProjectInput> & {
+  status?: ProjectStatus
+  docsUrl?: string
+  sdkLanguages?: string[]
+  cliEnabled?: boolean
+}
+
+export type ProjectQuery = {
+  page: number
+  limit: number
+  status?: ProjectStatus
+  sortBy: 'name' | 'createdAt' | 'updatedAt'
+  sortOrder: 'asc' | 'desc'
+}

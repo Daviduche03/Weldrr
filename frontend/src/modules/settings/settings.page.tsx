@@ -1,185 +1,68 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import {
-  Check,
-  ChevronsUpDown,
-  Copy,
-  CreditCard,
-  Download,
-  KeyRound,
-  Plus,
-  Trash2,
-  UserPlus,
-} from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { api } from '@/lib/api'
-import type { ApiKey, Member, Plan } from '@/lib/types'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { KeyRound, Trash2, UserX } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ConfirmDialog, type ConfirmDialogTone } from '@/components/ui/confirm-dialog'
+import { authApi } from '@/lib/api/auth'
+import { workspaceApi } from '@/lib/api/workspace'
+import { apiKeyApi } from '@/lib/api/api-keys'
+import type { ApiKey, Member, Plan, User } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useWorkspace } from '@/modules/workspace/workspace-provider'
 import { useAuth } from '@/modules/auth/auth-provider'
+import { tabs, type SettingsTab } from '@/modules/settings/settings.data'
+import { useFlash } from '@/modules/settings/settings.hooks'
 
-const tabs = ['Profile', 'Workspace', 'Members', 'API keys', 'Billing', 'Notifications'] as const
+type PendingAction =
+  | { kind: 'revoke-key'; key: ApiKey }
+  | { kind: 'remove-member'; member: Member }
+  | { kind: 'delete-workspace' }
 
-const roleMeta: Record<Member['role'], { label: string; badge: 'default' | 'secondary' | 'outline' }> = {
-  owner: { label: 'Owner', badge: 'default' },
-  admin: { label: 'Admin', badge: 'secondary' },
-  member: { label: 'Member', badge: 'outline' },
-}
-
-const plans: { id: Plan; name: string; price: string; desc: string }[] = [
-  { id: 'free', name: 'Free', price: '$0', desc: 'Up to 2 projects, community support' },
-  { id: 'pro', name: 'Pro', price: '$49', desc: 'Unlimited projects, priority support' },
-  { id: 'enterprise', name: 'Enterprise', price: 'Custom', desc: 'SSO, self-hosting, SLA' },
-]
-
-const planLimits: Record<Plan, number | null> = { free: 2, pro: 50, enterprise: null }
-
-const usageRows = [
-  { label: 'Projects', used: 3 },
-  { label: 'SDK downloads', used: 128 },
-  { label: 'Docs served (30d)', used: 1_200_000 },
-]
-
-const invoices = [
-  { id: 'inv_1', period: 'July 2026', date: 'Jul 1, 2026', amount: '$49.00', status: 'Paid' },
-  { id: 'inv_2', period: 'June 2026', date: 'Jun 1, 2026', amount: '$49.00', status: 'Paid' },
-  { id: 'inv_3', period: 'May 2026', date: 'May 1, 2026', amount: '$49.00', status: 'Paid' },
-]
-
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}k`
-  return String(n)
-}
-
-function useFlash(duration = 1600): [boolean, () => void] {
-  const [active, setActive] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
-  const fire = () => {
-    setActive(true)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setActive(false), duration)
-  }
-  useEffect(() => () => window.clearTimeout(timer.current), [])
-  return [active, fire]
-}
-
-function Section({
-  title,
-  description,
-  children,
-  footer,
-}: {
+type DialogConfig = {
   title: string
-  description?: string
-  children: ReactNode
-  footer?: ReactNode
-}) {
-  return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-background">
-      <div className="border-b border-border px-6 py-5">
-        <h2 className="font-semibold tracking-tight">{title}</h2>
-        {description && (
-          <p className="mt-1 max-w-lg text-sm text-muted-foreground">{description}</p>
-        )}
-      </div>
-      <div className="px-6 py-5">{children}</div>
-      {footer && (
-        <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
-          {footer}
-        </div>
-      )}
-    </section>
-  )
+  description: string
+  icon: ReactNode
+  tone: ConfirmDialogTone
+  confirmLabel: string
+  onConfirm: () => void
 }
+import { ProfileSection } from '@/modules/settings/sections/profile-section'
+import { WorkspaceSection } from '@/modules/settings/sections/workspace-section'
+import { MembersSection } from '@/modules/settings/sections/members-section'
+import { ApiKeysSection } from '@/modules/settings/sections/api-keys-section'
+import { BillingSection } from '@/modules/settings/sections/billing-section'
+import {
+  NotificationsSection,
+  type NotificationState,
+} from '@/modules/settings/sections/notifications-section'
+import { GitHubSection } from '@/modules/settings/sections/github-section'
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string
-  hint?: string
-  children: ReactNode
-}) {
+function SettingsSkeleton() {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium">{label}</label>
-      {children}
-      {hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
+      <div className="px-6 sm:px-8">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="mt-2 h-4 w-64" />
+      </div>
+      <div className="mt-8 space-y-6 px-6 sm:px-8">
+        <Skeleton className="h-52 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+      </div>
     </div>
   )
 }
 
-function Avatar({ name, className }: { name: string; className?: string }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground',
-        className,
-      )}
-    >
-      {(name || '?').charAt(0).toUpperCase()}
-    </span>
-  )
-}
-
-function Switch({
-  checked,
-  onChange,
-}: {
-  checked: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-        checked ? 'bg-brand' : 'bg-muted',
-      )}
-    >
-      <span
-        className={cn(
-          'absolute size-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-          checked ? 'translate-x-[1.125rem]' : 'translate-x-0.5',
-        )}
-      />
-    </button>
-  )
-}
-
-function SaveButton({
-  saved,
-  onClick,
-  children,
-}: {
-  saved: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <Button size="sm" onClick={onClick}>
-      {saved ? <Check /> : null}
-      {saved ? 'Saved' : children}
-    </Button>
-  )
-}
-
 export function SettingsPage() {
-  const { user } = useAuth()
-  const [tab, setTab] = useState<(typeof tabs)[number]>('Profile')
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
+  const { workspace, setWorkspace } = useWorkspace()
+  const [tab, setTab] = useState<SettingsTab>('Profile')
+  const [loading, setLoading] = useState(true)
+  const [banner, setBanner] = useState<string | null>(null)
+  const [pending, setPending] = useState<PendingAction | null>(null)
+  const [deletingWorkspace, setDeletingWorkspace] = useState(false)
 
-  const [profile, setProfile] = useState<{ name: string; email: string } | null>(null)
+  const [profile, setProfile] = useState<User | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [keys, setKeys] = useState<ApiKey[]>([])
 
@@ -190,7 +73,7 @@ export function SettingsPage() {
   const [keyName, setKeyName] = useState('')
   const [newKey, setNewKey] = useState<(ApiKey & { secret: string }) | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<Plan>('pro')
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState<NotificationState>({
     generation: true,
     failures: true,
     releases: false,
@@ -200,81 +83,205 @@ export function SettingsPage() {
   const [profileSaved, saveProfileFlash] = useFlash()
   const [workspaceSaved, saveWorkspaceFlash] = useFlash()
   const [planSaved, savePlanFlash] = useFlash()
+  const [formInitialized, setFormInitialized] = useState(false)
+
+  useEffect(() => {
+    if (!workspace || formInitialized) return
+    setFormInitialized(true)
+    setWsName(workspace.name)
+    setWsSlug(workspace.slug)
+    setSelectedPlan(workspace.plan)
+  }, [workspace, formInitialized])
 
   useEffect(() => {
     let mounted = true
-    Promise.all([api.getWorkspace(), api.getProfile(), api.listMembers(), api.listApiKeys()]).then(
-      ([w, p, m, k]) => {
+    Promise.all([authApi.me(), workspaceApi.listMembers(), apiKeyApi.list()])
+      .then(([p, m, k]) => {
         if (!mounted) return
         setProfile(p)
         setMembers(m)
         setKeys(k)
         setName(p.name)
-        setWsName(w.name)
-        setWsSlug(w.slug)
-        setSelectedPlan(w.plan)
-      },
-    )
+      })
+      .catch((err: unknown) => {
+        if (mounted) setBanner(err instanceof Error ? err.message : 'Failed to load settings')
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
     return () => {
       mounted = false
     }
   }, [])
 
   const saveProfile = () => {
-    api.updateProfile({ name }).then((p) => {
-      setProfile(p)
-      saveProfileFlash()
-    })
+    authApi
+      .updateProfile({ name })
+      .then((updated) => {
+        setProfile(updated)
+        setName(updated.name)
+        saveProfileFlash()
+      })
+      .catch((err: unknown) => setBanner(err instanceof Error ? err.message : 'Failed to save'))
   }
 
   const saveWorkspace = () => {
-    api.updateWorkspace({ name: wsName, slug: wsSlug }).then(() => {
-      saveWorkspaceFlash()
-    })
+    workspaceApi
+      .update({ name: wsName, slug: wsSlug })
+      .then((updated) => {
+        setWorkspace(updated)
+        setWsName(updated.name)
+        setWsSlug(updated.slug)
+        saveWorkspaceFlash()
+      })
+      .catch((err: unknown) => setBanner(err instanceof Error ? err.message : 'Failed to save'))
   }
 
   const invite = () => {
     const email = inviteEmail.trim()
     if (!email || !email.includes('@')) return
-    api.inviteMember(email).then((member) => {
-      setMembers((prev) => [member, ...prev])
-      setInviteEmail('')
-    })
+    workspaceApi
+      .inviteMember(email)
+      .then((member) => {
+        setMembers((prev) => [member, ...prev])
+        setInviteEmail('')
+      })
+      .catch((err: unknown) =>
+        setBanner(err instanceof Error ? err.message : 'Failed to invite member'),
+      )
   }
 
   const changeRole = (id: string, role: Member['role']) => {
+    if (role !== 'admin' && role !== 'member') return
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, role } : m)))
-    api.updateMemberRole(id, role)
+    workspaceApi.updateMemberRole(id, role).catch((err: unknown) => {
+      workspaceApi
+        .listMembers()
+        .then(setMembers)
+        .catch(() => {
+          if (err instanceof Error) setBanner(err.message)
+        })
+    })
   }
 
   const removeMember = (id: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== id))
-    api.removeMember(id)
+    const member = members.find((m) => m.id === id)
+    if (!member) return
+    setPending({ kind: 'remove-member', member })
   }
 
   const createKey = () => {
     const label = keyName.trim() || 'New key'
-    api.createApiKey(label).then((key) => {
-      setKeys((prev) => [key, ...prev])
-      setNewKey(key)
-      setKeyName('')
-    })
+    apiKeyApi
+      .create(label)
+      .then((key) => {
+        setKeys((prev) => [key, ...prev])
+        setNewKey(key)
+        setKeyName('')
+      })
+      .catch((err: unknown) =>
+        setBanner(err instanceof Error ? err.message : 'Failed to create API key'),
+      )
   }
 
   const revokeKey = (id: string) => {
-    setKeys((prev) => prev.filter((k) => k.id !== id))
-    if (newKey?.id === id) setNewKey(null)
-    api.revokeApiKey(id)
+    const key = keys.find((k) => k.id === id)
+    if (!key) return
+    setPending({ kind: 'revoke-key', key })
   }
 
   const selectPlan = (plan: Plan) => {
     setSelectedPlan(plan)
-    api.updatePlan(plan).then(() => savePlanFlash())
+    workspaceApi
+      .update({ plan })
+      .then((updated) => {
+        setWorkspace(updated)
+        savePlanFlash()
+      })
+      .catch((err: unknown) => {
+        setSelectedPlan(workspace?.plan ?? 'pro')
+        setBanner(err instanceof Error ? err.message : 'Failed to update plan')
+      })
   }
 
   const copy = (text: string) => {
     navigator.clipboard?.writeText(text)
   }
+
+  const confirmRemoveMember = () => {
+    if (pending?.kind !== 'remove-member') return
+    const member = pending.member
+    const previous = members
+    setMembers((prev) => prev.filter((m) => m.id !== member.id))
+    setPending(null)
+    workspaceApi.removeMember(member.id).catch((err: unknown) => {
+      setMembers(previous)
+      setBanner(err instanceof Error ? err.message : 'Failed to remove member')
+    })
+  }
+
+  const confirmRevokeKey = () => {
+    if (pending?.kind !== 'revoke-key') return
+    const key = pending.key
+    const previous = keys
+    setKeys((prev) => prev.filter((k) => k.id !== key.id))
+    if (newKey?.id === key.id) setNewKey(null)
+    setPending(null)
+    apiKeyApi.revoke(key.id).catch((err: unknown) => {
+      setKeys(previous)
+      setBanner(err instanceof Error ? err.message : 'Failed to revoke API key')
+    })
+  }
+
+  const confirmDeleteWorkspace = async () => {
+    if (pending?.kind !== 'delete-workspace') return
+    setDeletingWorkspace(true)
+    try {
+      await workspaceApi.remove()
+      setPending(null)
+      await signOut()
+      navigate('/')
+    } catch (err) {
+      setBanner(err instanceof Error ? err.message : 'Failed to delete workspace')
+      setDeletingWorkspace(false)
+    }
+  }
+
+  const dialog = ((): DialogConfig | null => {
+    switch (pending?.kind) {
+      case 'revoke-key':
+        return {
+          title: 'Revoke API key?',
+          description: `"${pending.key.name}" (${pending.key.prefix}…) will stop working immediately. Any services using it will lose access.`,
+          icon: <KeyRound />,
+          tone: 'warning',
+          confirmLabel: 'Revoke key',
+          onConfirm: confirmRevokeKey,
+        }
+      case 'remove-member':
+        return {
+          title: 'Remove member?',
+          description: `${pending.member.email} will immediately lose access to this workspace and all of its projects.`,
+          icon: <UserX />,
+          tone: 'danger',
+          confirmLabel: 'Remove member',
+          onConfirm: confirmRemoveMember,
+        }
+      case 'delete-workspace':
+        return {
+          title: 'Delete workspace?',
+          description: `${workspace?.name ?? 'This workspace'} and all of its projects, SDKs, and docs will be permanently deleted. This cannot be undone.`,
+          icon: <Trash2 />,
+          tone: 'danger',
+          confirmLabel: 'Delete workspace',
+          onConfirm: confirmDeleteWorkspace,
+        }
+      default:
+        return null
+    }
+  })()
+
+  if (loading) return <SettingsSkeleton />
 
   return (
     <div>
@@ -284,6 +291,19 @@ export function SettingsPage() {
           Manage your profile, workspace, and billing.
         </p>
       </div>
+
+      {banner && (
+        <div className="mx-6 mt-4 flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm text-destructive sm:mx-8">
+          <span>{banner}</span>
+          <button
+            type="button"
+            onClick={() => setBanner(null)}
+            className="cursor-pointer font-medium underline-offset-4 hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border px-6 sm:px-8">
         {tabs.map((t) => (
@@ -303,442 +323,86 @@ export function SettingsPage() {
         ))}
       </div>
 
-      <div className="mt-8 px-6 sm:px-8">
+      <div className="mt-8">
         {tab === 'Profile' && (
-          <div className="mx-auto max-w-3xl space-y-6">
-            <Section
-              title="Profile"
-              description="Your personal information shown across Weldrr."
-              footer={
-                <SaveButton saved={profileSaved} onClick={saveProfile}>
-                  Save changes
-                </SaveButton>
-              }
-            >
-              <div className="flex items-center gap-4">
-                <Avatar name={profile?.name ?? ''} className="size-14 text-lg" />
-                <div>
-                  <div className="font-medium">{profile?.name || '—'}</div>
-                  <div className="text-sm text-muted-foreground">{profile?.email}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground/70">
-                    Signed in with {user?.provider}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                <Field label="Name">
-                  <Input value={name} onChange={(e) => setName(e.target.value)} />
-                </Field>
-                <Field label="Email" hint="Contact support to change your email.">
-                  <Input value={profile?.email ?? ''} disabled />
-                </Field>
-              </div>
-            </Section>
-
-            <Section
-              title="Sign-in"
-              description="Security options for your account."
-            >
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                    <KeyRound className="size-4" />
-                  </span>
-                  <div>
-                    <div className="text-sm font-medium">Connected with {user?.provider}</div>
-                    <div className="text-xs text-muted-foreground">Two-factor auth is off</div>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  Manage
-                </Button>
-              </div>
-            </Section>
-          </div>
+          <ProfileSection
+            profile={profile}
+            name={name}
+            setName={setName}
+            saved={profileSaved}
+            onSave={saveProfile}
+          />
         )}
 
         {tab === 'Workspace' && (
-          <div className="mx-auto max-w-3xl space-y-6">
-            <Section
-              title="Workspace"
-              description="This name and slug identify your workspace."
-              footer={
-                <SaveButton saved={workspaceSaved} onClick={saveWorkspace}>
-                  Save changes
-                </SaveButton>
-              }
-            >
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Field label="Name">
-                  <Input value={wsName} onChange={(e) => setWsName(e.target.value)} />
-                </Field>
-                <Field
-                  label="Slug"
-                  hint="Used in URLs like weldrr.app/acme."
-                >
-                  <Input
-                    value={wsSlug}
-                    onChange={(e) => setWsSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                  />
-                </Field>
-              </div>
-            </Section>
-
-            <Section
-              title="Danger zone"
-              description="Permanently delete this workspace and all of its projects, SDKs, and docs."
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm text-muted-foreground">
-                  There&apos;s no going back. This cannot be undone.
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 />
-                  Delete workspace
-                </Button>
-              </div>
-            </Section>
-          </div>
+          <WorkspaceSection
+            wsName={wsName}
+            setWsName={setWsName}
+            wsSlug={wsSlug}
+            setWsSlug={setWsSlug}
+            saved={workspaceSaved}
+            onSave={saveWorkspace}
+            onDelete={() => setPending({ kind: 'delete-workspace' })}
+          />
         )}
 
         {tab === 'Members' && (
-          <div className="mx-auto max-w-3xl">
-            <section className="overflow-hidden rounded-2xl border border-border bg-background">
-              <div className="border-b border-border px-6 py-5">
-                <h2 className="font-semibold tracking-tight">Members</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Manage who has access to this workspace.
-                </p>
-              </div>
-              <ul className="divide-y divide-border">
-                {members.map((member) => (
-                  <li key={member.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <Avatar name={member.email} />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{member.email}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Joined {new Date(member.joinedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {member.role === 'owner' ? (
-                        <Badge variant={roleMeta.owner.badge}>{roleMeta.owner.label}</Badge>
-                      ) : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent"
-                            >
-                              {roleMeta[member.role].label}
-                              <ChevronsUpDown className="size-3.5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {(['admin', 'member'] as const).map((role) => (
-                              <DropdownMenuItem
-                                key={role}
-                                onClick={() => changeRole(member.id, role)}
-                              >
-                                {roleMeta[role].label}
-                                {member.role === role && <Check className="ml-auto" />}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                      {member.role !== 'owner' && (
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          aria-label={`Remove ${member.email}`}
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => removeMember(member.id)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex flex-wrap items-center gap-3 border-t border-border px-6 py-4">
-                <div className="relative min-w-0 flex-1 sm:max-w-xs">
-                  <UserPlus className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && invite()}
-                    placeholder="teammate@company.com"
-                    className="pl-9"
-                  />
-                </div>
-                <Button size="sm" onClick={invite}>
-                  <Plus />
-                  Invite member
-                </Button>
-              </div>
-            </section>
-          </div>
+          <MembersSection
+            members={members}
+            inviteEmail={inviteEmail}
+            setInviteEmail={setInviteEmail}
+            onInvite={invite}
+            onChangeRole={changeRole}
+            onRemove={removeMember}
+          />
         )}
 
         {tab === 'API keys' && (
-          <div className="mx-auto max-w-3xl">
-            <section className="overflow-hidden rounded-2xl border border-border bg-background">
-              <div className="border-b border-border px-6 py-5">
-                <h2 className="font-semibold tracking-tight">API keys</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Keys for authenticating with the Weldrr API and CI.
-                </p>
-              </div>
-
-              {newKey && (
-                <div className="mx-6 mt-5 rounded-xl border border-brand/30 bg-brand-soft px-4 py-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium">Key created — copy it now</div>
-                      <div className="mt-1 break-all font-mono text-sm">{newKey.secret}</div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copy(newKey.secret)}
-                      aria-label="Copy key"
-                    >
-                      <Copy />
-                      Copy
-                    </Button>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    For security, you won&apos;t be able to see this key again.
-                  </p>
-                </div>
-              )}
-
-              <ul className="divide-y divide-border">
-                {keys.map((key) => (
-                  <li key={key.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex size-8 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                          <KeyRound className="size-3.5" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-medium">{key.name}</div>
-                          <div className="font-mono text-xs text-muted-foreground">
-                            {key.prefix}•••••••••••
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="shrink-0 text-right text-xs text-muted-foreground">
-                      <div>{key.lastUsedAt ? `Used ${new Date(key.lastUsedAt).toLocaleDateString()}` : 'Never used'}</div>
-                      <div className="mt-0.5">Created {new Date(key.createdAt).toLocaleDateString()}</div>
-                    </div>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={`Revoke ${key.name}`}
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => revokeKey(key.id)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="flex flex-wrap items-center gap-3 border-t border-border px-6 py-4">
-                <Input
-                  value={keyName}
-                  onChange={(e) => setKeyName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && createKey()}
-                  placeholder="Name this key, e.g. CI pipeline"
-                  className="max-w-xs"
-                />
-                <Button size="sm" onClick={createKey}>
-                  <Plus />
-                  Create key
-                </Button>
-              </div>
-            </section>
-          </div>
+          <ApiKeysSection
+            keys={keys}
+            newKey={newKey}
+            keyName={keyName}
+            setKeyName={setKeyName}
+            onCreate={createKey}
+            onRevoke={revokeKey}
+            onCopy={copy}
+          />
         )}
 
         {tab === 'Billing' && (
-          <div className="mx-auto max-w-4xl space-y-6">
-            <Section
-              title="Plan"
-              description={`You are currently on the ${selectedPlan} plan.`}
-              footer={
-                <SaveButton saved={planSaved} onClick={() => selectPlan(selectedPlan)}>
-                  Save plan
-                </SaveButton>
-              }
-            >
-              <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">
-                {plans.map((plan) => {
-                  const active = selectedPlan === plan.id
-                  return (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      onClick={() => setSelectedPlan(plan.id)}
-                      className={cn(
-                        'relative bg-background p-6 text-left transition-colors hover:bg-muted',
-                        active && 'bg-muted ring-1 ring-brand/60 ring-inset',
-                      )}
-                    >
-                      {active && (
-                        <Badge className="absolute right-4 top-4">Current</Badge>
-                      )}
-                      <div className="font-semibold tracking-tight">{plan.name}</div>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-2xl font-semibold tracking-tight">{plan.price}</span>
-                        {plan.id !== 'enterprise' && (
-                          <span className="text-sm text-muted-foreground">/mo</span>
-                        )}
-                      </div>
-                      <p className="mt-1.5 text-sm text-muted-foreground">{plan.desc}</p>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-sm font-medium">Usage</h3>
-                <div className="mt-4 space-y-4">
-                  {usageRows.map((row) => {
-                    const limit = planLimits[selectedPlan]
-                    const pct = limit ? Math.min(100, (row.used / limit) * 100) : 100
-                    return (
-                      <div key={row.label}>
-                        <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="text-muted-foreground">{row.label}</span>
-                          <span className="tabular-nums">
-                            <span className="font-medium">{fmt(row.used)}</span>
-                            <span className="text-muted-foreground">
-                              {limit ? ` of ${fmt(limit)}` : ' — unlimited'}
-                            </span>
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-[width] duration-500',
-                              pct >= 100 ? 'bg-destructive' : 'bg-brand',
-                            )}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </Section>
-
-            <Section
-              title="Payment method"
-              description="The card used to pay for your subscription."
-              footer={
-                <Button size="sm" variant="outline">
-                  Update card
-                </Button>
-              }
-            >
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3.5">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                    <CreditCard className="size-4" />
-                  </span>
-                  <div>
-                    <div className="font-mono text-sm">•••• •••• •••• 4242</div>
-                    <div className="text-xs text-muted-foreground">Expires 12/2028</div>
-                  </div>
-                </div>
-                <Badge variant="secondary">Visa</Badge>
-              </div>
-            </Section>
-
-            <Section title="Invoices" description="Download receipts for past billing periods.">
-              <ul className="divide-y divide-border">
-                {invoices.map((invoice) => (
-                  <li
-                    key={invoice.id}
-                    className="flex items-center justify-between gap-4 py-3.5"
-                  >
-                    <div>
-                      <div className="text-sm font-medium">{invoice.period}</div>
-                      <div className="text-xs text-muted-foreground">{invoice.date}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">{invoice.status}</Badge>
-                      <span className="text-sm font-medium tabular-nums">{invoice.amount}</span>
-                      <Button size="icon-sm" variant="ghost" aria-label={`Download ${invoice.period} invoice`}>
-                        <Download />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          </div>
+          <BillingSection
+            selectedPlan={selectedPlan}
+            setSelectedPlan={setSelectedPlan}
+            saved={planSaved}
+            onSave={() => selectPlan(selectedPlan)}
+          />
         )}
 
         {tab === 'Notifications' && (
-          <div className="mx-auto max-w-3xl space-y-6">
-            <Section
-              title="Email notifications"
-              description="Choose which updates you receive by email."
-            >
-              <ul className="divide-y divide-border">
-                {[
-                  {
-                    key: 'generation' as const,
-                    label: 'Generation complete',
-                    desc: 'When SDKs, docs, or a CLI finish generating.',
-                  },
-                  {
-                    key: 'failures' as const,
-                    label: 'Spec validation failed',
-                    desc: 'When a spec fails to validate or generate.',
-                  },
-                  {
-                    key: 'releases' as const,
-                    label: 'New releases',
-                    desc: 'When a new SDK version is published.',
-                  },
-                  {
-                    key: 'digest' as const,
-                    label: 'Weekly digest',
-                    desc: 'A summary of usage and activity each Monday.',
-                  },
-                ].map((item) => (
-                  <li key={item.key} className="flex items-center justify-between gap-4 py-4">
-                    <div>
-                      <div className="text-sm font-medium">{item.label}</div>
-                      <div className="text-xs text-muted-foreground">{item.desc}</div>
-                    </div>
-                    <Switch
-                      checked={notifications[item.key]}
-                      onChange={(value) =>
-                        setNotifications((prev) => ({ ...prev, [item.key]: value }))
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          </div>
+          <NotificationsSection
+            notifications={notifications}
+            setNotifications={setNotifications}
+          />
         )}
+
+        {tab === 'GitHub' && <GitHubSection />}
       </div>
+
+      {dialog && (
+        <ConfirmDialog
+          open={pending !== null}
+          onOpenChange={(open) => {
+            if (!open) setPending(null)
+          }}
+          title={dialog.title}
+          description={dialog.description}
+          icon={dialog.icon}
+          tone={dialog.tone}
+          confirmLabel={dialog.confirmLabel}
+          loading={deletingWorkspace}
+          onConfirm={dialog.onConfirm}
+        />
+      )}
     </div>
   )
 }

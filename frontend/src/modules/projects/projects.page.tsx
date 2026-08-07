@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, Search } from 'lucide-react'
+import { ArrowUpRight, CircleAlert, FolderPlus, RefreshCw, Search, SearchX } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api'
+import { Skeleton } from '@/components/ui/skeleton'
+import { projectApi } from '@/lib/api/projects'
 import type { Project } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useAsyncData } from '@/lib/hooks'
 
 const statusMeta: Record<Project['status'], { label: string; dot: string }> = {
   ready: { label: 'Ready', dot: 'bg-emerald-500' },
@@ -31,19 +34,37 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
-export function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[] | null>(null)
-  const [query, setQuery] = useState('')
+function RowSkeleton() {
+  return (
+    <tr>
+      <td className="px-6 py-4">
+        <Skeleton className="h-4 w-40" />
+      </td>
+      <td className="border-l border-border px-6 py-4">
+        <Skeleton className="h-5 w-16" />
+      </td>
+      <td className="border-l border-border px-6 py-4">
+        <Skeleton className="h-4 w-20" />
+      </td>
+      <td className="border-l border-border px-6 py-4">
+        <Skeleton className="h-4 w-28" />
+      </td>
+      <td className="border-l border-border px-6 py-4">
+        <Skeleton className="h-4 w-10" />
+      </td>
+      <td className="border-l border-border px-6 py-4">
+        <Skeleton className="ml-auto h-4 w-16" />
+      </td>
+    </tr>
+  )
+}
 
-  useEffect(() => {
-    let mounted = true
-    api.listProjects().then((data) => {
-      if (mounted) setProjects(data)
-    })
-    return () => {
-      mounted = false
-    }
-  }, [])
+export function ProjectsPage() {
+  const { data: projects, error, reload } = useAsyncData(
+    () => projectApi.list(),
+    [],
+  )
+  const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
     if (!projects) return null
@@ -67,18 +88,12 @@ export function ProjectsPage() {
           </p>
         </div>
         <Button size="lg" asChild>
-          <Link to="/onboarding">New project</Link>
+          <Link to="/projects/new">New project</Link>
         </Button>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-background">
-        <div
-          className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3"
-          style={{
-            backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-            backgroundSize: '12px 12px',
-          }}
-        >
+      <div className="mt-8 overflow-hidden rounded-xl border border-border bg-background">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted px-6 py-3">
           <h2 className="text-sm font-medium text-muted-foreground">
             {filtered === null
               ? 'Projects'
@@ -95,31 +110,57 @@ export function ProjectsPage() {
           </div>
         </div>
 
-        {filtered === null ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-muted-foreground">Loading projects…</p>
+        {error ? (
+          <EmptyState
+            icon={<CircleAlert className="size-6" />}
+            title="Couldn't load projects"
+            description={error}
+            action={
+              <Button size="lg" variant="outline" onClick={reload}>
+                <RefreshCw />
+                Try again
+              </Button>
+            }
+          />
+        ) : filtered === null ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted-foreground">
+                  <th className="px-6 py-3 font-medium">Project</th>
+                  <th className="border-l border-border px-6 py-3 font-medium">Spec</th>
+                  <th className="border-l border-border px-6 py-3 font-medium">Status</th>
+                  <th className="border-l border-border px-6 py-3 font-medium">SDKs</th>
+                  <th className="border-l border-border px-6 py-3 font-medium">CLI</th>
+                  <th className="border-l border-border px-6 py-3 text-right font-medium">Updated</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <RowSkeleton key={i} />
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            {projects && projects.length === 0 ? (
-              <>
-                <h2 className="text-xl font-semibold tracking-tight">No projects yet</h2>
-                <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-                  Connect your first API spec and we&apos;ll generate docs, SDKs, and a CLI for it.
-                </p>
-                <Button size="lg" className="mt-6" asChild>
-                  <Link to="/onboarding">Connect a spec</Link>
+          projects && projects.length === 0 ? (
+            <EmptyState
+              icon={<FolderPlus className="size-6" />}
+              title="No projects yet"
+              description="Connect your first API spec and we'll generate docs, SDKs, and a CLI for it."
+              action={
+                <Button size="lg" asChild>
+                  <Link to="/projects/new">Connect a spec</Link>
                 </Button>
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold tracking-tight">No matches</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No projects match &ldquo;{query}&rdquo;.
-                </p>
-              </>
-            )}
-          </div>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={<SearchX className="size-6" />}
+              title="No matches"
+              description={`No projects match "${query}".`}
+            />
+          )
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">

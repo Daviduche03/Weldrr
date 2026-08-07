@@ -4,11 +4,17 @@ import crypto from 'node:crypto'
 import { config } from '@/config'
 import { authRepository } from '@/modules/auth/auth.repository'
 import { verifyOAuthToken } from '@/modules/auth/oauth'
-import { AppError } from '@/middleware/errorHandler'
+import { AppError, NotFoundError } from '@/middleware/errorHandler'
 import { sendTemplateEmail } from '@/services/zeptomail'
 import { emailTemplates } from '@/services/email-templates'
-import type { TokenPayload, AuthTokens, UserResponse, LoginResponse } from '@/modules/auth/auth.types'
-import type { NewUser } from '@/modules/auth/auth.schema'
+import type {
+  TokenPayload,
+  AuthTokens,
+  UserResponse,
+  LoginResponse,
+  RefreshResponse,
+} from '@/modules/auth/auth.types'
+import type { NewUser, User } from '@/db/schema'
 import type { AuthProvider } from '@/modules/auth/auth.types'
 
 const OTP_EXPIRY_MINUTES = 15
@@ -37,27 +43,27 @@ function hashToken(token: string): string {
 }
 
 function generateOtp(): string {
-  return crypto.randomInt(1000, 10000).toString()
+  return crypto.randomInt(10 ** (OTP_LENGTH - 1), 10 ** OTP_LENGTH).toString()
 }
 
-function sanitizeUser(user: {
-  id: string
-  email: string
-  name: string
-  accountType: string
-  company: string | null
-  avatarUrl: string | null
-  isEmailVerified: boolean
-}): UserResponse {
+function validateUser(user: User): UserResponse {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
-    accountType: user.accountType as 'developer' | 'team',
+    accountType: user.accountType,
     company: user.company ?? null,
     avatarUrl: user.avatarUrl ?? null,
     isEmailVerified: user.isEmailVerified,
   }
+}
+
+function refreshTokenExpiry(): Date {
+  const ms = /^(\d+)d$/.exec(config.jwt.refreshExpiresIn)?.[1]
+  const days = ms ? Number(ms) : 30
+  const expiry = new Date()
+  expiry.setDate(expiry.getDate() + days)
+  return expiry
 }
 
 async function createTokens(userId: string, email: string): Promise<AuthTokens> {
@@ -67,13 +73,10 @@ async function createTokens(userId: string, email: string): Promise<AuthTokens> 
   const refreshToken = generateRefreshToken()
   const tokenHash = hashToken(refreshToken)
 
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 30)
-
   await authRepository.createRefreshToken({
     userId,
     tokenHash,
-    expiresAt,
+    expiresAt: refreshTokenExpiry(),
   })
 
   return { accessToken, refreshToken }
@@ -103,7 +106,6 @@ async function sendVerificationOtp(user: { id: string; email: string; name: stri
       },
     })
   } catch (err) {
-    // Email delivery failure should not block account creation; user can resend
     console.error('Failed to send verification email:', err)
   }
 }
@@ -158,11 +160,11 @@ export const authService = {
       avatarUrl,
       passwordHash,
     })
-    const tokens = await createTokens(user.id, user.email)
 
+    const tokens = await createTokens(user.id, user.email)
     await sendVerificationOtp(user)
 
-    return { user: sanitizeUser(user), tokens }
+    return { user: validateUser(user), tokens }
   },
 
   async login(email: string, password: string): Promise<LoginResponse> {
@@ -173,7 +175,7 @@ export const authService = {
     if (!valid) throw new AppError(401, 'Invalid email or password')
 
     const tokens = await createTokens(user.id, user.email)
-    return { user: sanitizeUser(user), tokens }
+    return { user: validateUser(user), tokens }
   },
 
   async oauth(provider: AuthProvider, token: string): Promise<LoginResponse> {
@@ -185,37 +187,24 @@ export const authService = {
       const user = await authRepository.findUserById(existingAccount.userId)
       if (!user) throw new AppError(500, 'User not found')
       const tokens = await createTokens(user.id, user.email)
-      return { user: sanitizeUser(user), tokens }
+      return { user: validateUser(user), tokens }
     }
 
     const existingUser = await authRepository.findUserByEmail(email)
     if (existingUser) {
-      await authRepository.createOAuthAccount({
-        userId: existingUser.id,
-        provider,
-        providerId: sub,
-      })
+      await authRepository.createOAuthAccount({ userId: existingUser.id, provider, providerId: sub })
       const tokens = await createTokens(existingUser.id, existingUser.email)
-      return { user: sanitizeUser(existingUser), tokens }
+      return { user: validateUser(existingUser), tokens }
     }
 
-    const user = await authRepository.createUser({
-      email,
-      name,
-      accountType,
-      isEmailVerified: true,
-    })
-    await authRepository.createOAuthAccount({
-      userId: user.id,
-      provider,
-      providerId: sub,
-    })
+    const user = await authRepository.createUser({ email, name, accountType, isEmailVerified: true })
+    await authRepository.createOAuthAccount({ userId: user.id, provider, providerId: sub })
 
     const tokens = await createTokens(user.id, user.email)
-    return { user: sanitizeUser(user), tokens }
+    return { user: validateUser(user), tokens }
   },
 
-  async refresh(refreshToken: string): Promise<AuthTokens> {
+  async refresh(refreshToken: string): Promise<RefreshResponse> {
     const tokenHash = hashToken(refreshToken)
     const stored = await authRepository.findRefreshToken(tokenHash)
     if (!stored) throw new AppError(401, 'Invalid or expired refresh token')
@@ -245,8 +234,6 @@ export const authService = {
   },
 
   async forgotPassword(email: string): Promise<void> {
-    // Do not reveal whether the account exists. If the user is missing
-    // or signed up via OAuth, silently do nothing.
     const user = await authRepository.findUserByEmail(email)
     if (user?.passwordHash) {
       await issuePasswordResetCode(user)
@@ -284,10 +271,10 @@ export const authService = {
 
   async updateProfile(userId: string, data: Partial<NewUser>): Promise<UserResponse> {
     const user = await authRepository.findUserById(userId)
-    if (!user) throw new AppError(404, 'User not found')
+    if (!user) throw new NotFoundError('User not found')
     const updated = await authRepository.updateUser(userId, data)
     if (!updated) throw new AppError(500, 'Failed to update profile')
-    return sanitizeUser(updated)
+    return validateUser(updated)
   },
 
   async verifyEmail(email: string, code: string): Promise<UserResponse> {
@@ -311,7 +298,7 @@ export const authService = {
     await authRepository.markEmailVerified(user.id)
     await authRepository.useEmailVerificationToken(stored.id)
 
-    return sanitizeUser({ ...user, isEmailVerified: true })
+    return validateUser({ ...user, isEmailVerified: true })
   },
 
   async resendVerification(email: string): Promise<void> {
@@ -325,7 +312,7 @@ export const authService = {
 
   async getProfile(userId: string): Promise<UserResponse> {
     const user = await authRepository.findUserById(userId)
-    if (!user) throw new AppError(404, 'User not found')
-    return sanitizeUser(user)
+    if (!user) throw new NotFoundError('User not found')
+    return validateUser(user)
   },
 }
