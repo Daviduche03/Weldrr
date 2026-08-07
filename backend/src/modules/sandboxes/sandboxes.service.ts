@@ -25,6 +25,7 @@ import type {
 } from '@/modules/sandboxes/sandboxes.types'
 import { toSandboxResponse } from '@/modules/sandboxes/sandboxes.types'
 import type { Sandbox, DiscoveryEndpoint, Project } from '@/db/schema'
+import type { SandboxJobType, SandboxLanguage } from '@/modules/sandboxes/sandboxes.types'
 import { slugify } from '@/shared/utils/slug'
 import { githubRepository } from '@/modules/github/github.repository'
 import { createGitHubRepo } from '@/services/github'
@@ -400,7 +401,13 @@ export const sandboxService = {
     })
 
     if (row.jobType === 'discovery' && input.status === 'finished') {
-      await handleAgentDiscoveryComplete(row)
+      const discoveryReady = await handleAgentDiscoveryComplete(row)
+      if (discoveryReady && row.projectId) {
+        const project = await projectRepository.findByIdGlobal(row.projectId)
+        if (project) {
+          void autoStartArtifactBuilds(project, row.workspaceId)
+        }
+      }
     }
 
     if (
@@ -478,10 +485,10 @@ function parseDocsMarkdownEndpoints(md: string): DiscoveryEndpoint[] {
   return endpoints
 }
 
-async function handleAgentDiscoveryComplete(row: Sandbox): Promise<void> {
-  if (!row.modalSandboxId || !row.projectId) return
+async function handleAgentDiscoveryComplete(row: Sandbox): Promise<boolean> {
+  if (!row.modalSandboxId || !row.projectId) return false
   const discovery = await discoveryRepository.findBySandboxId(row.id)
-  if (!discovery) return
+  if (!discovery) return false
 
   try {
     const docsMarkdown = await readSandboxFile(row.modalSandboxId, '/workspace/docs.md')
@@ -498,18 +505,71 @@ async function handleAgentDiscoveryComplete(row: Sandbox): Promise<void> {
       discoveryId: discovery.id,
     })
     logger.info({ sandboxId: row.id }, 'Discovery agent docs.md saved')
+    return true
   } catch (err) {
     logger.error({ err, sandboxId: row.id }, 'Failed to read discovery docs.md')
     await discoveryRepository.update(discovery.id, {
       status: 'failed',
       error: err instanceof Error ? err.message : 'Failed to read docs.md from sandbox',
     })
+    return false
   } finally {
     // Discovery is a one-shot job — release the sandbox once docs.md is captured.
     try {
       await terminateModalSandbox(row.modalSandboxId)
     } catch (err) {
       logger.warn({ err, sandboxId: row.id }, 'Failed to terminate discovery sandbox')
+    }
+  }
+}
+
+const AUTO_BUILD_PROMPTS: Record<SandboxJobType, (name: string, language?: string) => string> = {
+  sdk: (name, language) =>
+    [
+      `Build a production-grade ${language ?? 'SDK'} SDK for "${name}" from the API surface in /workspace/docs.md.`,
+      'Follow the sdk-builder skill, including the versioning steps: set the package version from WELDRR_ARTIFACT_VERSION, commit, push, and tag.',
+      'Implement typed clients for every listed endpoint, add a smoke test, and ensure lint/tests pass.',
+      'Do not implement anything in the excluded internal section.',
+    ].join(' '),
+  docs: (name) =>
+    [
+      `Build the API documentation site for "${name}" from /workspace/docs.md and /workspace/spec.json.`,
+      'Follow the docs-builder skill: populate the template pages, create a reference page per resource, and verify the build.',
+      'Include the versioning steps: commit, push, and tag with WELDRR_ARTIFACT_VERSION.',
+      'Do not document anything in the excluded internal section.',
+    ].join(' '),
+  discovery: () => '',
+}
+
+async function autoStartArtifactBuilds(project: Project, workspaceId: string): Promise<void> {
+  const languages: SandboxLanguage[] = (project.sdkLanguages?.length
+    ? project.sdkLanguages
+    : ['typescript']) as SandboxLanguage[]
+
+  const jobs: { jobType: 'sdk' | 'docs'; language?: SandboxLanguage }[] = [
+    ...languages.map((language) => ({ jobType: 'sdk' as const, language })),
+    { jobType: 'docs' as const },
+  ]
+
+  for (const job of jobs) {
+    try {
+      const sandbox = await sandboxService.issue(workspaceId, {
+        projectId: project.id,
+        jobType: job.jobType,
+        language: job.language,
+      })
+      await sandboxService.start(workspaceId, sandbox.id, {
+        prompt: AUTO_BUILD_PROMPTS[job.jobType](project.name, job.language),
+      })
+      logger.info(
+        { projectId: project.id, jobType: job.jobType, language: job.language },
+        'Auto-started build after discovery',
+      )
+    } catch (err) {
+      logger.error(
+        { err, projectId: project.id, jobType: job.jobType, language: job.language },
+        'Failed to auto-start build after discovery',
+      )
     }
   }
 }
