@@ -103,14 +103,6 @@ export type Member = {
   accepted?: boolean
 }
 
-export type ApiKey = {
-  id: string
-  name: string
-  prefix: string
-  createdAt: string
-  lastUsedAt: string | null
-}
-
 export type ActivityAction =
   | 'workspace_created'
   | 'created'
@@ -122,8 +114,6 @@ export type ActivityAction =
   | 'member_added'
   | 'member_removed'
   | 'role_changed'
-  | 'api_key_created'
-  | 'api_key_revoked'
   | 'plan_changed'
 
 export type Activity = {

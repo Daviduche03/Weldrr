@@ -1,19 +1,18 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { KeyRound, Trash2, UserX } from 'lucide-react'
+import { Trash2, UserX } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog, type ConfirmDialogTone } from '@/components/ui/confirm-dialog'
 import { workspaceApi } from '@/lib/api/workspace'
-import type { ApiKey, Member, Plan, User } from '@/lib/types'
+import type { Member, Plan, User } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/modules/workspace/workspace-provider'
 import { useAuth } from '@/modules/auth/auth-provider'
-import { useMe, useMembers, useApiKeys, useUpdateProfile, useUpdateWorkspace, useInviteMember, useUpdateMemberRole, useRemoveMember, useCreateApiKey, useRevokeApiKey } from '@/lib/queries'
+import { useMe, useMembers, useUpdateProfile, useUpdateWorkspace, useInviteMember, useUpdateMemberRole, useRemoveMember } from '@/lib/queries'
 import { tabs, type SettingsTab } from '@/modules/settings/settings.data'
 import { useFlash } from '@/modules/settings/settings.hooks'
 
 type PendingAction =
-  | { kind: 'revoke-key'; key: ApiKey }
   | { kind: 'remove-member'; member: Member }
   | { kind: 'delete-workspace' }
 
@@ -28,7 +27,6 @@ type DialogConfig = {
 import { ProfileSection } from '@/modules/settings/sections/profile-section'
 import { WorkspaceSection } from '@/modules/settings/sections/workspace-section'
 import { MembersSection } from '@/modules/settings/sections/members-section'
-import { ApiKeysSection } from '@/modules/settings/sections/api-keys-section'
 import { BillingSection } from '@/modules/settings/sections/billing-section'
 import {
   NotificationsSection,
@@ -65,14 +63,11 @@ export function SettingsPage() {
 
   const [profile, setProfile] = useState<User | null>(null)
   const [members, setMembers] = useState<Member[]>([])
-  const [keys, setKeys] = useState<ApiKey[]>([])
 
   const [name, setName] = useState('')
   const [wsName, setWsName] = useState('')
   const [wsSlug, setWsSlug] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
-  const [keyName, setKeyName] = useState('')
-  const [newKey, setNewKey] = useState<(ApiKey & { secret: string }) | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<Plan>('pro')
   const [notifications, setNotifications] = useState<NotificationState>({
     generation: true,
@@ -90,7 +85,6 @@ export function SettingsPage() {
   // settings doesn't refetch). Local state below mirrors them for editing.
   const meQuery = useMe()
   const membersQuery = useMembers()
-  const keysQuery = useApiKeys()
 
   useEffect(() => {
     if (meQuery.data) {
@@ -102,10 +96,6 @@ export function SettingsPage() {
   useEffect(() => {
     if (membersQuery.data) setMembers(membersQuery.data)
   }, [membersQuery.data])
-
-  useEffect(() => {
-    if (keysQuery.data) setKeys(keysQuery.data)
-  }, [keysQuery.data])
 
   useEffect(() => {
     if (!workspace || formInitialized) return
@@ -120,8 +110,6 @@ export function SettingsPage() {
   const inviteMutation = useInviteMember()
   const changeRoleMutation = useUpdateMemberRole()
   const removeMemberMutation = useRemoveMember()
-  const createKeyMutation = useCreateApiKey()
-  const revokeKeyMutation = useRevokeApiKey()
 
   const saveProfile = () => {
     updateProfileMutation
@@ -171,25 +159,6 @@ export function SettingsPage() {
     setPending({ kind: 'remove-member', member })
   }
 
-  const createKey = () => {
-    const label = keyName.trim() || 'New key'
-    createKeyMutation
-      .mutateAsync(label)
-      .then((key) => {
-        setNewKey(key)
-        setKeyName('')
-      })
-      .catch((err: unknown) =>
-        setBanner(err instanceof Error ? err.message : 'Failed to create API key'),
-      )
-  }
-
-  const revokeKey = (id: string) => {
-    const key = keys.find((k) => k.id === id)
-    if (!key) return
-    setPending({ kind: 'revoke-key', key })
-  }
-
   const selectPlan = (plan: Plan) => {
     setSelectedPlan(plan)
     updateWorkspaceMutation
@@ -204,10 +173,6 @@ export function SettingsPage() {
       })
   }
 
-  const copy = (text: string) => {
-    navigator.clipboard?.writeText(text)
-  }
-
   const confirmRemoveMember = () => {
     if (pending?.kind !== 'remove-member') return
     const member = pending.member
@@ -215,14 +180,6 @@ export function SettingsPage() {
     removeMemberMutation.mutate(member.id, {
       onError: () => void membersQuery.refetch(),
     })
-  }
-
-  const confirmRevokeKey = () => {
-    if (pending?.kind !== 'revoke-key') return
-    const key = pending.key
-    if (newKey?.id === key.id) setNewKey(null)
-    setPending(null)
-    revokeKeyMutation.mutate(key.id)
   }
 
   const confirmDeleteWorkspace = async () => {
@@ -241,15 +198,6 @@ export function SettingsPage() {
 
   const dialog = ((): DialogConfig | null => {
     switch (pending?.kind) {
-      case 'revoke-key':
-        return {
-          title: 'Revoke API key?',
-          description: `"${pending.key.name}" (${pending.key.prefix}…) will stop working immediately. Any services using it will lose access.`,
-          icon: <KeyRound />,
-          tone: 'warning',
-          confirmLabel: 'Revoke key',
-          onConfirm: confirmRevokeKey,
-        }
       case 'remove-member':
         return {
           title: 'Remove member?',
@@ -273,7 +221,7 @@ export function SettingsPage() {
     }
   })()
 
-  const loading = meQuery.isLoading || membersQuery.isLoading || keysQuery.isLoading
+  const loading = meQuery.isLoading || membersQuery.isLoading
 
   if (loading) return <SettingsSkeleton />
 
@@ -348,18 +296,6 @@ export function SettingsPage() {
             onInvite={invite}
             onChangeRole={changeRole}
             onRemove={removeMember}
-          />
-        )}
-
-        {tab === 'API keys' && (
-          <ApiKeysSection
-            keys={keys}
-            newKey={newKey}
-            keyName={keyName}
-            setKeyName={setKeyName}
-            onCreate={createKey}
-            onRevoke={revokeKey}
-            onCopy={copy}
           />
         )}
 

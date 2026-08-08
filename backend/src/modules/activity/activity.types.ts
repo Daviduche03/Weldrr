@@ -9,8 +9,6 @@ export type ActivityAction =
   | 'member_added'
   | 'member_removed'
   | 'role_changed'
-  | 'api_key_created'
-  | 'api_key_revoked'
   | 'plan_changed'
 
 export type ActivityResponse = {

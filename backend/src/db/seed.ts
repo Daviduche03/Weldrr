@@ -1,12 +1,10 @@
 import bcrypt from 'bcrypt'
-import crypto from 'node:crypto'
 import { getDb } from '@/db/client'
 import { projects as projectsTable, activity as activityTable } from '@/db/schema'
 import { authRepository } from '@/modules/auth/auth.repository'
 import { workspaceRepository } from '@/modules/workspace/workspace.repository'
 import { projectRepository } from '@/modules/projects/projects.repository'
 import { activityRepository } from '@/modules/activity/activity.repository'
-import { apiKeyRepository } from '@/modules/api-keys/api-keys.repository'
 import { sdkRepository } from '@/modules/sdks/sdk.repository'
 import { logger } from '@/utils/logger'
 import type { Workspace, Project } from '@/db/schema'
@@ -190,20 +188,6 @@ async function seedActivity(workspace: Workspace): Promise<void> {
   logger.info('Seeded activity')
 }
 
-async function seedApiKeys(workspace: Workspace): Promise<void> {
-  const existing = await apiKeyRepository.listActive(workspace.id)
-  if (existing.length > 0) return
-
-  const secret = `wr_${crypto.randomBytes(24).toString('base64url')}`
-  await apiKeyRepository.create(workspace.id, {
-    name: 'CI pipeline',
-    prefix: 'wr_7f3a',
-    secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
-    lastUsedAt: new Date('2026-08-03T10:00:00Z'),
-  })
-  logger.info('Seeded api key')
-}
-
 async function seedSdks(workspace: Workspace, projects: Project[]): Promise<void> {
   const firstProject = projects[0]
   if (!firstProject) return
@@ -229,7 +213,6 @@ export async function seedAll(): Promise<void> {
   await seedMembers(workspace)
   const projects = await seedProjects(workspace)
   await seedActivity(workspace)
-  await seedApiKeys(workspace)
   await seedSdks(workspace, projects)
   logger.info('Seed complete')
 }

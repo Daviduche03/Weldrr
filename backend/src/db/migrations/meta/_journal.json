@@ -78,6 +78,13 @@
       "when": 1786224374965,
       "tag": "0010_project_publish_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786227099856,
+      "tag": "0011_drop_api_keys",
+      "breakpoints": true
     }
   ]
 }

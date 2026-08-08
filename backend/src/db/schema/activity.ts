@@ -26,8 +26,6 @@ export const activity = pgTable(
         'member_added',
         'member_removed',
         'role_changed',
-        'api_key_created',
-        'api_key_revoked',
         'plan_changed',
       ] as const,
     }).notNull(),

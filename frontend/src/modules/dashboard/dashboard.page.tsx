@@ -26,8 +26,6 @@ const activityMeta: Record<string, { label: string; dot: string }> = {
   member_added: { label: 'Member added', dot: 'bg-sky-500' },
   member_removed: { label: 'Member removed', dot: 'bg-rose-500' },
   role_changed: { label: 'Role changed', dot: 'bg-amber-500' },
-  api_key_created: { label: 'API key created', dot: 'bg-sky-500' },
-  api_key_revoked: { label: 'API key revoked', dot: 'bg-rose-500' },
   plan_changed: { label: 'Plan changed', dot: 'bg-brand' },
 }
 

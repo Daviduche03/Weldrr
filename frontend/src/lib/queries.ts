@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/lib/api/auth'
 import { dashboardApi } from '@/lib/api/dashboard'
-import { apiKeyApi } from '@/lib/api/api-keys'
 import { projectApi, type UpdateProjectInput } from '@/lib/api/projects'
 import { sdkApi } from '@/lib/api/sdks'
 import { sandboxApi, type IssueSandboxInput } from '@/lib/api/sandboxes'
@@ -26,7 +25,6 @@ export const queryKeys = {
   sandboxes: (params?: { projectId?: string; jobType?: SandboxJobType; status?: SandboxStatus }) =>
     ['sandboxes', params ?? {}] as const,
   dashboard: ['dashboard'] as const,
-  apiKeys: ['api-keys'] as const,
   members: ['workspace', 'members'] as const,
   connections: ['connections'] as const,
   workspace: ['workspace'] as const,
@@ -129,10 +127,6 @@ export function useSandboxes(params?: { projectId?: string; jobType?: SandboxJob
 
 export function useDashboard() {
   return useQuery({ queryKey: queryKeys.dashboard, queryFn: () => dashboardApi.get() })
-}
-
-export function useApiKeys() {
-  return useQuery({ queryKey: queryKeys.apiKeys, queryFn: () => apiKeyApi.list() })
 }
 
 export function useMembers() {
@@ -261,22 +255,6 @@ export function useUpdateWorkspace() {
       void qc.invalidateQueries({ queryKey: queryKeys.workspace })
       void qc.invalidateQueries({ queryKey: queryKeys.members })
     },
-  })
-}
-
-export function useCreateApiKey() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (name: string) => apiKeyApi.create(name),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.apiKeys }),
-  })
-}
-
-export function useRevokeApiKey() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => apiKeyApi.revoke(id),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.apiKeys }),
   })
 }
 

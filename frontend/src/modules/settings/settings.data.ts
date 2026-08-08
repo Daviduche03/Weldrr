@@ -4,7 +4,6 @@ export const tabs = [
   'Profile',
   'Workspace',
   'Members',
-  'API keys',
   'Billing',
   'Notifications',
   'Connections',

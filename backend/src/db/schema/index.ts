@@ -33,7 +33,6 @@ export {
   type ConnectionProvider,
 } from '@/db/schema/workspace-connections'
 export { projects, type Project, type NewProject } from '@/db/schema/projects'
-export { apiKeys, type ApiKey, type NewApiKey } from '@/db/schema/api-keys'
 export { activity, type ActivityRow, type NewActivity } from '@/db/schema/activity'
 export { sdks, type SdkRow, type NewSdk } from '@/db/schema/sdks'
 export {

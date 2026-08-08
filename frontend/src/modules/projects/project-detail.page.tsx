@@ -10,7 +10,6 @@ import {
   LoaderCircle,
   RefreshCw,
   Rocket,
-  Terminal,
   Trash2,
 } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
@@ -42,7 +41,7 @@ import type {
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const tabs = ['Overview', 'Docs', 'SDKs', 'CLI', 'Settings'] as const
+const tabs = ['Overview', 'Docs', 'SDKs', 'Settings'] as const
 
 const statusMeta: Record<Project['status'], { label: string; dot: string }> = {
   ready: { label: 'Ready', dot: 'bg-emerald-500' },
@@ -583,13 +582,6 @@ export function ProjectDetailPage() {
                       {publishingDocs ? 'Publishing…' : 'Publish'}
                     </Button>
                   </div>
-
-                  <div className="flex items-center gap-3 py-4">
-                    <div className="text-sm font-medium">CLI</div>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {project.cliEnabled ? 'Available' : 'Not enabled'}
-                    </span>
-                  </div>
                 </div>
               </section>
 
@@ -766,40 +758,6 @@ export function ProjectDetailPage() {
               </div>
             </Card>
           )}
-        </div>
-
-        <div className={cn(tab === 'CLI' ? '' : 'hidden')}>
-          <Card title="CLI">
-            {!project.cliEnabled ? (
-              <EmptyState
-                icon={<Terminal className="size-6" />}
-                title="CLI not enabled"
-                description="Enable the CLI to let users interact with your API from the terminal."
-              />
-            ) : (
-              <div className="space-y-6 p-6">
-                <div>
-                  <h3 className="text-sm font-medium">Install</h3>
-                  <div className="mt-2 rounded-lg bg-[#0f0f11] px-4 py-3 font-mono text-sm text-white/85">
-                    npm install -g @weldrr/cli
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium">Authenticate</h3>
-                  <div className="mt-2 rounded-lg bg-[#0f0f11] px-4 py-3 font-mono text-sm text-white/85">
-                    weldrr login
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium">Use {project.name}</h3>
-                  <div className="mt-2 rounded-lg bg-[#0f0f11] px-4 py-3 font-mono text-sm text-white/85">
-                    <div>weldrr use {project.specType}</div>
-                    <div className="mt-1 text-white/60">weldrr call users.list --limit 10</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
         </div>
 
         <div className={cn(tab === 'Settings' ? '' : 'hidden')}>
