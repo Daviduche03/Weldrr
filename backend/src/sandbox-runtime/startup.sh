@@ -67,7 +67,10 @@ if [ -n "${WELDRR_GIT_REMOTE:-}" ] && [ -n "${WELDRR_GIT_TOKEN:-}" ]; then
   log "Configuring git remote for artifact push"
   git config user.name "Weldrr"
   git config user.email "sdk@weldrr.app"
-  git branch -M main
+  # In PR mode the agent works on a weldrr feature branch (reviewed before merge);
+  # otherwise push to main as before.
+  GIT_BRANCH="${WELDRR_GIT_BRANCH:-main}"
+  git checkout -b "${GIT_BRANCH}" 2>/dev/null || git checkout "${GIT_BRANCH}" 2>/dev/null || true
   git remote remove origin 2>/dev/null || true
   # x-access-token is a GitHub-accepted placeholder username for OAuth/PAT tokens.
   git remote add origin "https://x-access-token:${WELDRR_GIT_TOKEN}@${WELDRR_GIT_REMOTE#https://}"

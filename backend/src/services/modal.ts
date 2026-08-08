@@ -51,6 +51,7 @@ export type SandboxProvisionInput = {
   discoveryTarget?: string
   gitRemote?: string
   gitToken?: string
+  gitBranch?: string
   artifactVersion?: string
 }
 
@@ -76,6 +77,7 @@ export async function provisionSandbox(input: SandboxProvisionInput): Promise<Sa
     ...(input.discoveryTarget ? { WELDRR_DISCOVERY_TARGET: input.discoveryTarget } : {}),
     ...(input.gitRemote ? { WELDRR_GIT_REMOTE: input.gitRemote } : {}),
     ...(input.gitToken ? { WELDRR_GIT_TOKEN: input.gitToken } : {}),
+    ...(input.gitBranch ? { WELDRR_GIT_BRANCH: input.gitBranch } : {}),
     ...(input.artifactVersion ? { WELDRR_ARTIFACT_VERSION: input.artifactVersion } : {}),
   })
 

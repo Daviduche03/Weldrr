@@ -808,6 +808,9 @@ export function ProjectDetailPage() {
             versions={versionList}
             sdks={sdkList}
             onSaveName={handleSaveName}
+            onChangePublishMode={async (mode) => {
+              await updateProject.mutateAsync({ id: project.id, input: { publishMode: mode } })
+            }}
             onDelete={() => setConfirmDelete(true)}
             saving={saving}
             deleting={deleting}

@@ -1,0 +1,279 @@
+import { AppError, NotFoundError } from '@/middleware/errorHandler'
+import { projectRepository } from '@/modules/projects/projects.repository'
+import { connectionService } from '@/modules/connections/connections.service'
+import {
+  writeRepoFile,
+  deleteRepoFile,
+  createBranch,
+  branchExists,
+  openPullRequest,
+  getPullRequest,
+  mergePullRequest,
+  createTag,
+  getRepoDefaultBranch,
+  type PullRequestInfo,
+} from '@/services/github'
+import { versionRepository } from '@/modules/versions/versions.repository'
+import { nextVersion } from '@/services/versioning'
+import { logger } from '@/utils/logger'
+import type { Project } from '@/db/schema'
+
+type RepoRef = { fullName: string; accessToken: string; branch: string }
+
+export type ArtifactKind = 'docs' | 'sdk'
+
+function fullNameFromUrl(url: string | null): string {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'github.com') return ''
+    return parsed.pathname.replace(/^\/+|\/+$/g, '').replace(/\.git$/, '')
+  } catch {
+    return ''
+  }
+}
+
+async function resolveRepo(workspaceId: string, projectId: string): Promise<RepoRef> {
+  const project = await projectRepository.findById(workspaceId, projectId)
+  if (!project) throw new NotFoundError('Project not found')
+
+  const connection = await connectionService.getConnection(workspaceId, 'github')
+  if (!connection?.token) {
+    throw new AppError(400, 'No GitHub connection for this workspace')
+  }
+
+  const repoUrl = project.docsUrl || project.gitRepo?.cloneUrl
+  const fullName = fullNameFromUrl(repoUrl ?? null)
+  if (!fullName) {
+    throw new AppError(400, 'Project has no publishing repository configured')
+  }
+
+  let branch = 'main'
+  try {
+    const defaultBranch = await getRepoDefaultBranch(connection.token, fullName)
+    branch = ['main', 'master'].includes(defaultBranch) ? defaultBranch : 'main'
+  } catch {
+    branch = 'main'
+  }
+
+  return { fullName, accessToken: connection.token, branch }
+}
+
+/** A stable branch name for an in-progress artifact change. */
+function prBranch(project: Project, kind: ArtifactKind, attempt = 1): string {
+  const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30)
+  return `weldrr/${slug}-${kind}${attempt > 1 ? `-${attempt}` : ''}`
+}
+
+export type PublishResult = {
+  mode: 'automerge' | 'pr'
+  prNumber?: number
+  prUrl?: string
+  branch?: string
+  version?: string
+}
+
+export const publishingService = {
+  async resolveRepo(workspaceId: string, projectId: string): Promise<RepoRef> {
+    return resolveRepo(workspaceId, projectId)
+  },
+
+  /**
+   * Writes one or more files into a project's publishing repo, honoring the
+   * project's publishMode:
+   *  - automerge: commit directly to the default branch
+   *  - pr: commit to a `weldrr/…` branch and open a PR
+   */
+  async writeArtifact(
+    workspaceId: string,
+    projectId: string,
+    input: {
+      kind: ArtifactKind
+      files: { path: string; content: string; encoding?: 'utf-8' | 'base64' }[]
+      deletes?: string[]
+      message: string
+      title: string
+      body?: string
+    },
+  ): Promise<PublishResult> {
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+
+    const ref = await resolveRepo(workspaceId, projectId)
+    const mode = project.publishMode ?? 'automerge'
+
+    if (mode === 'automerge') {
+      for (const file of input.files) {
+        await writeRepoFile(ref.accessToken, ref.fullName, {
+          path: file.path,
+          content: file.content,
+          message: input.message,
+          branch: ref.branch,
+          encoding: file.encoding,
+        })
+      }
+      for (const path of input.deletes ?? []) {
+        await deleteRepoFile(ref.accessToken, ref.fullName, path, input.message, ref.branch)
+      }
+      return { mode: 'automerge', branch: ref.branch }
+    }
+
+    // PR mode — pick an available weldrr branch and commit there.
+    let branch = prBranch(project, input.kind)
+    let attempt = 1
+    while (await branchExists(ref.accessToken, ref.fullName, branch)) {
+      attempt += 1
+      branch = prBranch(project, input.kind, attempt)
+    }
+    await createBranch(ref.accessToken, ref.fullName, branch, ref.branch)
+
+    for (const file of input.files) {
+      await writeRepoFile(ref.accessToken, ref.fullName, {
+        path: file.path,
+        content: file.content,
+        message: input.message,
+        branch,
+        encoding: file.encoding,
+      })
+    }
+    for (const path of input.deletes ?? []) {
+      await deleteRepoFile(ref.accessToken, ref.fullName, path, input.message, branch)
+    }
+
+    const pr = await openPullRequest(ref.accessToken, ref.fullName, {
+      head: branch,
+      base: ref.branch,
+      title: input.title,
+      body: input.body ?? 'Generated by Weldrr. Review and merge to publish.',
+    })
+
+    logger.info(
+      { projectId, kind: input.kind, pr: pr.number, branch },
+      'Opened PR for artifact change',
+    )
+    return { mode: 'pr', prNumber: pr.number, prUrl: pr.htmlUrl, branch }
+  },
+
+  /**
+   * For PR mode: polls a PR until it is merged, then tags the artifact version
+   * on the base branch and records it in the versions ledger.
+   */
+  async watchAndFinalize(
+    workspaceId: string,
+    projectId: string,
+    prNumber: number,
+    kind: ArtifactKind,
+    opts: { pollIntervalMs?: number; maxWaitMs?: number } = {},
+  ): Promise<{ merged: boolean; version?: string }> {
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+    const ref = await resolveRepo(workspaceId, projectId)
+
+    const pollIntervalMs = opts.pollIntervalMs ?? 15_000
+    const maxWaitMs = opts.maxWaitMs ?? 30 * 60_000
+    const deadline = Date.now() + maxWaitMs
+
+    let pr: PullRequestInfo
+    while (Date.now() < deadline) {
+      pr = await getPullRequest(ref.accessToken, ref.fullName, prNumber)
+      if (pr.state === 'closed') {
+        if (pr.merged) {
+          const version = await this.recordVersion(project, kind, pr.headSha, ref)
+          return { merged: true, version }
+        }
+        // Closed without merge (e.g. manually closed) — nothing to publish.
+        return { merged: false }
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+    }
+    return { merged: false }
+  },
+
+  /**
+   * Opens a PR for an agent-completed artifact push (PR mode). The agent
+   * already pushed to `weldrr/{slug}-{kind}`; we open the PR against main.
+   */
+  async openPrForAgent(
+    workspaceId: string,
+    projectId: string,
+    kind: ArtifactKind,
+    repoUrl: string,
+  ): Promise<PublishResult> {
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+
+    const connection = await connectionService.getConnection(workspaceId, 'github')
+    if (!connection?.token) {
+      throw new AppError(400, 'No GitHub connection for this workspace')
+    }
+    const fullName = fullNameFromUrl(repoUrl)
+    if (!fullName) throw new AppError(400, 'Invalid artifact repository URL')
+
+    const base = await getRepoDefaultBranch(connection.token, fullName)
+    const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30)
+    const head = `weldrr/${slug}-${kind}`
+
+    if (!(await branchExists(connection.token, fullName, head))) {
+      logger.warn({ projectId, kind, head }, 'Agent branch missing — nothing to open a PR for')
+      return { mode: 'pr', branch: head }
+    }
+
+    const pr = await openPullRequest(connection.token, fullName, {
+      head,
+      base,
+      title: `${kind === 'docs' ? 'Docs' : 'SDK'}: publish ${slug}`,
+      body: 'Generated by Weldrr. Review and merge to publish.',
+    })
+
+    logger.info({ projectId, kind, pr: pr.number, head }, 'Opened PR for agent build')
+    return { mode: 'pr', prNumber: pr.number, prUrl: pr.htmlUrl, branch: head }
+  },
+
+  /** Merge an open PR immediately (automerge-style finalize). */
+  async mergeNow(
+    workspaceId: string,
+    projectId: string,
+    prNumber: number,
+    kind: ArtifactKind,
+  ): Promise<{ merged: boolean; version?: string }> {
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+    const ref = await resolveRepo(workspaceId, projectId)
+
+    const result = await mergePullRequest(ref.accessToken, ref.fullName, prNumber)
+    if (!result.merged) return { merged: false }
+
+    const version = await this.recordVersion(project, kind, result.sha ?? '', ref)
+    return { merged: true, version }
+  },
+
+  async recordVersion(
+    project: Project,
+    kind: ArtifactKind,
+    headSha: string,
+    ref: RepoRef,
+  ): Promise<string> {
+    const latest = await versionRepository.latestForProject(project.id, kind)
+    const version = nextVersion(latest?.version, 'patch')
+
+    // Tag the base branch commit that contains the merge.
+    const mergeCommit = headSha
+    await createTag(ref.accessToken, ref.fullName, `v${version}`, mergeCommit)
+
+    await versionRepository.create({
+      workspaceId: project.workspaceId,
+      projectId: project.id,
+      artifactType: kind,
+      version,
+      sourceRef: mergeCommit,
+      notes: `Published via ${project.publishMode === 'pr' ? 'pull request' : 'auto-merge'}`,
+    })
+
+    await projectRepository.update(project.workspaceId, project.id, {
+      ...(kind === 'docs' ? { docsVersion: version } : { sdkVersion: version }),
+    })
+
+    logger.info({ projectId: project.id, kind, version }, 'Artifact version recorded after merge')
+    return version
+  },
+}

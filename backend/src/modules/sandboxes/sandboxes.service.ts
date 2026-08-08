@@ -11,6 +11,7 @@ import { discoveryRepository } from '@/modules/discoveries/discovery.repository'
 import { parseSpec, recordDocsVersion } from '@/services/discovery'
 import { encryptSecret, decryptSecret } from '@/shared/utils/credential-cipher'
 import { logger } from '@/utils/logger'
+import { publishingService } from '@/services/publishing'
 import {
   opencodeHealth,
   opencodeCreateSession,
@@ -123,7 +124,7 @@ async function prepareGitPush(
   project: Project,
   jobType: 'sdk' | 'docs',
   language?: string,
-): Promise<{ gitRemote: string; gitToken: string } | null> {
+): Promise<{ gitRemote: string; gitToken: string; gitBranch: string } | null> {
   if (!project.gitRepo) return null
 
   const connection = await connectionService.getConnection(project.workspaceId, 'github')
@@ -159,8 +160,20 @@ async function prepareGitPush(
   }
 
   if (!repo) return null
-  logger.info({ projectId: project.id, repo: repo.cloneUrl }, 'SDK repo ready for push')
-  return { gitRemote: repo.cloneUrl, gitToken: connection.token }
+
+  // In PR mode the agent pushes to a weldrr feature branch; the backend opens
+  // a PR and only merges after review. Otherwise push straight to main.
+  let gitBranch = 'main'
+  if ((project.publishMode ?? 'automerge') === 'pr') {
+    const slug = slugify(project.name) || 'project'
+    gitBranch = `weldrr/${slug}-${kind}`
+  }
+
+  logger.info(
+    { projectId: project.id, repo: repo.cloneUrl, branch: gitBranch },
+    'SDK repo ready for push',
+  )
+  return { gitRemote: repo.cloneUrl, gitToken: connection.token, gitBranch }
 }
 
 export const sandboxService = {
@@ -235,6 +248,7 @@ export const sandboxService = {
 
     let gitRemote: string | undefined
     let gitToken: string | undefined
+    let gitBranch: string | undefined
     if (project && (input.jobType === 'sdk' || input.jobType === 'docs')) {
       const push = await prepareGitPush(project, input.jobType, input.language).catch((err) => {
         logger.warn({ err, projectId: project.id }, 'Failed to prepare GitHub push — continuing without push')
@@ -242,6 +256,7 @@ export const sandboxService = {
       })
       gitRemote = push?.gitRemote
       gitToken = push?.gitToken
+      gitBranch = push?.gitBranch
     }
 
     try {
@@ -255,6 +270,7 @@ export const sandboxService = {
         opencodePassword,
         ...(gitRemote ? { gitRemote } : {}),
         ...(gitToken ? { gitToken } : {}),
+        ...(gitBranch ? { gitBranch } : {}),
         ...(artifactVersion ? { artifactVersion } : {}),
       })
 
@@ -410,7 +426,51 @@ export const sandboxService = {
       }
     }
 
-    if (
+    // PR mode: the agent pushed to a weldrr feature branch — open a PR instead
+    // of recording a version now. The version is recorded when the PR merges.
+    const projectForPublish = row.projectId
+      ? await projectRepository.findByIdGlobal(row.projectId)
+      : undefined
+    const prMode =
+      projectForPublish &&
+      (projectForPublish.publishMode ?? 'automerge') === 'pr' &&
+      terminalStatus === 'finished' &&
+      input.artifactUrl
+
+    if (prMode && row.projectId && input.artifactUrl) {
+      try {
+        const prResult = await publishingService.openPrForAgent(
+          row.workspaceId,
+          row.projectId,
+          row.jobType as 'docs' | 'sdk',
+          input.artifactUrl,
+        )
+        if (row.jobType === 'docs') {
+          await projectRepository.update(row.workspaceId, row.projectId, {
+            docsUrl: input.artifactUrl,
+          })
+        }
+        if (prResult.prNumber) {
+          void publishingService
+            .watchAndFinalize(
+              row.workspaceId,
+              row.projectId,
+              prResult.prNumber,
+              row.jobType as 'docs' | 'sdk',
+            )
+            .catch(() => undefined)
+        }
+        await activityService.record({
+          workspaceId: row.workspaceId,
+          projectId: row.projectId,
+          projectName: row.jobType === 'docs' ? 'Documentation sandbox' : 'SDK sandbox',
+          action: 'generated',
+          detail: `Agent build complete — awaiting review of PR #${prResult.prNumber ?? ''}`,
+        })
+      } catch (err) {
+        logger.error({ err, sandboxId: row.id }, 'Failed to open PR for agent build')
+      }
+    } else if (
       row.jobType === 'sdk' &&
       terminalStatus === 'finished' &&
       row.version &&
@@ -431,9 +491,7 @@ export const sandboxService = {
           sdkVersion: row.version,
         })
       }
-    }
-
-    if (
+    } else if (
       row.jobType === 'docs' &&
       terminalStatus === 'finished' &&
       input.artifactUrl &&

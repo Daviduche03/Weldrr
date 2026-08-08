@@ -11,6 +11,7 @@ import {
   Rocket,
   RefreshCw,
   ExternalLink,
+  GitBranch,
   LoaderCircle,
   Check,
 } from 'lucide-react'
@@ -55,6 +56,7 @@ export function DocsEditor({
   const [content, setContent] = useState('')
   const [dirty, setDirty] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>('idle')
+  const [prInfo, setPrInfo] = useState<{ prNumber: number; prUrl: string } | null>(null)
   const [editorMode, setEditorMode] = useState<'visual' | 'markdown'>('visual')
   const [publishing, setPublishing] = useState(false)
   const [publishVersion, setPublishVersion] = useState<string | null>(null)
@@ -105,6 +107,7 @@ export function DocsEditor({
         setDirty(false)
         setSaveState('idle')
         setPublishVersion(null)
+        setPrInfo(null)
         const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : ''
         setOpenDirs((d) => ({ ...d, [dir]: true }))
       } catch (err) {
@@ -118,9 +121,14 @@ export function DocsEditor({
     setSaveState('saving')
     setError(null)
     try {
-      await docsApi.writeFile(projectId, path, text)
+      const result = await docsApi.writeFile(projectId, path, text)
       setDirty(false)
       setSaveState('saved')
+      setPrInfo(
+        result.mode === 'pr' && result.prNumber && result.prUrl
+          ? { prNumber: result.prNumber, prUrl: result.prUrl }
+          : null,
+      )
       void loadTree()
     } catch (err) {
       setSaveState('error')
@@ -376,6 +384,25 @@ export function DocsEditor({
             <div className="flex items-center gap-2 border-b border-border bg-emerald-500/5 px-4 py-2 text-xs text-emerald-600 dark:text-emerald-400">
               <Check className="size-3.5" />
               Published v{publishVersion} — the docs site will redeploy shortly.
+            </div>
+          )}
+
+          {prInfo && (
+            <div className="flex items-center gap-2 border-b border-border bg-sky-500/5 px-4 py-2 text-xs text-sky-600 dark:text-sky-400">
+              <GitBranch className="size-3.5 shrink-0" />
+              <span>
+                Saved as PR{' '}
+                <span className="font-mono font-medium">#{prInfo.prNumber}</span> — review and merge
+                to publish.
+              </span>
+              <a
+                href={prInfo.prUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto inline-flex shrink-0 items-center gap-1 font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
+              >
+                Open PR <ExternalLink className="size-3" />
+              </a>
             </div>
           )}
 

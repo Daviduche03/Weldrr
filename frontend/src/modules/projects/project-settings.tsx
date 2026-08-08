@@ -25,6 +25,7 @@ export function ProjectSettings({
   versions,
   sdks,
   onSaveName,
+  onChangePublishMode,
   onDelete,
   saving,
   deleting,
@@ -33,12 +34,15 @@ export function ProjectSettings({
   versions: ArtifactVersion[]
   sdks: Sdk[]
   onSaveName: (name: string) => Promise<void>
+  onChangePublishMode: (mode: 'automerge' | 'pr') => Promise<void>
   onDelete: () => void
   saving: boolean
   deleting: boolean
 }) {
   const [name, setName] = useState(project.name)
   const [saved, setSaved] = useState(false)
+  const [publishSaved, setPublishSaved] = useState(false)
+  const [publishSaving, setPublishSaving] = useState(false)
   const meta = statusMeta[project.status]
 
   const saveName = async () => {
@@ -46,6 +50,18 @@ export function ProjectSettings({
     await onSaveName(name.trim())
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  const changePublishMode = async (mode: 'automerge' | 'pr') => {
+    if (mode === project.publishMode || publishSaving) return
+    setPublishSaving(true)
+    try {
+      await onChangePublishMode(mode)
+      setPublishSaved(true)
+      setTimeout(() => setPublishSaved(false), 2500)
+    } finally {
+      setPublishSaving(false)
+    }
   }
 
   const docsVersion = versions.find((v) => v.artifactType === 'docs')
@@ -102,6 +118,54 @@ export function ProjectSettings({
             <p className="mt-1.5 text-xs text-muted-foreground">
               The name shown across Weldrr and your generated docs.
             </p>
+          </div>
+
+          <div className="border-t border-border py-6">
+            <label className="block text-sm font-medium">Publishing</label>
+            <p className="mt-1 text-sm text-muted-foreground">
+              How generated changes reach your team before they ship.
+            </p>
+            <div className="mt-4 grid max-w-md gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => void changePublishMode('automerge')}
+                className={cn(
+                  'rounded-lg border px-4 py-3 text-left transition-colors',
+                  project.publishMode === 'automerge'
+                    ? 'border-ring bg-accent'
+                    : 'border-border hover:bg-muted',
+                )}
+              >
+                <div className="text-sm font-medium">Auto-merge</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Push generated changes straight to main. Fast, no review.
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => void changePublishMode('pr')}
+                className={cn(
+                  'rounded-lg border px-4 py-3 text-left transition-colors',
+                  project.publishMode === 'pr'
+                    ? 'border-ring bg-accent'
+                    : 'border-border hover:bg-muted',
+                )}
+              >
+                <div className="text-sm font-medium">Pull request</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Open a PR for every change. Reviewed before merge.
+                </div>
+              </button>
+            </div>
+            {publishSaving ? (
+              <span className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <LoaderCircle className="size-3 animate-spin" /> Saving…
+              </span>
+            ) : publishSaved ? (
+              <span className="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                <Check className="size-3.5" /> Saved
+              </span>
+            ) : null}
           </div>
 
           <dl className="grid gap-x-10 border-t border-border sm:grid-cols-2">

@@ -18,6 +18,7 @@ const projectFields = z.object({
   gitRepo: gitRepoSchema.optional(),
   sdkLanguages: z.array(z.string().min(1).max(50)).max(10).optional(),
   cliEnabled: z.boolean().optional(),
+  publishMode: z.enum(['automerge', 'pr']).optional(),
 })
 
 export const createProjectSchema = projectFields.superRefine((value, ctx) => {
@@ -37,6 +38,7 @@ export const updateProjectSchema = projectFields
     docsUrl: z.string().trim().url('Docs URL must be a valid URL').optional().or(z.literal('')),
     sdkLanguages: z.array(z.string().min(1).max(50)).max(10).optional(),
     cliEnabled: z.boolean().optional(),
+    publishMode: z.enum(['automerge', 'pr']).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one field must be provided',

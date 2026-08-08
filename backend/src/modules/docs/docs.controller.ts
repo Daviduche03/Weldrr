@@ -58,7 +58,10 @@ export const docsController = {
     res.json({ status: 'success', data })
   },
 
-  async writeFile(req: WorkspaceRequest, res: Response<ApiResponse<{ path: string }>>) {
+  async writeFile(
+    req: WorkspaceRequest,
+    res: Response<ApiResponse<{ path: string; mode?: 'automerge' | 'pr'; prNumber?: number; prUrl?: string }>>,
+  ) {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const input = writeFileSchema.parse(req.body)
     const data = await docsService.writeFile(req.workspace.workspaceId, projectId, input)

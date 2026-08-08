@@ -21,6 +21,7 @@ function toResponse(project: Project): ProjectResponse {
     specType: project.specType,
     specSource: project.specSource,
     status: project.status,
+    publishMode: project.publishMode,
     docsUrl: project.docsUrl,
     sdkVersion: project.sdkVersion,
     docsVersion: project.docsVersion,
@@ -108,6 +109,7 @@ export const projectService = {
       docsUrl: '',
       sdkLanguages: input.sdkLanguages ?? [],
       cliEnabled: input.cliEnabled ?? false,
+      publishMode: input.publishMode ?? 'automerge',
     })
 
     await activityService.record({
@@ -145,6 +147,7 @@ export const projectService = {
       ...(input.docsUrl !== undefined ? { docsUrl: input.docsUrl } : {}),
       ...(input.sdkLanguages !== undefined ? { sdkLanguages: input.sdkLanguages } : {}),
       ...(input.cliEnabled !== undefined ? { cliEnabled: input.cliEnabled } : {}),
+      ...(input.publishMode !== undefined ? { publishMode: input.publishMode } : {}),
     })
     if (!project) throw new NotFoundError('Project not found')
 

@@ -1,11 +1,12 @@
 import { http } from '@/lib/http'
-import type { CreateProjectInput, Discovery, Project, ProjectStatus } from '@/lib/types'
+import type { CreateProjectInput, Discovery, Project, ProjectStatus, PublishMode } from '@/lib/types'
 
 export type UpdateProjectInput = Partial<CreateProjectInput> & {
   status?: ProjectStatus
   docsUrl?: string
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  publishMode?: PublishMode
 }
 
 export const projectApi = {

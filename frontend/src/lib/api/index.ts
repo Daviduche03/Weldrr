@@ -8,6 +8,7 @@ export { activityApi } from '@/lib/api/activity'
 export { sandboxApi, type IssueSandboxInput } from '@/lib/api/sandboxes'
 export { versionApi } from '@/lib/api/versions'
 export { docsApi, type DocsTreeNode, type DocsFile, type DocsPublishResult } from '@/lib/api/docs'
+export { publishingApi, type MergeResult } from '@/lib/api/publishing'
 export {
   connectionApi,
   type ConnectionInfo,

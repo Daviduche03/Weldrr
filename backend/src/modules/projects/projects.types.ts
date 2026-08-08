@@ -12,12 +12,15 @@ export type GitRepo = {
 
 export type ProjectStatus = 'generating' | 'ready' | 'failed'
 
+export type PublishMode = 'automerge' | 'pr'
+
 export type ProjectResponse = {
   id: string
   name: string
   specType: SpecType
   specSource: SpecSource
   status: ProjectStatus
+  publishMode: PublishMode
   docsUrl: string
   sdkVersion: string | null
   docsVersion: string | null
@@ -38,6 +41,7 @@ export type CreateProjectInput = {
   gitRepo?: GitRepo
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  publishMode?: PublishMode
 }
 
 export type UpdateProjectInput = Partial<CreateProjectInput> & {
@@ -45,6 +49,7 @@ export type UpdateProjectInput = Partial<CreateProjectInput> & {
   docsUrl?: string
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  publishMode?: PublishMode
 }
 
 export type ProjectQuery = {

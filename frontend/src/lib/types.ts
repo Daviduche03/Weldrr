@@ -45,12 +45,15 @@ export type GitRepo = {
   private: boolean
 }
 
+export type PublishMode = 'automerge' | 'pr'
+
 export type Project = {
   id: string
   name: string
   specType: SpecType
   specSource: 'paste' | 'url' | 'upload' | 'github'
   status: ProjectStatus
+  publishMode: PublishMode
   docsUrl: string
   sdkVersion: string | null
   docsVersion: string | null
@@ -70,6 +73,7 @@ export type CreateProjectInput = {
   gitRepo?: GitRepo
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  publishMode?: PublishMode
 }
 
 export type GitHubConnection = {

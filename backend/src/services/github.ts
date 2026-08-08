@@ -332,6 +332,130 @@ async function getRepoRef(
   return { commitSha: data.object.sha }
 }
 
+export async function createBranch(
+  accessToken: string,
+  fullName: string,
+  branch: string,
+  baseBranch = 'main',
+): Promise<void> {
+  const base = await getRepoRef(accessToken, fullName, baseBranch)
+  await githubRequest(`/repos/${fullName}/git/refs`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: base.commitSha }),
+  })
+}
+
+export async function branchExists(
+  accessToken: string,
+  fullName: string,
+  branch: string,
+): Promise<boolean> {
+  try {
+    await getRepoRef(accessToken, fullName, branch)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export type PullRequestInfo = {
+  number: number
+  htmlUrl: string
+  state: string
+  merged: boolean
+  headSha: string
+}
+
+export async function openPullRequest(
+  accessToken: string,
+  fullName: string,
+  input: {
+    head: string
+    base?: string
+    title: string
+    body?: string
+  },
+): Promise<PullRequestInfo> {
+  const data = (await githubRequest(`/repos/${fullName}/pulls`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({
+      title: input.title,
+      head: input.head,
+      base: input.base ?? 'main',
+      body: input.body ?? '',
+    }),
+  })) as {
+    number: number
+    html_url: string
+    state: string
+    merged?: boolean
+    head?: { sha?: string }
+  }
+  return {
+    number: data.number,
+    htmlUrl: data.html_url,
+    state: data.state,
+    merged: data.merged ?? false,
+    headSha: data.head?.sha ?? '',
+  }
+}
+
+export async function getPullRequest(
+  accessToken: string,
+  fullName: string,
+  number: number,
+): Promise<PullRequestInfo> {
+  const data = (await githubRequest(`/repos/${fullName}/pulls/${number}`, accessToken)) as {
+    number: number
+    html_url: string
+    state: string
+    merged?: boolean
+    head?: { sha?: string }
+  }
+  return {
+    number: data.number,
+    htmlUrl: data.html_url,
+    state: data.state,
+    merged: data.merged ?? false,
+    headSha: data.head?.sha ?? '',
+  }
+}
+
+export async function mergePullRequest(
+  accessToken: string,
+  fullName: string,
+  number: number,
+): Promise<{ merged: boolean; sha?: string }> {
+  const data = (await githubRequest(`/repos/${fullName}/pulls/${number}/merge`, accessToken, {
+    method: 'PUT',
+    body: JSON.stringify({ merge_method: 'squash' }),
+  })) as { merged?: boolean; sha?: string }
+  return { merged: data.merged ?? false, sha: data.sha }
+}
+
+export async function createTag(
+  accessToken: string,
+  fullName: string,
+  tag: string,
+  commitSha: string,
+  message?: string,
+): Promise<void> {
+  const tagData = (await githubRequest(`/repos/${fullName}/git/tags`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({
+      tag,
+      message: message ?? tag,
+      object: commitSha,
+      type: 'commit',
+    }),
+  })) as { sha: string }
+
+  await githubRequest(`/repos/${fullName}/git/refs`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ ref: `refs/tags/${tag}`, sha: tagData.sha }),
+  })
+}
+
 function encodePath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/')
 }

@@ -38,6 +38,11 @@ export const projects = pgTable(
       .notNull()
       .default([]),
     cliEnabled: boolean('cli_enabled').notNull().default(false),
+    /** How generated artifacts reach the team: automerge pushes to main
+     *  directly (fast), 'pr' opens a pull request for review. */
+    publishMode: text('publish_mode', { enum: ['automerge', 'pr'] as const })
+      .notNull()
+      .default('automerge'),
     spec: jsonb('spec').$type<Record<string, unknown> | null>(),
     specRaw: text('spec_raw'),
     specUrl: text('spec_url'),

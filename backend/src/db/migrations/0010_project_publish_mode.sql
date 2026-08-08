@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "publish_mode" text DEFAULT 'automerge' NOT NULL;
