@@ -24,14 +24,18 @@ export type GitHubUser = {
 async function githubRequest(
   path: string,
   accessToken: string,
+  init?: { method?: string; body?: string },
 ): Promise<unknown> {
   const res = await fetch(`${GITHUB_API}${path}`, {
+    method: init?.method ?? 'GET',
     headers: {
       authorization: `Bearer ${accessToken}`,
       accept: 'application/vnd.github+json',
       'x-github-api-version': '2022-11-28',
       'user-agent': 'weldrr',
+      ...(init?.body ? { 'content-type': 'application/json' } : {}),
     },
+    ...(init?.body ? { body: init.body } : {}),
     signal: AbortSignal.timeout(15_000),
   })
 
@@ -150,4 +154,181 @@ export async function createGitHubRepo(
     html_url: string
   }
   return { fullName: data.full_name, cloneUrl: data.clone_url, htmlUrl: data.html_url }
+}
+
+export type RepoTreeNode = {
+  path: string
+  type: 'tree' | 'blob'
+  sha: string
+}
+
+export async function getRepoDefaultBranch(
+  accessToken: string,
+  fullName: string,
+): Promise<string> {
+  const data = (await githubRequest(`/repos/${fullName}`, accessToken)) as {
+    default_branch?: string
+  }
+  return data.default_branch ?? 'main'
+}
+
+export async function listRepoTree(
+  accessToken: string,
+  fullName: string,
+  branch = 'main',
+): Promise<RepoTreeNode[]> {
+  const data = (await githubRequest(
+    `/repos/${fullName}/git/trees/${branch}?recursive=1`,
+    accessToken,
+  )) as { tree?: Array<{ path?: string; type?: string; sha?: string }> }
+  return (data.tree ?? [])
+    .filter((x) => x.path && x.sha)
+    .map((x) => ({
+      path: x.path as string,
+      type: x.type === 'tree' ? ('tree' as const) : ('blob' as const),
+      sha: x.sha as string,
+    }))
+}
+
+export async function readRepoFile(
+  accessToken: string,
+  fullName: string,
+  path: string,
+  branch?: string,
+): Promise<string> {
+  const ref = branch ? `?ref=${encodeURIComponent(branch)}` : ''
+  const data = (await githubRequest(
+    `/repos/${fullName}/contents/${encodePath(path)}${ref}`,
+    accessToken,
+  )) as { content?: string; encoding?: string }
+
+  if (typeof data.content !== 'string') {
+    throw new AppError(502, `GitHub returned no content for "${path}"`)
+  }
+  if (data.encoding === 'base64') {
+    return Buffer.from(data.content, 'base64').toString('utf-8')
+  }
+  return data.content
+}
+
+export type WriteFileInput = {
+  path: string
+  content: string
+  message?: string
+  branch?: string
+}
+
+export async function writeRepoFile(
+  accessToken: string,
+  fullName: string,
+  input: WriteFileInput,
+): Promise<void> {
+  const branch = input.branch ?? 'main'
+  const message = input.message ?? `docs: update ${input.path}`
+
+  const current = await getRepoRef(accessToken, fullName, branch)
+
+  const blobData = (await githubRequest(
+    `/repos/${fullName}/git/blobs`,
+    accessToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        content: input.content,
+        encoding: 'utf-8',
+      }),
+    },
+  )) as { sha: string }
+
+  const commitData0 = (await githubRequest(
+    `/repos/${fullName}/git/commits/${current.commitSha}`,
+    accessToken,
+  )) as { tree?: { sha?: string } }
+  const baseTreeSha = commitData0.tree?.sha ?? current.commitSha
+
+  const treeData = (await githubRequest(
+    `/repos/${fullName}/git/trees`,
+    accessToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: [{ path: input.path, mode: '100644', type: 'blob', sha: blobData.sha }],
+      }),
+    },
+  )) as { sha: string }
+
+  const commitData = (await githubRequest(
+    `/repos/${fullName}/git/commits`,
+    accessToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        tree: treeData.sha,
+        parents: [current.commitSha],
+      }),
+    },
+  )) as { sha: string }
+
+  await githubRequest(`/repos/${fullName}/git/refs/heads/${branch}`, accessToken, {
+    method: 'PATCH',
+    body: JSON.stringify({ sha: commitData.sha, force: false }),
+  })
+}
+
+export async function deleteRepoFile(
+  accessToken: string,
+  fullName: string,
+  path: string,
+  message = `docs: delete ${path}`,
+  branch = 'main',
+): Promise<void> {
+  // GitHub's contents DELETE requires the current blob sha.
+  const current = (await githubRequest(
+    `/repos/${fullName}/contents/${encodePath(path)}?ref=${encodeURIComponent(branch)}`,
+    accessToken,
+  )) as { sha?: string }
+  if (!current.sha) {
+    throw new AppError(404, `File "${path}" not found in ${fullName}`)
+  }
+
+  const res = await fetch(`${GITHUB_API}/repos/${fullName}/contents/${encodePath(path)}`, {
+    method: 'DELETE',
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: 'application/vnd.github+json',
+      'x-github-api-version': '2022-11-28',
+      'user-agent': 'weldrr',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ message, sha: current.sha, branch }),
+    signal: AbortSignal.timeout(15_000),
+  })
+
+  if (res.status === 401 || res.status === 403) {
+    throw new AppError(401, 'GitHub connection expired — please reconnect')
+  }
+  if (!res.ok) {
+    throw new AppError(502, `GitHub API returned HTTP ${res.status}`)
+  }
+}
+
+async function getRepoRef(
+  accessToken: string,
+  fullName: string,
+  branch: string,
+): Promise<{ commitSha: string }> {
+  const data = (await githubRequest(
+    `/repos/${fullName}/git/ref/heads/${branch}`,
+    accessToken,
+  )) as { object?: { sha?: string } }
+  if (!data.object?.sha) {
+    throw new AppError(502, `Could not resolve branch "${branch}" for ${fullName}`)
+  }
+  return { commitSha: data.object.sha }
+}
+
+function encodePath(path: string): string {
+  return path.split('/').map(encodeURIComponent).join('/')
 }

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { projectApi, sdkApi, sandboxApi, versionApi } from '@/lib/api'
+import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
 import type {
   ArtifactVersion,
   Discovery,
@@ -674,47 +675,64 @@ export function ProjectDetailPage() {
         )}
 
         {tab === 'Docs' && (
-          <Card
-            title={`${project.name} · docs`}
-            action={
-              project.docsUrl ? (
-                <a
-                  href={project.docsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand-muted"
-                >
-                  Open docs
-                  <ExternalLink className="size-4" />
-                </a>
-              ) : undefined
-            }
-          >
-            {!discovery ? (
-              <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-                <LoaderCircle className="size-4 animate-spin" />
-                Loading docs…
-              </div>
-            ) : discovery.status === 'failed' ? (
-              <EmptyState
-                icon={<FileQuestion className="size-6" />}
-                title="Docs couldn't be generated"
-                description={discovery.error ?? 'Discovery failed for this project.'}
-              />
-            ) : !discovery.docsMarkdown ? (
-              <EmptyState
-                icon={<BookOpen className="size-6" />}
-                title="Docs not ready yet"
-                description="Docs will appear here once discovery completes."
-              />
+          <div className="space-y-4">
+            {!discovery || discovery.status === 'failed' ? (
+              <Card
+                title={`${project.name} · docs`}
+                action={
+                  project.docsUrl ? (
+                    <a
+                      href={project.docsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand-muted"
+                    >
+                      Open docs
+                      <ExternalLink className="size-4" />
+                    </a>
+                  ) : undefined
+                }
+              >
+                {!discovery ? (
+                  <div className="grid h-96 grid-cols-[16rem_1fr_20rem] gap-0 p-4">
+                    <div className="space-y-2 border-r border-border pr-4">
+                      <Skeleton className="h-4 w-20" />
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <Skeleton key={i} className={cn('h-5', i % 3 === 0 ? 'w-4/5' : i % 3 === 1 ? 'w-3/5' : 'w-2/3')} />
+                      ))}
+                    </div>
+                    <div className="space-y-3 px-4">
+                      <Skeleton className="h-8 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-32 w-full" />
+                    </div>
+                    <div className="hidden space-y-3 border-l border-border pl-4 lg:block">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-11/12" />
+                    </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<FileQuestion className="size-6" />}
+                    title="Docs couldn't be generated"
+                    description={discovery.error ?? 'Discovery failed for this project.'}
+                  />
+                )}
+              </Card>
             ) : (
-              <div className="max-h-[36rem] overflow-y-auto bg-[#0f0f11] p-6">
-                <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/85">
-                  {discovery.docsMarkdown}
-                </pre>
-              </div>
+              <DocsEditor
+                projectId={project.id}
+                docsUrl={project.docsUrl}
+                onPublished={() => {
+                  void reload()
+                  void reloadVersions()
+                }}
+              />
             )}
-          </Card>
+          </div>
         )}
 
         {tab === 'SDKs' && (

@@ -17,7 +17,7 @@ export class ApiError extends Error {
 type Query = Record<string, string | number | boolean | undefined>
 
 export type HttpOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
   auth?: boolean
   query?: Query
@@ -112,8 +112,12 @@ function patch<T>(path: string, body?: unknown, options?: Omit<HttpOptions, 'met
   return request<T>(path, { ...options, method: 'PATCH', body })
 }
 
+function put<T>(path: string, body?: unknown, options?: Omit<HttpOptions, 'method' | 'body'>): Promise<T> {
+  return request<T>(path, { ...options, method: 'PUT', body })
+}
+
 function remove<T>(path: string, options?: Omit<HttpOptions, 'method' | 'body'>): Promise<T> {
   return request<T>(path, { ...options, method: 'DELETE' })
 }
 
-export const http = { get, post, patch, remove, url: API_BASE_URL }
+export const http = { get, post, patch, put, remove, url: API_BASE_URL }

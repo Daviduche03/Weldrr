@@ -14,6 +14,7 @@ import { sdkRoutes } from '@/modules/sdks/sdk.routes'
 import { uploadRoutes } from '@/modules/upload/upload.routes'
 import { sandboxRoutes } from '@/modules/sandboxes/sandboxes.routes'
 import { githubRoutes } from '@/modules/github/github.routes'
+import { docsRoutes } from '@/modules/docs/docs.routes'
 import { proxyRoutes } from '@/modules/proxy/proxy.routes'
 import { errorHandler } from '@/middleware/errorHandler'
 import { notFound } from '@/middleware/notFound'
@@ -67,6 +68,7 @@ export function createApp(): Express {
   app.use('/api/uploads', uploadRoutes)
   app.use('/api/sandboxes', sandboxRoutes)
   app.use('/api/github', githubRoutes)
+  app.use('/api/projects', docsRoutes)
   app.use('/api/proxy', proxyRoutes)
 
   app.use(notFound)
