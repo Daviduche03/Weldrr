@@ -89,7 +89,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/onboarding')}>
+        <DropdownMenuItem onClick={() => navigate('/workspaces/new')}>
           <Plus className="size-4" />
           Create workspace
         </DropdownMenuItem>

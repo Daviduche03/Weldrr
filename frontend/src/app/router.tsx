@@ -7,6 +7,7 @@ import { AuthRoutes } from '@/modules/workspace/auth-routes'
 import { DashboardPage } from '@/modules/dashboard/dashboard.page'
 import { OnboardingPage } from '@/modules/onboarding/onboarding.page'
 import { NewProjectPage } from '@/modules/projects/new-project.page'
+import { NewWorkspacePage } from '@/modules/workspace/new-workspace.page'
 import { ProjectsPage } from '@/modules/projects/projects.page'
 import { ProjectDetailPage } from '@/modules/projects/project-detail.page'
 import { SettingsPage } from '@/modules/settings/settings.page'
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
               { path: '/dashboard', element: <DashboardPage /> },
               { path: '/projects', element: <ProjectsPage /> },
               { path: '/projects/new', element: <NewProjectPage /> },
+              { path: '/workspaces/new', element: <NewWorkspacePage /> },
               { path: '/projects/:id', element: <ProjectDetailPage /> },
               { path: '/settings', element: <SettingsPage /> },
             ],
