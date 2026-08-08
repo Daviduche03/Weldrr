@@ -2,21 +2,21 @@ import { CodeSquareIcon, MagicWand02Icon, PackageSent01Icon } from 'hugeicons-re
 
 const steps = [
   {
-    title: 'Add your API spec',
+    title: 'Point Weldrr at your code',
     description:
-      'Point Weldrr at your OpenAPI, GraphQL, or gRPC specification. We read and understand every endpoint, schema, and auth flow.',
+      'Connect your repository — or paste an OpenAPI, GraphQL, or gRPC spec. Weldrr reads the source and maps every endpoint, schema, and auth flow.',
     icon: CodeSquareIcon,
   },
   {
     title: 'Weldrr generates everything',
     description:
-      'Docs, SDKs, and a CLI are generated from one source of truth — consistent, type-safe, and always in sync with your API.',
+      'Docs, SDKs, and a CLI are generated from your code — consistent, type-safe, and always in sync with what you actually ship.',
     icon: MagicWand02Icon,
   },
   {
     title: 'Ship and stay in sync',
     description:
-      'Publish to your own domain or package registries. Every API change regenerates and redeploys automatically.',
+      'Publish to your own git repositories and package registries. Every API change is detected and regenerated automatically.',
     icon: PackageSent01Icon,
   },
 ]
@@ -27,10 +27,10 @@ export function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl text-left">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            From spec to shipped in three steps
+            From code to shipped in three steps
           </h2>
           <p className="mt-4 text-pretty text-lg text-muted-foreground">
-            No boilerplate. No hand-maintained docs. Weldrr turns your API spec into the complete
+            No boilerplate. No hand-maintained docs. Weldrr reads your code and ships the complete
             developer experience.
           </p>
         </div>

@@ -101,9 +101,9 @@ function AiChatSvg() {
 
 const cards: { title: string; description: string; svg: ReactNode }[] = [
   {
-    title: 'Docs from your API spec',
+    title: 'Understands your code, not just a spec',
     description:
-      'Generate beautiful, agent-friendly documentation from your OpenAPI, GraphQL, or gRPC spec — never out of date again.',
+      'Point Weldrr at your repository and it maps every endpoint, schema, and auth flow from the source itself — no hand-maintained spec to keep in sync.',
     svg: <DocsSvg />,
   },
   {
@@ -115,13 +115,13 @@ const cards: { title: string; description: string; svg: ReactNode }[] = [
   {
     title: 'A CLI that works with your API',
     description:
-      'Interact with your API from the terminal instantly, with autocompletion generated straight from your spec.',
+      'Interact with your API from the terminal instantly, with autocompletion generated straight from your code.',
     svg: <CliSvg />,
   },
   {
-    title: 'AI chat in your docs',
+    title: 'Catches drift before it ships',
     description:
-      'Let users and agents ask questions and get answers grounded in your documentation, with no training data required.',
+      'When your API changes, Weldrr flags what’s out of date — documented-but-unimplemented endpoints, newly mounted routes — so your docs never lie.',
     svg: <AiChatSvg />,
   },
 ]
@@ -132,11 +132,11 @@ export function Benefits() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl text-left">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Everything your developers need, generated from one source of truth
+            Everything your developers need, generated from your code
           </h2>
           <p className="mt-4 text-pretty text-lg text-muted-foreground">
-            Weldrr turns your API spec into the full developer experience — docs, SDKs, and CLI —
-            always in sync.
+            Weldrr turns your codebase into the full developer experience — docs, SDKs, and CLI —
+            and keeps it in sync as your API evolves.
           </p>
         </div>
       </div>

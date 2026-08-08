@@ -6,10 +6,11 @@ export function Hero() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl">
           <h1 className="text-balance text-left text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-            Upgrade your developer and agent experience from day one
+            Docs, SDKs, and CLI — generated from your code, not a spec you maintain
           </h1>
           <p className="mt-6 max-w-2xl text-left text-pretty text-lg text-muted-foreground sm:text-xl">
-            Docs, SDKs, and a CLI for your API. Built for the AI era.
+            Weldrr reads your codebase, understands what your API actually does, and keeps your
+            developer experience in sync automatically. Built for the AI era.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button size="lg" shimmer asChild>

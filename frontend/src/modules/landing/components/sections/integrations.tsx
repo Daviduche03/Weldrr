@@ -32,7 +32,7 @@ const protocols = [
 const integrations = [
   {
     name: 'GitHub',
-    description: 'Sync your specs from repositories and trigger regenerations in CI.',
+    description: 'Connect a repository and Weldrr reads your codebase, not just a spec, to keep everything in sync.',
     icon: GithubIcon,
   },
   {
@@ -61,7 +61,7 @@ export function Integrations() {
             Works with your protocols and tools
           </h2>
           <p className="mt-4 text-pretty text-lg text-muted-foreground">
-            Plug Weldrr into your API spec and your existing workflow — from source control to the
+            Plug Weldrr into your codebase and your existing workflow — from source control to the
             terminal.
           </p>
         </div>

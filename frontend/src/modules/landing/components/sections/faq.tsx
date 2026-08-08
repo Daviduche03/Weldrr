@@ -1,13 +1,13 @@
 const faqs = [
   {
-    question: 'What API formats does Weldrr support?',
+    question: 'Do I need a spec to use Weldrr?',
     answer:
-      'Weldrr works with OpenAPI 3.0 and 3.1, GraphQL schemas, gRPC protobufs, and AsyncAPI. If your API is defined by a spec, we can generate docs, SDKs, and a CLI from it.',
+      'No. Connect a repository and Weldrr reads your codebase to map every endpoint, schema, and auth flow. It also works with OpenAPI, GraphQL, gRPC, and AsyncAPI specs when you have one.',
   },
   {
     question: 'Do I need to maintain docs and SDKs separately?',
     answer:
-      'No. Docs, SDKs, and the CLI are all generated from one source of truth — your API spec. When your API changes, Weldrr regenerates everything so nothing drifts out of sync.',
+      'No. Weldrr reads your code and generates docs, SDKs, and a CLI from it. When your API changes, Weldrr detects the drift and regenerates everything so nothing falls out of sync.',
   },
   {
     question: 'Can I self-host Weldrr?',
@@ -17,7 +17,7 @@ const faqs = [
   {
     question: 'How does the AI chat in docs work?',
     answer:
-      'Ask AI answers questions grounded in your documentation. It runs against your generated docs and spec, so answers are accurate and always up to date — no training data or fine-tuning needed.',
+      'Ask AI answers questions grounded in your documentation. It runs against your generated docs, so answers are accurate and always up to date — no training data or fine-tuning needed.',
   },
   {
     question: 'Do you offer a free trial?',

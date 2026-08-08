@@ -14,10 +14,10 @@ export function FinalCta() {
       >
         <div className="mx-auto max-w-2xl py-24 text-center">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
-            Start building for developers and agents
+            Stop maintaining docs. Ship from code.
           </h2>
           <p className="mt-5 text-pretty text-lg text-muted-foreground sm:text-xl">
-            Ship docs, SDKs, and a CLI from your API spec — in minutes, not months.
+            Docs, SDKs, and a CLI from your codebase — in minutes, not months.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" shimmer asChild>
