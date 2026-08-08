@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -9,8 +9,9 @@ import {
   ExternalLink,
   Braces,
 } from 'lucide-react'
-import { sdkApi, type SdkTreeNode } from '@/lib/api/sdks'
+import { useSdkTree, useSdkFile } from '@/lib/queries'
 import type { SdkLanguage } from '@/lib/types'
+import type { SdkTreeNode } from '@/lib/api/sdks'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HighlightedCode } from '@/modules/projects/docs-editor/highlighted-code'
@@ -67,61 +68,35 @@ export function SdkViewer({
   onBack: () => void
   repoUrl?: string | null
 }) {
-  const [tree, setTree] = useState<SdkTreeNode[]>([])
-  const [loadingTree, setLoadingTree] = useState(true)
-  const [treeError, setTreeError] = useState<string | null>(null)
   const [openDirs, setOpenDirs] = useState<Record<string, boolean>>({ '': true })
   const [activePath, setActivePath] = useState<string | null>(null)
-  const [fileContent, setFileContent] = useState<string>('')
   const [fileKind, setFileKind] = useState('txt')
-  const [loadingFile, setLoadingFile] = useState(false)
-  const [fileError, setFileError] = useState<string | null>(null)
 
-  const loadTree = useCallback(async () => {
-    setLoadingTree(true)
-    setTreeError(null)
-    try {
-      const nodes = await sdkApi.tree(projectId, language)
-      const filtered = nodes.filter((n) => {
+  const treeQuery = useSdkTree(projectId, language)
+  const fileQuery = useSdkFile(projectId, language, activePath)
+
+  const rawTree = treeQuery.data ?? []
+  const tree = useMemo(
+    () =>
+      rawTree.filter((n) => {
         const parts = n.path.split('/')
         const inIgnoredDir = parts.slice(0, -1).some((p) => IGNORED_DIRS.has(p))
         if (inIgnoredDir) return false
         if (n.type === 'blob' && IGNORED_FILES.has(n.name)) return false
         return true
-      })
-      setTree(filtered)
-    } catch (err) {
-      setTreeError(err instanceof Error ? err.message : 'Could not load SDK repo')
-    } finally {
-      setLoadingTree(false)
-    }
-  }, [projectId, language])
+      }),
+    [rawTree],
+  )
+  const loadingTree = treeQuery.isLoading
+  const treeError = treeQuery.error instanceof Error ? treeQuery.error.message : null
 
   useEffect(() => {
-    void loadTree()
-  }, [loadTree])
+    if (fileQuery.data) {
+      setFileKind(fileQuery.data.kind)
+    }
+  }, [fileQuery.data])
 
   const treeMap = useMemo(() => buildTree(tree), [tree])
-
-  const loadFile = useCallback(
-    async (path: string) => {
-      setLoadingFile(true)
-      setFileError(null)
-      try {
-        const file = await sdkApi.readFile(projectId, language, path)
-        setActivePath(path)
-        setFileContent(file.content)
-        setFileKind(file.kind)
-        const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : ''
-        setOpenDirs((d) => ({ ...d, [dir]: true }))
-      } catch (err) {
-        setFileError(err instanceof Error ? err.message : 'Could not load file')
-      } finally {
-        setLoadingFile(false)
-      }
-    },
-    [projectId, language],
-  )
 
   const renderChildren = (dir: string, depth: number): React.ReactNode => {
     const children = (treeMap[dir] ?? [])
@@ -155,7 +130,11 @@ export function SdkViewer({
         <button
           key={childPath}
           type="button"
-          onClick={() => void loadFile(childPath)}
+          onClick={() => {
+            setActivePath(childPath)
+            const dir = childPath.includes('/') ? childPath.slice(0, childPath.lastIndexOf('/')) : ''
+            setOpenDirs((d) => ({ ...d, [dir]: true }))
+          }}
           className={cn(
             'flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/60 hover:text-foreground',
             isActive ? 'bg-accent text-foreground' : 'text-muted-foreground',
@@ -180,7 +159,7 @@ export function SdkViewer({
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {language} · source
           </span>
-          <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void loadTree()} className="text-muted-foreground">
+          <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void treeQuery.refetch()} className="text-muted-foreground">
             <RefreshCw className={cn('size-3.5', loadingTree && 'animate-spin')} />
           </Button>
         </div>
@@ -229,20 +208,22 @@ export function SdkViewer({
           </div>
         </div>
 
-        {fileError && (
-          <div className="border-b border-border bg-destructive/5 px-4 py-2 text-xs text-destructive">{fileError}</div>
+        {fileQuery.isError && (
+          <div className="border-b border-border bg-destructive/5 px-4 py-2 text-xs text-destructive">
+            {fileQuery.error instanceof Error ? fileQuery.error.message : 'Could not load file'}
+          </div>
         )}
 
         {activePath ? (
           <div className="min-h-0 flex-1 overflow-auto">
-            {loadingFile ? (
+            {fileQuery.isLoading ? (
               <div className="space-y-2 p-4">
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <Skeleton key={i} className={cn('h-4', i % 5 === 0 ? 'w-3/4' : i % 4 === 0 ? 'w-2/3' : 'w-full')} />
                 ))}
               </div>
             ) : (
-              <HighlightedCode code={fileContent} lang={fileKind} />
+              <HighlightedCode code={fileQuery.data?.content ?? ''} lang={fileKind} />
             )}
           </div>
         ) : (

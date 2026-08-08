@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Braces,
@@ -16,19 +17,30 @@ import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { projectApi, sdkApi, sandboxApi, versionApi } from '@/lib/api'
 import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
 import { SdkViewer } from '@/modules/projects/docs-editor/sdk-viewer'
 import { ProjectSettings } from '@/modules/projects/project-settings'
+import {
+  useProject,
+  useDiscovery,
+  useVersions,
+  useSdks,
+  useSandboxes,
+  useUpdateProject,
+  useRemoveProject,
+  useRerunDiscovery,
+  useIssueSandbox,
+  useStartSandbox,
+  useAddSdk,
+  useRemoveSdk,
+  queryKeys,
+} from '@/lib/queries'
 import type {
-  ArtifactVersion,
-  Discovery,
   Project,
   Sandbox,
   Sdk,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useAsyncData } from '@/lib/hooks'
 
 const tabs = ['Overview', 'Docs', 'SDKs', 'CLI', 'Settings'] as const
 
@@ -157,6 +169,7 @@ function DetailSkeleton() {
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState<(typeof tabs)[number]>('Overview')
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -164,29 +177,51 @@ export function ProjectDetailPage() {
   const [publishingDocs, setPublishingDocs] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [latestBuild, setLatestBuild] = useState<Sandbox | null>(null)
-  const [docsBuild, setDocsBuild] = useState<Sandbox | null>(null)
   const [viewingSdkLang, setViewingSdkLang] = useState<Sdk['language'] | null>(null)
 
-  const { data: project, error, reload } = useAsyncData<Project | null>(
-    useCallback(() => (id ? projectApi.get(id) : Promise.resolve(null)), [id]),
-    [id],
-  )
+  const projectQuery = useProject(id)
+  const discoveryQuery = useDiscovery(id)
+  const versionsQuery = useVersions(id)
+  const sdksQuery = useSdks(id)
+  const sdkBuildsQuery = useSandboxes(id ? { projectId: id, jobType: 'sdk' } : undefined)
+  const docsBuildsQuery = useSandboxes(id ? { projectId: id, jobType: 'docs' } : undefined)
 
-  const { data: discovery } = useAsyncData<Discovery | null>(
-    useCallback(() => (id ? projectApi.discovery(id) : Promise.resolve(null)), [id]),
-    [id],
-  )
+  const project = projectQuery.data ?? null
+  const error = projectQuery.error as Error | null
+  const discovery = discoveryQuery.data ?? null
+  const versions = versionsQuery.data
+  const sdks = sdksQuery.data
+  const sdkBuilds = sdkBuildsQuery.data ?? []
+  const docsBuilds = docsBuildsQuery.data ?? []
 
-  const { data: versions, reload: reloadVersions } = useAsyncData<ArtifactVersion[]>(
-    useCallback(() => (id ? versionApi.list(id) : Promise.resolve([])), [id]),
-    [id],
-  )
+  const latestBuild = useMemo<Sandbox | null>(() => {
+    const active = sdkBuilds.find((s) => ['issuing', 'starting', 'ready', 'building'].includes(s.status))
+    return active ?? sdkBuilds[0] ?? null
+  }, [sdkBuilds])
 
-  const { data: sdks, reload: reloadSdks } = useAsyncData<Sdk[]>(
-    useCallback(() => (id ? sdkApi.list(id) : Promise.resolve([])), [id]),
-    [id],
-  )
+  const docsBuild = useMemo<Sandbox | null>(() => {
+    const active = docsBuilds.find((s) => ['issuing', 'starting', 'ready', 'building'].includes(s.status))
+    return active ?? docsBuilds[0] ?? null
+  }, [docsBuilds])
+
+  // Poll sandboxes every few seconds while a build is in flight; refresh
+  // project + versions once a build reaches a terminal state.
+  const buildActive =
+    (latestBuild && ['issuing', 'starting', 'ready', 'building'].includes(latestBuild.status)) ||
+    (docsBuild && ['issuing', 'starting', 'ready', 'building'].includes(docsBuild.status))
+
+  useEffect(() => {
+    if (!buildActive) return
+    const timer = setInterval(() => {
+      const sdkDone = latestBuild && ['finished', 'failed', 'terminated'].includes(latestBuild.status)
+      const docsDone = docsBuild && ['finished', 'failed', 'terminated'].includes(docsBuild.status)
+      if (sdkDone || docsDone) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.project(id ?? '') })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.projectVersions(id ?? '') })
+      }
+    }, 8000)
+    return () => clearInterval(timer)
+  }, [buildActive, latestBuild, docsBuild, id, queryClient])
 
   useEffect(() => {
     if (project) setName(project.name)
@@ -210,56 +245,32 @@ export function ProjectDetailPage() {
     return { total: discovery.endpoints.length, byMethod }
   }, [discovery])
 
-  const pollLatestBuild = useCallback(async () => {
-    if (!id) return
-    try {
-      const list = await sandboxApi.list({ projectId: id, jobType: 'sdk' })
-      const active = list.find((s) => ['issuing', 'starting', 'ready', 'building'].includes(s.status))
-      const latest = active ?? list[0] ?? null
-      setLatestBuild(latest)
-      return latest
-    } catch {
-      return null
-    }
-  }, [id])
-
-  const pollDocsBuild = useCallback(async () => {
-    if (!id) return
-    try {
-      const list = await sandboxApi.list({ projectId: id, jobType: 'docs' })
-      const active = list.find((s) => ['issuing', 'starting', 'ready', 'building'].includes(s.status))
-      const latest = active ?? list[0] ?? null
-      setDocsBuild(latest)
-      return latest
-    } catch {
-      return null
-    }
-  }, [id])
-
-  useEffect(() => {
-    void pollLatestBuild()
-    void pollDocsBuild()
-  }, [pollLatestBuild, pollDocsBuild, id])
+  const updateProject = useUpdateProject()
+  const removeProject = useRemoveProject()
+  const rerunDiscovery = useRerunDiscovery()
+  const issueSandbox = useIssueSandbox()
+  const startSandbox = useStartSandbox()
+  const addSdkMutation = useAddSdk()
+  const removeSdkMutation = useRemoveSdk()
 
   const publishSdk = async () => {
     if (!project || publishing) return
     setPublishing(true)
     try {
-      const sandbox = await sandboxApi.issue({
+      const sandbox = await issueSandbox.mutateAsync({
         projectId: project.id,
         jobType: 'sdk',
         language: primaryLanguage,
       })
-      await sandboxApi.start(
-        sandbox.id,
-        [
+      await startSandbox.mutateAsync({
+        id: sandbox.id,
+        prompt: [
           `Build a production-grade ${languageLabels[primaryLanguage] ?? primaryLanguage} SDK from the API surface in /workspace/docs.md.`,
           'Follow the sdk-builder skill, including the versioning steps: set the package version from WELDRR_ARTIFACT_VERSION, commit, push, and tag.',
           'Implement typed clients for every listed endpoint, add a smoke test, and ensure lint/tests pass.',
           'Do not implement anything in the excluded internal section.',
         ].join(' '),
-      )
-      await pollLatestBuild()
+      })
     } finally {
       setPublishing(false)
     }
@@ -269,49 +280,27 @@ export function ProjectDetailPage() {
     if (!project || publishingDocs) return
     setPublishingDocs(true)
     try {
-      const sandbox = await sandboxApi.issue({ projectId: project.id, jobType: 'docs' })
-      await sandboxApi.start(
-        sandbox.id,
-        [
+      const sandbox = await issueSandbox.mutateAsync({ projectId: project.id, jobType: 'docs' })
+      await startSandbox.mutateAsync({
+        id: sandbox.id,
+        prompt: [
           'Build the API documentation site from /workspace/docs.md and /workspace/spec.json.',
           'Follow the docs-builder skill: populate the template pages, create a reference page per resource, and verify the build.',
           'Include the versioning steps: commit, push, and tag with WELDRR_ARTIFACT_VERSION.',
           'Do not document anything in the excluded internal section.',
         ].join(' '),
-      )
-      await pollDocsBuild()
+      })
     } finally {
       setPublishingDocs(false)
     }
   }
 
-  // Poll the latest builds while in-flight, then refresh versions on completion.
-  useEffect(() => {
-    if (!id) return
-    const active = latestBuild && ['issuing', 'starting', 'ready', 'building'].includes(latestBuild.status)
-      ? latestBuild
-      : docsBuild && ['issuing', 'starting', 'ready', 'building'].includes(docsBuild.status)
-        ? docsBuild
-        : null
-    if (!active) return
-    const timer = setInterval(async () => {
-      const [sdkNext, docsNext] = await Promise.all([pollLatestBuild(), pollDocsBuild()])
-      const done =
-        (sdkNext && ['finished', 'failed', 'terminated'].includes(sdkNext.status)) ||
-        (docsNext && ['finished', 'failed', 'terminated'].includes(docsNext.status))
-      if (done) {
-        clearInterval(timer)
-        reload()
-        reloadVersions()
-      }
-    }, 8000)
-    return () => clearInterval(timer)
-  }, [id, latestBuild, docsBuild, pollLatestBuild, pollDocsBuild, reload, reloadVersions])
-
   const handleRegenerate = async () => {
     if (!project) return
-    await projectApi.update(project.id, { status: 'generating' })
-    reload()
+    await Promise.all([
+      updateProject.mutateAsync({ id: project.id, input: { status: 'generating' } }),
+      rerunDiscovery.mutateAsync(project.id),
+    ])
   }
 
   const handleSaveName = async () => {
@@ -320,8 +309,7 @@ export function ProjectDetailPage() {
     if (!trimmed || trimmed === project.name) return
     setSaving(true)
     try {
-      await projectApi.update(project.id, { name: trimmed })
-      reload()
+      await updateProject.mutateAsync({ id: project.id, input: { name: trimmed } })
     } finally {
       setSaving(false)
     }
@@ -329,21 +317,23 @@ export function ProjectDetailPage() {
 
   const addSdk = async (language: string) => {
     if (!id) return
-    await sdkApi.create(id, { name: languageLabels[language] ?? language, language: language as Sdk['language'] })
-    reloadSdks()
+    await addSdkMutation.mutateAsync({
+      projectId: id,
+      name: languageLabels[language] ?? language,
+      language: language as Sdk['language'],
+    })
   }
 
   const removeSdk = async (sdk: Sdk) => {
     if (!id) return
-    await sdkApi.remove(id, sdk.id)
-    reloadSdks()
+    await removeSdkMutation.mutateAsync({ projectId: id, id: sdk.id })
   }
 
   const handleDeleteProject = async () => {
     if (!id || deleting) return
     setDeleting(true)
     try {
-      await projectApi.remove(id)
+      await removeProject.mutateAsync(id)
       window.location.assign('/projects')
     } finally {
       setDeleting(false)
@@ -438,7 +428,7 @@ export function ProjectDetailPage() {
       </div>
 
       <div className="mt-6">
-        {tab === 'Overview' && (
+        <div className={cn(tab === 'Overview' ? '' : 'hidden')}>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Left column */}
             <div className="min-w-0">
@@ -639,9 +629,9 @@ export function ProjectDetailPage() {
               </section>
             </div>
           </div>
-        )}
+        </div>
 
-        {tab === 'Docs' && (
+        <div className={cn(tab === 'Docs' ? '' : 'hidden')}>
           <div className="space-y-4">
             {!discovery || discovery.status === 'failed' ? (
               <Card
@@ -694,16 +684,16 @@ export function ProjectDetailPage() {
                 projectId={project.id}
                 docsUrl={project.docsUrl}
                 onPublished={() => {
-                  void reload()
-                  void reloadVersions()
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.project(id ?? '') })
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.projectVersions(id ?? '') })
                 }}
               />
             )}
           </div>
-        )}
+        </div>
 
-        {tab === 'SDKs' && (
-          viewingSdkLang ? (
+        <div className={cn(tab === 'SDKs' ? '' : 'hidden')}>
+          {viewingSdkLang ? (
             <SdkViewer
               projectId={project.id}
               language={viewingSdkLang}
@@ -775,10 +765,10 @@ export function ProjectDetailPage() {
                 </div>
               </div>
             </Card>
-          )
-        )}
+          )}
+        </div>
 
-        {tab === 'CLI' && (
+        <div className={cn(tab === 'CLI' ? '' : 'hidden')}>
           <Card title="CLI">
             {!project.cliEnabled ? (
               <EmptyState
@@ -810,9 +800,9 @@ export function ProjectDetailPage() {
               </div>
             )}
           </Card>
-        )}
+        </div>
 
-        {tab === 'Settings' && (
+        <div className={cn(tab === 'Settings' ? '' : 'hidden')}>
           <ProjectSettings
             project={project}
             versions={versionList}
@@ -822,7 +812,7 @@ export function ProjectDetailPage() {
             saving={saving}
             deleting={deleting}
           />
-        )}
+        </div>
       </div>
 
       <ConfirmDialog

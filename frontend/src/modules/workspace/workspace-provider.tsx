@@ -1,49 +1,21 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { workspaceApi } from '@/lib/api/workspace'
-import type { Workspace } from '@/lib/types'
+import { useEffect, type ReactNode } from 'react'
+import { useWorkspaceStore, planLabel } from '@/lib/stores/workspace-store'
 
-type WorkspaceState = {
-  workspace: Workspace | null
-  loading: boolean
-  setWorkspace: (workspace: Workspace) => void
-}
-
-const WorkspaceContext = createContext<WorkspaceState | undefined>(undefined)
+export { planLabel }
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [workspace, setWorkspace] = useState<Workspace | null>(null)
-  const [loading, setLoading] = useState(true)
+  const initialize = useWorkspaceStore((s) => s.initialize)
 
   useEffect(() => {
-    let active = true
-    workspaceApi
-      .get()
-      .then((ws) => {
-        if (active) setWorkspace(ws)
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
+    void initialize()
+  }, [initialize])
 
-  const value = useMemo(
-    () => ({ workspace, loading, setWorkspace }),
-    [workspace, loading],
-  )
-
-  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
+  return <>{children}</>
 }
 
 export function useWorkspace() {
-  const context = useContext(WorkspaceContext)
-  if (!context) throw new Error('useWorkspace must be used within a WorkspaceProvider')
-  return context
-}
-
-export function planLabel(plan: Workspace['plan']): string {
-  return `${plan.charAt(0).toUpperCase()}${plan.slice(1)} plan`
+  const workspace = useWorkspaceStore((s) => s.workspace)
+  const loading = useWorkspaceStore((s) => s.loading)
+  const setWorkspace = useWorkspaceStore((s) => s.setWorkspace)
+  return { workspace, loading, setWorkspace }
 }

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LoaderCircle, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BrandIcon } from '@/components/brand-icon'
-import { connectionApi, type ConnectionInfo, type ConnectionProvider } from '@/lib/api/connections'
+import { connectionApi, type ConnectionProvider } from '@/lib/api/connections'
+import { useConnections, useSaveToken, useDisconnect } from '@/lib/queries'
 import { Section } from '@/modules/settings/settings/ui'
 import { cn } from '@/lib/utils'
 
@@ -66,29 +67,18 @@ const providerMeta: ProviderMeta[] = [
 ]
 
 export function ConnectionsSection() {
-  const [connections, setConnections] = useState<ConnectionInfo[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const connectionsQuery = useConnections()
+  const saveTokenMutation = useSaveToken()
+  const disconnectMutation = useDisconnect()
+  const connections = connectionsQuery.data ?? []
+  const loading = connectionsQuery.isLoading
+  const [error, setError] = useState<string | null>(
+    connectionsQuery.error instanceof Error ? connectionsQuery.error.message : null,
+  )
 
   const [tokenDraft, setTokenDraft] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-
-  const load = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      setConnections(await connectionApi.list())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load connections')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    void load()
-  }, [])
 
   const connectedFor = (provider: ConnectionProvider) =>
     connections.find((c) => c.provider === provider)?.connected ?? false
@@ -111,9 +101,8 @@ export function ConnectionsSection() {
     setSaving(provider)
     setError(null)
     try {
-      await connectionApi.saveToken({ provider: provider as never, token })
+      await saveTokenMutation.mutateAsync({ provider: provider as never, token })
       setTokenDraft((d) => ({ ...d, [provider]: '' }))
-      await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save token')
     } finally {
@@ -125,8 +114,7 @@ export function ConnectionsSection() {
     setBusy(provider)
     setError(null)
     try {
-      await connectionApi.disconnect(provider)
-      await load()
+      await disconnectMutation.mutateAsync(provider as never)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disconnect')
     } finally {

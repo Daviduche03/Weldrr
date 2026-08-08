@@ -1,55 +1,38 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-
-type Theme = 'light' | 'dark' | 'system'
-
-type ThemeProviderState = {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-}
-
-const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined)
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement
-  const resolved =
-    theme === 'system'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      : theme
-  root.classList.toggle('dark', resolved === 'dark')
-  root.style.colorScheme = resolved
-}
+import { useEffect, type ReactNode } from 'react'
+import { useThemeStore } from '@/lib/stores/theme-store'
 
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
 }: {
   children: ReactNode
-  defaultTheme?: Theme
+  defaultTheme?: 'light' | 'dark' | 'system'
 }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return defaultTheme
-    const stored = window.localStorage.getItem('theme') as Theme | null
-    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : defaultTheme
-  })
+  const theme = useThemeStore((s) => s.theme)
 
   useEffect(() => {
-    applyTheme(theme)
-    window.localStorage.setItem('theme', theme)
+    if (theme === defaultTheme && !localStorage.getItem('theme')) return
+    // Ensure the initial stored/default theme is applied on mount.
+    useThemeStore.getState().setTheme(localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null || defaultTheme)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Keep the DOM in sync whenever the store theme changes.
+  useEffect(() => {
+    const root = document.documentElement
+    const resolved = theme === 'system'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      : theme
+    root.classList.toggle('dark', resolved === 'dark')
+    root.style.colorScheme = resolved
   }, [theme])
 
-  const setTheme = (next: Theme) => setThemeState(next)
-
-  return (
-    <ThemeProviderContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeProviderContext.Provider>
-  )
+  return <>{children}</>
 }
 
 export function useTheme() {
-  const context = useContext(ThemeProviderContext)
-  if (!context) throw new Error('useTheme must be used within a ThemeProvider')
-  return context
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+  const toggle = useThemeStore((s) => s.toggle)
+  return { theme, setTheme, toggle }
 }

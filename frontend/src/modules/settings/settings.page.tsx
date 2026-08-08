@@ -3,13 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { KeyRound, Trash2, UserX } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog, type ConfirmDialogTone } from '@/components/ui/confirm-dialog'
-import { authApi } from '@/lib/api/auth'
 import { workspaceApi } from '@/lib/api/workspace'
-import { apiKeyApi } from '@/lib/api/api-keys'
 import type { ApiKey, Member, Plan, User } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/modules/workspace/workspace-provider'
 import { useAuth } from '@/modules/auth/auth-provider'
+import { useMe, useMembers, useApiKeys, useUpdateProfile, useUpdateWorkspace, useInviteMember, useUpdateMemberRole, useRemoveMember, useCreateApiKey, useRevokeApiKey } from '@/lib/queries'
 import { tabs, type SettingsTab } from '@/modules/settings/settings.data'
 import { useFlash } from '@/modules/settings/settings.hooks'
 
@@ -60,7 +59,6 @@ export function SettingsPage() {
   const [tab, setTab] = useState<SettingsTab>(() =>
     new URLSearchParams(location.search).get('connections') ? 'Connections' : 'Profile',
   )
-  const [loading, setLoading] = useState(true)
   const [banner, setBanner] = useState<string | null>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
   const [deletingWorkspace, setDeletingWorkspace] = useState(false)
@@ -88,6 +86,27 @@ export function SettingsPage() {
   const [planSaved, savePlanFlash] = useFlash()
   const [formInitialized, setFormInitialized] = useState(false)
 
+  // Source of truth queries (cached by react-query, so navigating back to
+  // settings doesn't refetch). Local state below mirrors them for editing.
+  const meQuery = useMe()
+  const membersQuery = useMembers()
+  const keysQuery = useApiKeys()
+
+  useEffect(() => {
+    if (meQuery.data) {
+      setProfile(meQuery.data)
+      setName(meQuery.data.name)
+    }
+  }, [meQuery.data])
+
+  useEffect(() => {
+    if (membersQuery.data) setMembers(membersQuery.data)
+  }, [membersQuery.data])
+
+  useEffect(() => {
+    if (keysQuery.data) setKeys(keysQuery.data)
+  }, [keysQuery.data])
+
   useEffect(() => {
     if (!workspace || formInitialized) return
     setFormInitialized(true)
@@ -96,30 +115,17 @@ export function SettingsPage() {
     setSelectedPlan(workspace.plan)
   }, [workspace, formInitialized])
 
-  useEffect(() => {
-    let mounted = true
-    Promise.all([authApi.me(), workspaceApi.listMembers(), apiKeyApi.list()])
-      .then(([p, m, k]) => {
-        if (!mounted) return
-        setProfile(p)
-        setMembers(m)
-        setKeys(k)
-        setName(p.name)
-      })
-      .catch((err: unknown) => {
-        if (mounted) setBanner(err instanceof Error ? err.message : 'Failed to load settings')
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
-      })
-    return () => {
-      mounted = false
-    }
-  }, [])
+  const updateProfileMutation = useUpdateProfile()
+  const updateWorkspaceMutation = useUpdateWorkspace()
+  const inviteMutation = useInviteMember()
+  const changeRoleMutation = useUpdateMemberRole()
+  const removeMemberMutation = useRemoveMember()
+  const createKeyMutation = useCreateApiKey()
+  const revokeKeyMutation = useRevokeApiKey()
 
   const saveProfile = () => {
-    authApi
-      .updateProfile({ name })
+    updateProfileMutation
+      .mutateAsync({ name })
       .then((updated) => {
         setProfile(updated)
         setName(updated.name)
@@ -129,8 +135,8 @@ export function SettingsPage() {
   }
 
   const saveWorkspace = () => {
-    workspaceApi
-      .update({ name: wsName, slug: wsSlug })
+    updateWorkspaceMutation
+      .mutateAsync({ name: wsName, slug: wsSlug })
       .then((updated) => {
         setWorkspace(updated)
         setWsName(updated.name)
@@ -143,12 +149,9 @@ export function SettingsPage() {
   const invite = () => {
     const email = inviteEmail.trim()
     if (!email || !email.includes('@')) return
-    workspaceApi
-      .inviteMember(email)
-      .then((member) => {
-        setMembers((prev) => [member, ...prev])
-        setInviteEmail('')
-      })
+    inviteMutation
+      .mutateAsync({ email, role: 'member' })
+      .then(() => setInviteEmail(''))
       .catch((err: unknown) =>
         setBanner(err instanceof Error ? err.message : 'Failed to invite member'),
       )
@@ -157,13 +160,8 @@ export function SettingsPage() {
   const changeRole = (id: string, role: Member['role']) => {
     if (role !== 'admin' && role !== 'member') return
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, role } : m)))
-    workspaceApi.updateMemberRole(id, role).catch((err: unknown) => {
-      workspaceApi
-        .listMembers()
-        .then(setMembers)
-        .catch(() => {
-          if (err instanceof Error) setBanner(err.message)
-        })
+    changeRoleMutation.mutate({ id, role }, {
+      onError: () => void membersQuery.refetch(),
     })
   }
 
@@ -175,10 +173,9 @@ export function SettingsPage() {
 
   const createKey = () => {
     const label = keyName.trim() || 'New key'
-    apiKeyApi
-      .create(label)
+    createKeyMutation
+      .mutateAsync(label)
       .then((key) => {
-        setKeys((prev) => [key, ...prev])
         setNewKey(key)
         setKeyName('')
       })
@@ -195,8 +192,8 @@ export function SettingsPage() {
 
   const selectPlan = (plan: Plan) => {
     setSelectedPlan(plan)
-    workspaceApi
-      .update({ plan })
+    updateWorkspaceMutation
+      .mutateAsync({ plan })
       .then((updated) => {
         setWorkspace(updated)
         savePlanFlash()
@@ -214,26 +211,18 @@ export function SettingsPage() {
   const confirmRemoveMember = () => {
     if (pending?.kind !== 'remove-member') return
     const member = pending.member
-    const previous = members
-    setMembers((prev) => prev.filter((m) => m.id !== member.id))
     setPending(null)
-    workspaceApi.removeMember(member.id).catch((err: unknown) => {
-      setMembers(previous)
-      setBanner(err instanceof Error ? err.message : 'Failed to remove member')
+    removeMemberMutation.mutate(member.id, {
+      onError: () => void membersQuery.refetch(),
     })
   }
 
   const confirmRevokeKey = () => {
     if (pending?.kind !== 'revoke-key') return
     const key = pending.key
-    const previous = keys
-    setKeys((prev) => prev.filter((k) => k.id !== key.id))
     if (newKey?.id === key.id) setNewKey(null)
     setPending(null)
-    apiKeyApi.revoke(key.id).catch((err: unknown) => {
-      setKeys(previous)
-      setBanner(err instanceof Error ? err.message : 'Failed to revoke API key')
-    })
+    revokeKeyMutation.mutate(key.id)
   }
 
   const confirmDeleteWorkspace = async () => {
@@ -283,6 +272,8 @@ export function SettingsPage() {
         return null
     }
   })()
+
+  const loading = meQuery.isLoading || membersQuery.isLoading || keysQuery.isLoading
 
   if (loading) return <SettingsSkeleton />
 

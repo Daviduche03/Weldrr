@@ -12,10 +12,9 @@ import {
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { dashboardApi } from '@/lib/api/dashboard'
+import { useDashboard } from '@/lib/queries'
 import type { Activity, DashboardMetrics } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useAsyncData } from '@/lib/hooks'
 
 const activityMeta: Record<string, { label: string; dot: string }> = {
   generated: { label: 'Generated', dot: 'bg-emerald-500' },
@@ -172,7 +171,7 @@ function ActivityRowSkeleton() {
 }
 
 export function DashboardPage() {
-  const { data, loading } = useAsyncData(() => dashboardApi.get(), [])
+  const { data, isLoading: loading } = useDashboard()
   const metrics = data?.metrics ?? null
   const activity: Activity[] = data?.activity ?? []
 

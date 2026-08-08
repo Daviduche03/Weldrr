@@ -4,10 +4,9 @@ import { ArrowUpRight, CircleAlert, FolderPlus, RefreshCw, Search, SearchX } fro
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { projectApi } from '@/lib/api/projects'
+import { useProjects } from '@/lib/queries'
 import type { Project } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useAsyncData } from '@/lib/hooks'
 
 const statusMeta: Record<Project['status'], { label: string; dot: string }> = {
   ready: { label: 'Ready', dot: 'bg-emerald-500' },
@@ -60,10 +59,7 @@ function RowSkeleton() {
 }
 
 export function ProjectsPage() {
-  const { data: projects, error, reload } = useAsyncData(
-    () => projectApi.list(),
-    [],
-  )
+  const { data: projects, error, refetch } = useProjects()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -114,9 +110,9 @@ export function ProjectsPage() {
           <EmptyState
             icon={<CircleAlert className="size-6" />}
             title="Couldn't load projects"
-            description={error}
+            description={error instanceof Error ? error.message : 'Please try again'}
             action={
-              <Button size="lg" variant="outline" onClick={reload}>
+              <Button size="lg" variant="outline" onClick={() => void refetch()}>
                 <RefreshCw />
                 Try again
               </Button>
