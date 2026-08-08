@@ -12,6 +12,7 @@ import {
   Play,
 } from "lucide-react";
 import { Playground } from "./components/playground";
+import { useBrandingConfig, brandLogoUrl, type BrandingConfig } from "./branding";
 
 const docs = import.meta.glob("./docs/**/*.mdx", { eager: true }) as Record<
   string,
@@ -87,11 +88,18 @@ function WMark({ className }: { className?: string }) {
   );
 }
 
-function Brand() {
+function Brand({ config }: { config: BrandingConfig }) {
+  const logoUrl = brandLogoUrl(config);
   return (
     <div className="flex shrink-0 items-center gap-2.5">
-      <WMark className="h-5 w-5 text-primary" />
-      <span className="text-sm font-semibold tracking-tight text-foreground">API Docs</span>
+      {logoUrl ? (
+        <img src={logoUrl} alt="" className="h-6 w-auto max-w-24 object-contain" />
+      ) : (
+        <WMark className="h-5 w-5 text-primary" />
+      )}
+      <span className="text-sm font-semibold tracking-tight text-foreground">
+        {config.siteName ?? "API Docs"}
+      </span>
     </div>
   );
 }
@@ -301,6 +309,7 @@ function DocShell() {
   const slug = splat || "index";
   const articleRef = useRef<HTMLElement>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
+  const config = useBrandingConfig();
 
   const entry = docEntries.find((e) => e.slug === slug);
 
@@ -342,7 +351,7 @@ function DocShell() {
         <footer className="mx-auto max-w-3xl px-6 pb-10 sm:px-10 lg:px-12">
           <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
             <span className="text-xs text-muted-foreground">
-              {entry.title} · API Docs
+              {entry.title} · {config.siteName ?? "API Docs"}
             </span>
             <a
               href="https://weldrr.app"
@@ -366,6 +375,7 @@ function DocShell() {
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const config = useBrandingConfig();
   const isPlayground = location.pathname.startsWith("/docs/playground");
 
   return (
@@ -373,7 +383,7 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
         <div className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
-          <Brand />
+          <Brand config={config} />
           <ExpandableSearch onSelect={(slug) => navigate(`/docs/${slug}`)} />
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />

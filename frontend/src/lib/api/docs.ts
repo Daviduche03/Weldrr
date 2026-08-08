@@ -19,6 +19,20 @@ export type DocsPublishResult = {
   version: string
 }
 
+export type BrandingConfig = {
+  siteName?: string
+  font?: string
+  colors?: { primary?: string; accent?: string }
+  logo?: string
+  favicon?: string
+  ogImage?: string
+}
+
+export type BrandingAsset = {
+  path: string
+  base64: string
+}
+
 export const docsApi = {
   tree: (projectId: string): Promise<DocsTreeNode[]> =>
     http.get<DocsTreeNode[]>(`/api/projects/${projectId}/docs/tree`),
@@ -34,4 +48,14 @@ export const docsApi = {
 
   publish: (projectId: string): Promise<DocsPublishResult> =>
     http.post<DocsPublishResult>(`/api/projects/${projectId}/docs/publish`),
+
+  readBranding: (projectId: string): Promise<BrandingConfig> =>
+    http.get<BrandingConfig>(`/api/projects/${projectId}/docs/branding`),
+
+  writeBranding: (
+    projectId: string,
+    config: BrandingConfig,
+    assets?: BrandingAsset[],
+  ): Promise<{ path: string }> =>
+    http.put<{ path: string }>(`/api/projects/${projectId}/docs/branding`, { config, assets }),
 }

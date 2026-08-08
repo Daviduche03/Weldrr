@@ -216,6 +216,8 @@ export type WriteFileInput = {
   content: string
   message?: string
   branch?: string
+  /** Defaults to utf-8. Use 'base64' for binary assets (images). */
+  encoding?: 'utf-8' | 'base64'
 }
 
 export async function writeRepoFile(
@@ -225,6 +227,7 @@ export async function writeRepoFile(
 ): Promise<void> {
   const branch = input.branch ?? 'main'
   const message = input.message ?? `docs: update ${input.path}`
+  const encoding = input.encoding ?? 'utf-8'
 
   const current = await getRepoRef(accessToken, fullName, branch)
 
@@ -235,7 +238,7 @@ export async function writeRepoFile(
       method: 'POST',
       body: JSON.stringify({
         content: input.content,
-        encoding: 'utf-8',
+        encoding,
       }),
     },
   )) as { sha: string }

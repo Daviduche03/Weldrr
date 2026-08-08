@@ -24,6 +24,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { projectApi, sdkApi, sandboxApi, versionApi } from '@/lib/api'
 import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
 import { SdkViewer } from '@/modules/projects/docs-editor/sdk-viewer'
+import { BrandingSection } from '@/modules/projects/docs-editor/branding-section'
 import type {
   ArtifactVersion,
   Discovery,
@@ -873,6 +874,8 @@ export function ProjectDetailPage() {
                 </div>
               </div>
             </Card>
+
+            {project.docsUrl && <BrandingSection projectId={project.id} />}
 
             <Card title="Danger zone">
               <div className="flex flex-wrap items-center justify-between gap-3 p-6">

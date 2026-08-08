@@ -16,6 +16,18 @@ const writeFileSchema = z.object({
   content: z.string().max(2_000_000),
 })
 
+const brandingSchema = z.object({
+  config: z.record(z.unknown()),
+  assets: z
+    .array(
+      z.object({
+        path: z.string().min(1).max(200),
+        base64: z.string().max(5_000_000),
+      }),
+    )
+    .optional(),
+})
+
 export const docsController = {
   async tree(req: WorkspaceRequest, res: Response<ApiResponse<DocsTreeNode[]>>) {
     const { projectId } = projectIdParamSchema.parse(req.params)
@@ -27,6 +39,22 @@ export const docsController = {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const { path } = fileQuerySchema.parse(req.query)
     const data = await docsService.readFile(req.workspace.workspaceId, projectId, path)
+    res.json({ status: 'success', data })
+  },
+
+  async readBranding(
+    req: WorkspaceRequest,
+    res: Response<ApiResponse<Record<string, unknown>>>,
+  ) {
+    const { projectId } = projectIdParamSchema.parse(req.params)
+    const data = await docsService.readBranding(req.workspace.workspaceId, projectId)
+    res.json({ status: 'success', data })
+  },
+
+  async writeBranding(req: WorkspaceRequest, res: Response<ApiResponse<{ path: string }>>) {
+    const { projectId } = projectIdParamSchema.parse(req.params)
+    const input = brandingSchema.parse(req.body)
+    const data = await docsService.writeBranding(req.workspace.workspaceId, projectId, input)
     res.json({ status: 'success', data })
   },
 

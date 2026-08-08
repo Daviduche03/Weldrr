@@ -28,9 +28,15 @@ function fullNameFromUrl(url: string | null): string {
 }
 
 const EDITABLE_PREFIX = 'src/docs'
+const BRANDING_PATH = 'branding.json'
 
 function isEditable(path: string): boolean {
-  return path === EDITABLE_PREFIX || path.startsWith(`${EDITABLE_PREFIX}/`)
+  return (
+    path === EDITABLE_PREFIX ||
+    path.startsWith(`${EDITABLE_PREFIX}/`) ||
+    path === BRANDING_PATH ||
+    path.startsWith('public/')
+  )
 }
 
 function fileType(path: string): string {
@@ -125,6 +131,19 @@ export const docsService = {
     return { path, content, kind: fileType(path) }
   },
 
+  async readBranding(
+    workspaceId: string,
+    projectId: string,
+  ): Promise<Record<string, unknown>> {
+    const ref = await this.resolveRepo(workspaceId, projectId)
+    try {
+      const raw = await readRepoFile(ref.accessToken, ref.fullName, BRANDING_PATH, ref.branch)
+      return JSON.parse(raw) as Record<string, unknown>
+    } catch {
+      return {}
+    }
+  },
+
   async writeFile(
     workspaceId: string,
     projectId: string,
@@ -148,6 +167,53 @@ export const docsService = {
     await deleteRepoFile(ref.accessToken, ref.fullName, path, `docs: delete ${path}`, ref.branch)
     logger.info({ projectId, path }, 'Docs file deleted')
     return { path }
+  },
+
+  /**
+   * Persists branding config + assets to the docs repo. `config` is written
+   * to branding.json (utf-8); each entry in `assets` is written to
+   * public/<filename> as base64.
+   */
+  async writeBranding(
+    workspaceId: string,
+    projectId: string,
+    input: {
+      config: Record<string, unknown>
+      assets?: { path: string; base64: string }[]
+    },
+  ): Promise<{ path: string }> {
+    const ref = await this.resolveRepo(workspaceId, projectId)
+
+    const allowedAssets = /^public\/[\w.-]+\.(svg|png|jpg|jpeg|webp|ico)$/i
+    for (const asset of input.assets ?? []) {
+      if (!allowedAssets.test(asset.path)) {
+        throw new AppError(400, `Invalid asset path: ${asset.path}`)
+      }
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(asset.base64) || asset.base64.length > 5_000_000) {
+        throw new AppError(400, `Invalid base64 payload for ${asset.path}`)
+      }
+    }
+
+    // Write branding.json first so the config references exist.
+    await writeRepoFile(ref.accessToken, ref.fullName, {
+      path: BRANDING_PATH,
+      content: JSON.stringify(input.config, null, 2),
+      message: 'docs: update branding',
+      branch: ref.branch,
+    })
+
+    for (const asset of input.assets ?? []) {
+      await writeRepoFile(ref.accessToken, ref.fullName, {
+        path: asset.path,
+        content: asset.base64,
+        encoding: 'base64',
+        message: `docs: add branding asset ${asset.path}`,
+        branch: ref.branch,
+      })
+    }
+
+    logger.info({ projectId }, 'Branding updated')
+    return { path: BRANDING_PATH }
   },
 
   async publish(workspaceId: string, projectId: string): Promise<{ version: string }> {

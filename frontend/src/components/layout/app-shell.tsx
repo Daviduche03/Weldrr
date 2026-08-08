@@ -12,6 +12,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { Logo } from '@/components/logo'
+import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -196,9 +197,7 @@ export function AppShell() {
             <SidebarNav collapsed={false} />
             <div className="p-3">
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/60 p-2.5">
-                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
-                  {(user?.email ?? '?').charAt(0).toUpperCase()}
-                </span>
+                <Avatar name={user?.email ?? ''} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{user?.email}</div>
                   <button
@@ -256,9 +255,7 @@ export function AppShell() {
         <div className={cn('py-3 transition-[padding] duration-300', collapsed ? 'px-2' : 'px-3')}>
           <div className="grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-2.5">
             <span className="flex size-9 items-center justify-center">
-              <span className="inline-flex size-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
-                {(user?.email ?? '?').charAt(0).toUpperCase()}
-              </span>
+              <Avatar name={user?.email ?? ''} />
             </span>
             <span
               className={cn(
