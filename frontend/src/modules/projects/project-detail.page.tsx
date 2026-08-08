@@ -2,15 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
-  BookOpen,
   Braces,
   ExternalLink,
   FileQuestion,
   GitBranch,
-  Globe,
-  History,
   LoaderCircle,
-  Package,
   RefreshCw,
   Rocket,
   Terminal,
@@ -443,47 +439,45 @@ export function ProjectDetailPage() {
 
       <div className="mt-6">
         {tab === 'Overview' && (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Left column */}
-            <div className="space-y-6 lg:col-span-2">
-              <Card
-                title="API surface"
-                action={
-                  discovery ? (
-                    <span className="text-xs text-muted-foreground">
-                      {endpointSummary.total} endpoints
-                    </span>
-                  ) : undefined
-                }
-              >
-                {!discovery ? (
-                  <div className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
-                    <LoaderCircle className="size-4 animate-spin" />
-                    Loading endpoints…
-                  </div>
-                ) : discovery.status === 'failed' ? (
-                  <div className="p-8 text-center">
-                    <p className="text-sm text-rose-600 dark:text-rose-400">Discovery failed.</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{discovery.error}</p>
-                  </div>
-                ) : discovery.endpoints.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
-                    No endpoints extracted yet. Run discovery to analyze your spec.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
+            <div className="min-w-0">
+              {/* API surface */}
+              <section>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h2 className="text-sm font-semibold text-foreground">API surface</h2>
+                  {discovery && (
+                    <span className="text-xs text-muted-foreground">{endpointSummary.total} endpoints</span>
+                  )}
+                </div>
+                <div className="mt-3 border-t border-border">
+                  {!discovery ? (
+                    <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+                      <LoaderCircle className="size-4 animate-spin" />
+                      Loading endpoints…
+                    </div>
+                  ) : discovery.status === 'failed' ? (
+                    <div className="py-8">
+                      <p className="text-sm text-rose-600 dark:text-rose-400">Discovery failed.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{discovery.error}</p>
+                    </div>
+                  ) : discovery.endpoints.length === 0 ? (
+                    <div className="py-8 text-sm text-muted-foreground">
+                      No endpoints extracted yet. Run discovery to analyze your spec.
+                    </div>
+                  ) : (
                     <table className="w-full text-left">
                       <thead>
                         <tr className="border-b border-border text-xs text-muted-foreground">
-                          <th className="px-5 py-2.5 font-medium">Method</th>
-                          <th className="px-5 py-2.5 font-medium">Endpoint</th>
-                          <th className="px-5 py-2.5 font-medium">Summary</th>
+                          <th className="py-2.5 pr-4 font-medium">Method</th>
+                          <th className="py-2.5 pr-4 font-medium">Endpoint</th>
+                          <th className="py-2.5 font-medium">Summary</th>
                         </tr>
                       </thead>
-                      <tbody className="max-h-[22rem] overflow-y-auto divide-y divide-border">
+                      <tbody className="divide-y divide-border">
                         {discovery.endpoints.map((ep, i) => (
-                          <tr key={i} className="hover:bg-muted/50">
-                            <td className="px-5 py-2.5 align-top">
+                          <tr key={i}>
+                            <td className="py-2.5 pr-4 align-top">
                               <span
                                 className={cn(
                                   'font-mono text-xs font-semibold',
@@ -493,22 +487,22 @@ export function ProjectDetailPage() {
                                 {ep.method}
                               </span>
                             </td>
-                            <td className="px-5 py-2.5 align-top font-mono text-[13px]">
-                              {ep.path}
-                            </td>
-                            <td className="px-5 py-2.5 align-top text-[13px] text-muted-foreground">
+                            <td className="py-2.5 pr-4 align-top font-mono text-[13px]">{ep.path}</td>
+                            <td className="py-2.5 align-top text-[13px] text-muted-foreground">
                               {ep.summary ?? '—'}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                )}
-              </Card>
+                  )}
+                </div>
+              </section>
 
-              <Card title="Project">
-                <dl className="grid grid-cols-2 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+              {/* Project */}
+              <section className="mt-10">
+                <h2 className="text-sm font-semibold text-foreground">Project</h2>
+                <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
                   {[
                     { label: 'Spec type', value: project.specType.toUpperCase() },
                     { label: 'Source', value: project.specSource },
@@ -523,21 +517,19 @@ export function ProjectDetailPage() {
                     </div>
                   ))}
                 </dl>
-              </Card>
+              </section>
             </div>
 
             {/* Right column */}
-            <div className="space-y-6">
-              <Card title="Artifacts">
-                <div className="divide-y divide-border">
-                  <div className="flex items-center gap-3 px-5 py-4">
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                      <Package className="size-4" />
-                    </span>
+            <div className="min-w-0">
+              {/* Artifacts */}
+              <section>
+                <h2 className="text-sm font-semibold text-foreground">Artifacts</h2>
+                <div className="mt-3 divide-y divide-border border-t border-border">
+                  <div className="flex items-center gap-3 py-4">
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">
-                        SDK{' '}
-                        <span className="text-muted-foreground">· {languageLabels[primaryLanguage]}</span>
+                        SDK <span className="text-muted-foreground">· {languageLabels[primaryLanguage]}</span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2">
                         {latestBuild ? (
@@ -569,10 +561,7 @@ export function ProjectDetailPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center gap-3 px-5 py-4">
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                      <Globe className="size-4" />
-                    </span>
+                  <div className="flex items-center gap-3 py-4">
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">Docs</div>
                       <div className="mt-0.5 flex items-center gap-2">
@@ -605,56 +594,32 @@ export function ProjectDetailPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center gap-3 px-5 py-4">
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                      <Terminal className="size-4" />
+                  <div className="flex items-center gap-3 py-4">
+                    <div className="text-sm font-medium">CLI</div>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {project.cliEnabled ? 'Available' : 'Not enabled'}
                     </span>
-                    <div>
-                      <div className="text-sm font-medium">CLI</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {project.cliEnabled ? 'Available' : 'Not enabled'}
-                      </div>
-                    </div>
                   </div>
                 </div>
-              </Card>
+              </section>
 
-              <Card
-                title="Versions"
-                action={
-                  <History className="size-4 text-muted-foreground" />
-                }
-              >
+              {/* Versions */}
+              <section className="mt-10">
+                <h2 className="text-sm font-semibold text-foreground">Versions</h2>
                 {versionList.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-muted-foreground">
+                  <p className="mt-3 border-t border-border pt-4 text-sm text-muted-foreground">
                     No versions published yet.
-                  </div>
+                  </p>
                 ) : (
-                  <ul className="divide-y divide-border">
+                  <ul className="mt-3 divide-y divide-border border-t border-border">
                     {versionList.slice(0, 6).map((v) => (
-                      <li key={v.id} className="flex items-center gap-3 px-5 py-3">
-                        <span
-                          className={cn(
-                            'inline-flex size-7 shrink-0 items-center justify-center rounded-md border text-muted-foreground',
-                            v.artifactType === 'sdk' ? 'border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-                          )}
-                        >
-                          {v.artifactType === 'sdk' ? (
-                            <Package className="size-3.5" />
-                          ) : (
-                            <BookOpen className="size-3.5" />
-                          )}
-                        </span>
+                      <li key={v.id} className="flex items-center gap-3 py-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-[13px] font-medium">v{v.version}</span>
-                            <span className="text-xs capitalize text-muted-foreground">
-                              {v.artifactType}
-                            </span>
+                            <span className="text-xs capitalize text-muted-foreground">{v.artifactType}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatTime(v.createdAt)}
-                          </div>
+                          <div className="text-xs text-muted-foreground">{formatTime(v.createdAt)}</div>
                         </div>
                         {v.artifactUrl && (
                           <a
@@ -671,7 +636,7 @@ export function ProjectDetailPage() {
                     ))}
                   </ul>
                 )}
-              </Card>
+              </section>
             </div>
           </div>
         )}
