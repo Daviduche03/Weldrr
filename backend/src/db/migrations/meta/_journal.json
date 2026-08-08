@@ -64,6 +64,13 @@
       "when": 1786064477650,
       "tag": "0008_wealthy_bromley",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786175165110,
+      "tag": "0009_workspace_connections",
+      "breakpoints": true
     }
   ]
 }

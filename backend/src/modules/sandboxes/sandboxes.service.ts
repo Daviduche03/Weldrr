@@ -27,7 +27,7 @@ import { toSandboxResponse } from '@/modules/sandboxes/sandboxes.types'
 import type { Sandbox, DiscoveryEndpoint, Project } from '@/db/schema'
 import type { SandboxJobType, SandboxLanguage } from '@/modules/sandboxes/sandboxes.types'
 import { slugify } from '@/shared/utils/slug'
-import { githubRepository } from '@/modules/github/github.repository'
+import { connectionService } from '@/modules/connections/connections.service'
 import { createGitHubRepo } from '@/services/github'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
@@ -126,8 +126,8 @@ async function prepareGitPush(
 ): Promise<{ gitRemote: string; gitToken: string } | null> {
   if (!project.gitRepo) return null
 
-  const connection = await githubRepository.findForWorkspace(project.workspaceId)
-  if (!connection?.accessToken) {
+  const connection = await connectionService.getConnection(project.workspaceId, 'github')
+  if (!connection?.token) {
     logger.warn(
       { projectId: project.id, workspaceId: project.workspaceId },
       'No GitHub connection for workspace — artifact will not be pushed',
@@ -146,7 +146,7 @@ async function prepareGitPush(
   for (let attempt = 0; attempt < 5 && !repo; attempt += 1) {
     const name = attempt === 0 ? baseName : `${baseName}-${attempt + 1}`
     try {
-      repo = await createGitHubRepo(connection.accessToken, {
+      repo = await createGitHubRepo(connection.token, {
         name,
         description: `Weldrr-generated ${language ?? ''} SDK for ${project.name}`.trim(),
         private: isPrivate,
@@ -160,7 +160,7 @@ async function prepareGitPush(
 
   if (!repo) return null
   logger.info({ projectId: project.id, repo: repo.cloneUrl }, 'SDK repo ready for push')
-  return { gitRemote: repo.cloneUrl, gitToken: connection.accessToken }
+  return { gitRemote: repo.cloneUrl, gitToken: connection.token }
 }
 
 export const sandboxService = {

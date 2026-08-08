@@ -7,7 +7,7 @@ export const tabs = [
   'API keys',
   'Billing',
   'Notifications',
-  'GitHub',
+  'Connections',
 ] as const
 export type SettingsTab = (typeof tabs)[number]
 

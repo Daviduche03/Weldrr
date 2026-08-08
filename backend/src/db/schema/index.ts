@@ -25,6 +25,13 @@ export {
   type WorkspaceMember,
   type NewWorkspaceMember,
 } from '@/db/schema/workspace-members'
+export {
+  workspaceConnections,
+  connectionProviders,
+  type WorkspaceConnection,
+  type NewWorkspaceConnection,
+  type ConnectionProvider,
+} from '@/db/schema/workspace-connections'
 export { projects, type Project, type NewProject } from '@/db/schema/projects'
 export { apiKeys, type ApiKey, type NewApiKey } from '@/db/schema/api-keys'
 export { activity, type ActivityRow, type NewActivity } from '@/db/schema/activity'

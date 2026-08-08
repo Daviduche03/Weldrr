@@ -1,6 +1,6 @@
 import { sdkRepository } from '@/modules/sdks/sdk.repository'
 import { projectRepository } from '@/modules/projects/projects.repository'
-import { githubRepository } from '@/modules/github/github.repository'
+import { connectionService } from '@/modules/connections/connections.service'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { activityService } from '@/modules/activity/activity.service'
 import { AppError, NotFoundError } from '@/middleware/errorHandler'
@@ -80,12 +80,12 @@ async function resolveSdkRepo(
   const project = await projectRepository.findById(workspaceId, projectId)
   if (!project) throw new NotFoundError('Project not found')
 
-  const connection = await githubRepository.findForWorkspace(workspaceId)
-  if (!connection?.accessToken) {
+  const connection = await connectionService.getConnection(workspaceId, 'github')
+  if (!connection?.token) {
     throw new AppError(400, 'No GitHub connection for this workspace')
   }
 
-  const user = await getGitHubUser(connection.accessToken)
+  const user = await getGitHubUser(connection.token)
 
   // Prefer the real published repo (the artifact URL recorded when the build
   // pushed). The naive `{project}-sdk-{lang}` name can point at a stale empty
@@ -104,12 +104,12 @@ async function resolveSdkRepo(
 
   let branch = SDK_BRANCH
   try {
-    branch = await getRepoDefaultBranch(connection.accessToken, fullName)
+    branch = await getRepoDefaultBranch(connection.token, fullName)
   } catch {
     branch = SDK_BRANCH
   }
 
-  return { fullName, accessToken: connection.accessToken, branch }
+  return { fullName, accessToken: connection.token, branch }
 }
 
 function toSdkTree(nodes: RepoTreeNode[]): SdkTreeNode[] {

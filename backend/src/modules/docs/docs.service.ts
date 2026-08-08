@@ -1,6 +1,6 @@
 import { AppError, NotFoundError } from '@/middleware/errorHandler'
 import { projectRepository } from '@/modules/projects/projects.repository'
-import { githubRepository } from '@/modules/github/github.repository'
+import { connectionService } from '@/modules/connections/connections.service'
 import {
   listRepoTree,
   readRepoFile,
@@ -69,14 +69,14 @@ export const docsService = {
       throw new AppError(400, 'This project has no docs repository yet — generate docs first')
     }
 
-    const connection = await githubRepository.findForWorkspace(workspaceId)
-    if (!connection?.accessToken) {
+    const connection = await connectionService.getConnection(workspaceId, 'github')
+    if (!connection?.token) {
       throw new AppError(400, 'No GitHub connection for this workspace')
     }
 
     let branch: string
     try {
-      const defaultBranch = await getRepoDefaultBranch(connection.accessToken, fullName)
+      const defaultBranch = await getRepoDefaultBranch(connection.token, fullName)
       branch = ['main', 'master'].includes(defaultBranch) ? defaultBranch : 'main'
     } catch {
       branch = 'main'
@@ -84,7 +84,7 @@ export const docsService = {
 
     return {
       fullName,
-      accessToken: connection.accessToken,
+      accessToken: connection.token,
       branch,
     }
   },

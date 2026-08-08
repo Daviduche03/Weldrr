@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { KeyRound, Trash2, UserX } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog, type ConfirmDialogTone } from '@/components/ui/confirm-dialog'
@@ -35,7 +35,7 @@ import {
   NotificationsSection,
   type NotificationState,
 } from '@/modules/settings/sections/notifications-section'
-import { GitHubSection } from '@/modules/settings/sections/github-section'
+import { ConnectionsSection } from '@/modules/settings/sections/connections-section'
 
 function SettingsSkeleton() {
   return (
@@ -54,9 +54,12 @@ function SettingsSkeleton() {
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signOut } = useAuth()
   const { workspace, setWorkspace } = useWorkspace()
-  const [tab, setTab] = useState<SettingsTab>('Profile')
+  const [tab, setTab] = useState<SettingsTab>(() =>
+    new URLSearchParams(location.search).get('connections') ? 'Connections' : 'Profile',
+  )
   const [loading, setLoading] = useState(true)
   const [banner, setBanner] = useState<string | null>(null)
   const [pending, setPending] = useState<PendingAction | null>(null)
@@ -385,7 +388,7 @@ export function SettingsPage() {
           />
         )}
 
-        {tab === 'GitHub' && <GitHubSection />}
+        {tab === 'Connections' && <ConnectionsSection />}
       </div>
 
       {dialog && (

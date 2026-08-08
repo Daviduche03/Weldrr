@@ -2,8 +2,13 @@ import jwt from 'jsonwebtoken'
 import { config } from '@/config'
 import { AppError } from '@/middleware/errorHandler'
 import { githubRepository } from '@/modules/github/github.repository'
+import { workspaceConnectionRepository } from '@/modules/connections/connections.repository'
 import { getGitHubUser, listGitHubRepos } from '@/services/github'
 import type { GitHubRepo } from '@/services/github'
+import { encryptSecret } from '@/shared/utils/credential-cipher'
+import { getDb } from '@/db/client'
+import { workspaceMembers } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import { logger } from '@/utils/logger'
 
 const GITHUB_AUTHORIZE = 'https://github.com/login/oauth/authorize'
@@ -111,6 +116,24 @@ export const githubService = {
       accessToken,
       scopes,
     })
+
+    // Mirror into workspace-scoped connections so the publishing pipeline can
+    // resolve the credential even when GitHub was connected via onboarding or
+    // the new-project repo picker (which are user-scoped flows).
+    const memberships = await getDb()
+      .select({ workspaceId: workspaceMembers.workspaceId })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, userId))
+    for (const membership of memberships) {
+      await workspaceConnectionRepository.upsert(membership.workspaceId, {
+        provider: 'github',
+        accountLogin: user.login,
+        accountName: user.name ?? user.login,
+        avatarUrl: user.avatarUrl ?? null,
+        tokenEncrypted: encryptSecret(accessToken),
+        scopes,
+      })
+    }
 
     logger.info({ userId, login: user.login }, 'GitHub account connected')
     return { redirectUrl: frontendRedirectPath() }
