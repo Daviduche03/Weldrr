@@ -3,10 +3,17 @@ import { sdkService } from '@/modules/sdks/sdk.service'
 import { createSdkSchema, updateSdkSchema } from '@/modules/sdks/sdk.schema'
 import type { WorkspaceRequest } from '@/shared/types/request'
 import type { ApiMessageResponse, ApiResponse } from '@/shared/types/response'
-import type { SdkResponse } from '@/modules/sdks/sdk.types'
+import type { SdkResponse, SdkLanguage } from '@/modules/sdks/sdk.types'
+import type { SdkTreeNode } from '@/modules/sdks/sdk.service'
 import { z } from 'zod'
 
 const idParamSchema = z.string().uuid('Invalid sdk id')
+
+const sdkLanguageSchema = z.enum(['typescript', 'python', 'java', 'go', 'ruby', 'php'])
+
+const sdkFileQuerySchema = z.object({
+  path: z.string().min(1).max(500),
+})
 
 function parseProjectId(req: WorkspaceRequest): string {
   return req.params.projectId as string
@@ -35,5 +42,26 @@ export const sdkController = {
     const id = idParamSchema.parse(req.params.id)
     await sdkService.delete(req.workspace.workspaceId, parseProjectId(req), id)
     res.status(204).json({ status: 'success', message: 'SDK deleted' })
+  },
+
+  async tree(req: WorkspaceRequest, res: Response<ApiResponse<SdkTreeNode[]>>) {
+    const language = sdkLanguageSchema.parse(req.params.language) as SdkLanguage
+    const data = await sdkService.tree(req.workspace.workspaceId, parseProjectId(req), language)
+    res.json({ status: 'success', data })
+  },
+
+  async readFile(
+    req: WorkspaceRequest,
+    res: Response<ApiResponse<{ path: string; content: string; kind: string }>>,
+  ) {
+    const language = sdkLanguageSchema.parse(req.params.language) as SdkLanguage
+    const { path } = sdkFileQuerySchema.parse(req.query)
+    const data = await sdkService.readFile(
+      req.workspace.workspaceId,
+      parseProjectId(req),
+      language,
+      path,
+    )
+    res.json({ status: 'success', data })
   },
 }

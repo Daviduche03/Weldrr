@@ -6,6 +6,20 @@ export type CreateSdkInput = {
   language?: SdkLanguage
 }
 
+export type SdkTreeNode = {
+  path: string
+  name: string
+  type: 'tree' | 'blob'
+  kind: string
+  sha: string
+}
+
+export type SdkFile = {
+  path: string
+  content: string
+  kind: string
+}
+
 export const sdkApi = {
   list: (projectId: string): Promise<Sdk[]> =>
     http.get<Sdk[]>(`/api/projects/${projectId}/sdks`),
@@ -18,4 +32,10 @@ export const sdkApi = {
 
   remove: (projectId: string, id: string): Promise<void> =>
     http.remove<void>(`/api/projects/${projectId}/sdks/${id}`),
+
+  tree: (projectId: string, language: SdkLanguage): Promise<SdkTreeNode[]> =>
+    http.get<SdkTreeNode[]>(`/api/projects/${projectId}/sdks/${language}/tree`),
+
+  readFile: (projectId: string, language: SdkLanguage, path: string): Promise<SdkFile> =>
+    http.get<SdkFile>(`/api/projects/${projectId}/sdks/${language}/file`, { query: { path } }),
 }

@@ -382,3 +382,41 @@ html {
   border: 1px solid var(--border);
   max-width: 100%;
 }
+
+/* Shiki syntax highlighting (SDK viewer + docs preview) */
+/* shiki emits dual-theme CSS variables per token (--shiki-dark / --shiki-light);
+   we apply the right one based on the app's .dark class. */
+.shiki,
+.shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg, transparent);
+  font-style: var(--shiki-dark-font-style, normal);
+  font-weight: var(--shiki-dark-font-weight, normal);
+  text-decoration: var(--shiki-dark-text-decoration, none);
+}
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg, transparent);
+  font-style: var(--shiki-dark-font-style, normal);
+  font-weight: var(--shiki-dark-font-weight, normal);
+  text-decoration: var(--shiki-dark-text-decoration, none);
+}
+:root:not(.dark) .shiki,
+:root:not(.dark) .shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg, transparent);
+  font-style: var(--shiki-light-font-style, normal);
+  font-weight: var(--shiki-light-font-weight, normal);
+  text-decoration: var(--shiki-light-text-decoration, none);
+}
+.shiki {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+.shiki code {
+  font-family: inherit;
+}

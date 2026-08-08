@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { projectApi, sdkApi, sandboxApi, versionApi } from '@/lib/api'
 import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
+import { SdkViewer } from '@/modules/projects/docs-editor/sdk-viewer'
 import type {
   ArtifactVersion,
   Discovery,
@@ -169,6 +170,7 @@ export function ProjectDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [latestBuild, setLatestBuild] = useState<Sandbox | null>(null)
   const [docsBuild, setDocsBuild] = useState<Sandbox | null>(null)
+  const [viewingSdkLang, setViewingSdkLang] = useState<Sdk['language'] | null>(null)
 
   const { data: project, error, reload } = useAsyncData<Project | null>(
     useCallback(() => (id ? projectApi.get(id) : Promise.resolve(null)), [id]),
@@ -736,64 +738,79 @@ export function ProjectDetailPage() {
         )}
 
         {tab === 'SDKs' && (
-          <Card title="SDKs" action={<span className="text-xs text-muted-foreground">{sdkList.length} total</span>}>
-            {sdkList.length === 0 ? (
-              <EmptyState
-                icon={<Braces className="size-6" />}
-                title="No SDKs yet"
-                description="Generate an SDK in the language your users need."
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {sdkList.map((sdk) => {
-                  const meta = sdkStatusMeta[sdk.status]
-                  return (
-                    <li key={sdk.id} className="flex items-center justify-between gap-4 px-5 py-4">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium">{sdk.name}</div>
-                        <div className="text-xs capitalize text-muted-foreground">
-                          {languageLabels[sdk.language] ?? sdk.language}
+          viewingSdkLang ? (
+            <SdkViewer
+              projectId={project.id}
+              language={viewingSdkLang}
+              repoUrl={sdkVersion?.artifactUrl ?? null}
+              onBack={() => setViewingSdkLang(null)}
+            />
+          ) : (
+            <Card title="SDKs" action={<span className="text-xs text-muted-foreground">{project.sdkLanguages.length} language{project.sdkLanguages.length === 1 ? '' : 's'}</span>}>
+              {project.sdkLanguages.length === 0 ? (
+                <EmptyState
+                  icon={<Braces className="size-6" />}
+                  title="No SDKs yet"
+                  description="Generate an SDK in the language your users need."
+                />
+              ) : (
+                <ul className="divide-y divide-border">
+                  {project.sdkLanguages.map((lang) => {
+                    const sdk = sdkList.find((s) => s.language === lang)
+                    const meta = sdk ? sdkStatusMeta[sdk.status] : sdkStatusMeta.draft
+                    return (
+                      <li key={lang} className="flex items-center justify-between gap-4 px-5 py-4">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium">{languageLabels[lang] ?? lang}</div>
+                          <div className="text-xs capitalize text-muted-foreground">
+                            {languageLabels[lang] ?? lang}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-4">
-                        <StatusLabel label={meta.label} dot={meta.dot} />
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          aria-label={`Remove ${sdk.name}`}
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => removeSdk(sdk)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+                        <div className="flex shrink-0 items-center gap-4">
+                          <StatusLabel label={meta.label} dot={meta.dot} />
+                          <Button size="sm" variant="outline" onClick={() => setViewingSdkLang(lang as Sdk['language'])}>
+                            View source
+                          </Button>
+                          {sdk && (
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              aria-label={`Remove ${sdk.name}`}
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => removeSdk(sdk)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
 
-            <div className="border-t border-border px-5 py-4">
-              <div className="flex flex-wrap items-center gap-2">
-                {Object.entries(languageLabels).map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => addSdk(key)}
-                    disabled={project.sdkLanguages.includes(key)}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-sm transition-colors',
-                      project.sdkLanguages.includes(key)
-                        ? 'cursor-not-allowed border-border text-muted-foreground/50'
-                        : 'cursor-pointer border-border text-muted-foreground hover:border-ring hover:text-foreground',
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="border-t border-border px-5 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {Object.entries(languageLabels).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => addSdk(key)}
+                      disabled={project.sdkLanguages.includes(key)}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                        project.sdkLanguages.includes(key)
+                          ? 'cursor-not-allowed border-border text-muted-foreground/50'
+                          : 'cursor-pointer border-border text-muted-foreground hover:border-ring hover:text-foreground',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )
         )}
 
         {tab === 'CLI' && (

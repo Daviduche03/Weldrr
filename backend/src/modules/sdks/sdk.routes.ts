@@ -40,4 +40,16 @@ router.delete(
   asyncHandler(sdkController.remove),
 )
 
+// Read-only SDK source viewer.
+router.get(
+  '/:projectId/sdks/:language/tree',
+  validateParams,
+  asyncHandler(sdkController.tree),
+)
+router.get(
+  '/:projectId/sdks/:language/file',
+  validateParams,
+  asyncHandler(sdkController.readFile),
+)
+
 export { router as sdkRoutes }
