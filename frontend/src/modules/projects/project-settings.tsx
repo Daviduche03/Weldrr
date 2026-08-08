@@ -53,7 +53,7 @@ export function ProjectSettings({
   const repoFullName = project.gitRepo?.fullName ?? project.docsUrl
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-4xl">
       {/* Heading */}
       <div className="flex items-center justify-between gap-4">
         <div>
