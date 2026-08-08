@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   BookOpen,
   Braces,
-  Check,
   ExternalLink,
   FileQuestion,
   GitBranch,
@@ -24,7 +23,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { projectApi, sdkApi, sandboxApi, versionApi } from '@/lib/api'
 import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
 import { SdkViewer } from '@/modules/projects/docs-editor/sdk-viewer'
-import { BrandingSection } from '@/modules/projects/docs-editor/branding-section'
+import { ProjectSettings } from '@/modules/projects/project-settings'
 import type {
   ArtifactVersion,
   Discovery,
@@ -849,51 +848,15 @@ export function ProjectDetailPage() {
         )}
 
         {tab === 'Settings' && (
-          <div className="max-w-2xl space-y-6">
-            <Card title="Project settings">
-              <div className="space-y-4 p-6">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Name</label>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/50"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button size="sm" onClick={handleSaveName} disabled={saving || name.trim() === project.name}>
-                    {saving ? 'Saving…' : 'Save'}
-                  </Button>
-                  {!saving && name.trim() === project.name && (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-                      <Check className="size-3.5" />
-                      Saved
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            {project.docsUrl && <BrandingSection projectId={project.id} />}
-
-            <Card title="Danger zone">
-              <div className="flex flex-wrap items-center justify-between gap-3 p-6">
-                <div className="text-sm text-muted-foreground">
-                  Permanently delete this project and all generated artifacts.
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:bg-destructive/10"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 />
-                  Delete project
-                </Button>
-              </div>
-            </Card>
-          </div>
+          <ProjectSettings
+            project={project}
+            versions={versionList}
+            sdks={sdkList}
+            onSaveName={handleSaveName}
+            onDelete={() => setConfirmDelete(true)}
+            saving={saving}
+            deleting={deleting}
+          />
         )}
       </div>
 

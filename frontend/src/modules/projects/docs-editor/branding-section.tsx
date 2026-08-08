@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ImagePlus, LoaderCircle, Palette, Type } from 'lucide-react'
+import { Check, LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { docsApi, type BrandingConfig } from '@/lib/api/docs'
@@ -111,106 +111,102 @@ export function BrandingSection({ projectId }: { projectId: string }) {
   }
 
   return (
-    <Card title="Branding">
-      <div className="space-y-6 p-6">
-        {error && <p className="text-sm text-destructive">{error}</p>}
+    <div className="space-y-7 py-4">
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <div>
-          <label className="mb-1.5 block text-sm font-medium">Site name</label>
-          <Input
-            value={config.siteName ?? ''}
-            onChange={(e) => setConfig((c) => ({ ...c, siteName: e.target.value }))}
-            placeholder="e.g. PayGrid API"
-          />
-        </div>
+      <div>
+        <label htmlFor="site-name" className="block text-sm font-medium">
+          Site name
+        </label>
+        <Input
+          id="site-name"
+          value={config.siteName ?? ''}
+          onChange={(e) => setConfig((c) => ({ ...c, siteName: e.target.value }))}
+          placeholder="e.g. PayGrid API"
+          className="mt-2 max-w-md"
+        />
+      </div>
 
-        <div>
-          <label className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-            <Type className="size-4" /> Font
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {FONTS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setConfig((c) => ({ ...c, font: f.id }))}
-                className={cn(
-                  'rounded-full border px-3 py-1.5 text-sm transition-colors',
-                  config.font === f.id || (!config.font && f.id === 'system')
-                    ? 'border-brand bg-brand-soft text-foreground'
-                    : 'border-border text-muted-foreground hover:border-ring hover:text-foreground',
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-            <Palette className="size-4" /> Colors
-          </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ColorField
-              label="Primary"
-              value={config.colors?.primary ?? '#8d54ff'}
-              onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, primary: v } }))}
-            />
-            <ColorField
-              label="Accent"
-              value={config.colors?.accent ?? '#8d54ff'}
-              onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, accent: v } }))}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-            <ImagePlus className="size-4" /> Images
-          </label>
-          <div className="space-y-3">
-            {(
-              [
-                { kind: 'logo' as FileKind, label: 'Logo', hint: 'SVG or PNG, appears in the header.' },
-                { kind: 'favicon' as FileKind, label: 'Favicon', hint: 'SVG, PNG, or ICO.' },
-                { kind: 'ogImage' as FileKind, label: 'Social preview', hint: 'Used when your docs are shared.' },
-              ] as const
-            ).map((item) => {
-              const file = pendingFiles[item.kind]
-              const existing =
-                item.kind === 'logo' ? config.logo : item.kind === 'favicon' ? config.favicon : config.ogImage
-              return (
-                <div key={item.kind} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium">{item.label}</div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {file ? file.name : existing ? `Current: ${existing}` : 'None uploaded'}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground/70">{item.hint}</div>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => void onPickFile(item.kind)}>
-                    {file ? 'Replace' : existing ? 'Change' : 'Upload'}
-                  </Button>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 border-t border-border pt-4">
-          <Button size="sm" onClick={() => void save()} disabled={saving}>
-            {saving ? <LoaderCircle className="size-3.5 animate-spin" /> : null}
-            Save branding
-          </Button>
-          {saved && (
-            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-              <Check className="size-3.5" /> Saved — the docs site will redeploy on push.
-            </span>
-          )}
+      <div>
+        <label className="block text-sm font-medium">Font</label>
+        <div className="mt-2 flex max-w-md flex-wrap gap-2">
+          {FONTS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setConfig((c) => ({ ...c, font: f.id }))}
+              className={cn(
+                'rounded-md border px-3 py-1.5 text-sm transition-colors',
+                config.font === f.id || (!config.font && f.id === 'system')
+                  ? 'border-ring bg-accent text-foreground'
+                  : 'border-border text-muted-foreground hover:border-ring hover:text-foreground',
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
-    </Card>
+
+      <div>
+        <label className="block text-sm font-medium">Colors</label>
+        <div className="mt-2 grid max-w-md gap-3 sm:grid-cols-2">
+          <ColorField
+            label="Primary"
+            value={config.colors?.primary ?? '#8d54ff'}
+            onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, primary: v } }))}
+          />
+          <ColorField
+            label="Accent"
+            value={config.colors?.accent ?? '#8d54ff'}
+            onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, accent: v } }))}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Images</label>
+        <div className="mt-1 divide-y divide-border">
+          {(
+            [
+              { kind: 'logo' as FileKind, label: 'Logo', hint: 'SVG or PNG, appears in the header.' },
+              { kind: 'favicon' as FileKind, label: 'Favicon', hint: 'SVG, PNG, or ICO.' },
+              { kind: 'ogImage' as FileKind, label: 'Social preview', hint: 'Used when your docs are shared.' },
+            ] as const
+          ).map((item) => {
+            const file = pendingFiles[item.kind]
+            const existing =
+              item.kind === 'logo' ? config.logo : item.kind === 'favicon' ? config.favicon : config.ogImage
+            return (
+              <div key={item.kind} className="flex items-center justify-between gap-4 py-3.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{item.label}</div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {file ? file.name : existing ? `Current: ${existing}` : 'None uploaded'}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground/70">{item.hint}</div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => void onPickFile(item.kind)} className="shrink-0">
+                  {file ? 'Replace' : existing ? 'Change' : 'Upload'}
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 border-t border-border pt-5">
+        <Button size="sm" onClick={() => void save()} disabled={saving}>
+          {saving ? <LoaderCircle className="size-3.5 animate-spin" /> : null}
+          Save branding
+        </Button>
+        {saved && (
+          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+            <Check className="size-3.5" /> Saved — the docs site will redeploy on push.
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -228,16 +224,5 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         <Input value={value} onChange={(e) => onChange(e.target.value)} className="mt-0.5 h-8 font-mono text-xs" />
       </div>
     </div>
-  )
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="overflow-hidden rounded-xl border border-border bg-background">
-      <header className="border-b border-border bg-muted px-5 py-3">
-        <h2 className="text-[13px] font-medium text-foreground">{title}</h2>
-      </header>
-      {children}
-    </section>
   )
 }
