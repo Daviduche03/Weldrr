@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Building2,
   Check,
@@ -23,7 +23,6 @@ import {
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/auth-provider'
 import { planLabel, useWorkspace } from '@/modules/workspace/workspace-provider'
-import { CreateWorkspaceDialog } from '@/modules/workspace/create-workspace-dialog'
 
 const mainNav = [
   { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
@@ -34,7 +33,7 @@ const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings }]
 
 function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { workspace } = useWorkspace()
-  const [createOpen, setCreateOpen] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <>
@@ -42,7 +41,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1.5rem)] items-center rounded-lg border border-border bg-background text-left transition-colors duration-300 hover:bg-muted"
+          className="grid h-10 w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1.5rem)] items-center rounded-lg border border-border bg-background text-left transition-colors duration-300 hover:bg-muted"
         >
           <span className="flex size-full items-center justify-center">
             <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
@@ -90,13 +89,12 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+        <DropdownMenuItem onClick={() => navigate('/onboarding')}>
           <Plus className="size-4" />
           Create workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-    <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   )
 }
@@ -112,7 +110,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
           title={collapsed ? item.label : undefined}
           className={({ isActive }) =>
             cn(
-              'grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg text-sm font-medium transition-colors duration-300',
+              'grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg text-sm font-medium transition-colors duration-300',
               isActive
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -144,7 +142,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
       <NavLink
         to="/projects/new"
         title={collapsed ? 'New project' : undefined}
-        className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
+        className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
       >
         <span className="flex size-full items-center justify-center">
           <Plus className="size-4 shrink-0" />
@@ -220,10 +218,10 @@ export function AppShell() {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-40 hidden flex-col bg-background transition-[width] duration-300 lg:flex',
-          collapsed ? 'w-16' : 'w-72',
+          collapsed ? 'w-14' : 'w-72',
         )}
       >
-        <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center py-4 pl-5 pr-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center py-4 pl-5 pr-2">
           <span
             className={cn(
               'min-w-0 overflow-hidden transition-[max-width,opacity] duration-300',
@@ -256,7 +254,7 @@ export function AppShell() {
         <SidebarNav collapsed={collapsed} />
 
         <div className={cn('py-3 transition-[padding] duration-300', collapsed ? 'px-2' : 'px-3')}>
-          <div className="grid w-full min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-2.5">
+          <div className="grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-2.5">
             <span className="flex size-9 items-center justify-center">
               <span className="inline-flex size-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground">
                 {(user?.email ?? '?').charAt(0).toUpperCase()}
@@ -283,7 +281,7 @@ export function AppShell() {
 
       <div
         className={cn(
-          collapsed ? 'lg:pl-16' : 'lg:pl-72',
+          collapsed ? 'lg:pl-14' : 'lg:pl-72',
         )}
       >
         <main className="mx-auto max-w-full py-3 lg:px-4">
