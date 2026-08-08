@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { GitBranch, Package, Boxes, LoaderCircle, KeyRound, Check } from 'lucide-react'
+import { LoaderCircle, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BrandIcon } from '@/components/brand-icon'
 import { connectionApi, type ConnectionInfo, type ConnectionProvider } from '@/lib/api/connections'
 import { Section } from '@/modules/settings/settings/ui'
 import { cn } from '@/lib/utils'
@@ -20,13 +21,13 @@ const providerMeta: ProviderMeta[] = [
     provider: 'github',
     label: 'GitHub',
     desc: 'Build projects from an existing codebase and push generated docs/SDKs.',
-    icon: <GitBranch className="size-4" />,
+    icon: <BrandIcon name="github" />,
   },
   {
     provider: 'npm',
     label: 'npm',
     desc: 'Publish TypeScript SDKs to the npm registry.',
-    icon: <Package className="size-4" />,
+    icon: <BrandIcon name="npm" />,
     tokenLabel: 'npm access token',
     tokenPlaceholder: 'npm_...',
   },
@@ -34,7 +35,7 @@ const providerMeta: ProviderMeta[] = [
     provider: 'pypi',
     label: 'PyPI',
     desc: 'Publish Python SDKs to PyPI.',
-    icon: <Boxes className="size-4" />,
+    icon: <BrandIcon name="pypi" />,
     tokenLabel: 'PyPI API token',
     tokenPlaceholder: 'pypi-...',
   },
@@ -42,7 +43,7 @@ const providerMeta: ProviderMeta[] = [
     provider: 'goproxy',
     label: 'Go proxy',
     desc: 'Publish Go SDKs to your module proxy.',
-    icon: <KeyRound className="size-4" />,
+    icon: <BrandIcon name="go" />,
     tokenLabel: 'Proxy token',
     tokenPlaceholder: '••••••••••••',
   },
@@ -50,7 +51,7 @@ const providerMeta: ProviderMeta[] = [
     provider: 'maven',
     label: 'Maven Central',
     desc: 'Publish Java/Kotlin SDKs to Maven Central.',
-    icon: <KeyRound className="size-4" />,
+    icon: <BrandIcon name="maven" />,
     tokenLabel: 'Central token',
     tokenPlaceholder: '••••••••••••',
   },
@@ -58,7 +59,7 @@ const providerMeta: ProviderMeta[] = [
     provider: 'rubygems',
     label: 'RubyGems',
     desc: 'Publish Ruby SDKs to RubyGems.',
-    icon: <KeyRound className="size-4" />,
+    icon: <BrandIcon name="rubygems" />,
     tokenLabel: 'RubyGems API key',
     tokenPlaceholder: 'rubygems_...',
   },
