@@ -385,11 +385,12 @@ html {
 
 /* Shiki syntax highlighting (SDK viewer + docs preview) */
 /* shiki emits dual-theme CSS variables per token (--shiki-dark / --shiki-light);
-   we apply the right one based on the app's .dark class. */
+   we apply the right one based on the app's .dark class. Background stays
+   transparent so the code pane uses the app's own surface, not the shiki theme's. */
 .shiki,
 .shiki span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg, transparent);
+  background-color: transparent;
   font-style: var(--shiki-dark-font-style, normal);
   font-weight: var(--shiki-dark-font-weight, normal);
   text-decoration: var(--shiki-dark-text-decoration, none);
@@ -397,7 +398,7 @@ html {
 .dark .shiki,
 .dark .shiki span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg, transparent);
+  background-color: transparent;
   font-style: var(--shiki-dark-font-style, normal);
   font-weight: var(--shiki-dark-font-weight, normal);
   text-decoration: var(--shiki-dark-text-decoration, none);
@@ -405,7 +406,7 @@ html {
 :root:not(.dark) .shiki,
 :root:not(.dark) .shiki span {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg, transparent);
+  background-color: transparent;
   font-style: var(--shiki-light-font-style, normal);
   font-weight: var(--shiki-light-font-weight, normal);
   text-decoration: var(--shiki-light-text-decoration, none);
