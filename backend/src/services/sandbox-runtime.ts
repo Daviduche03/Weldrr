@@ -14,6 +14,8 @@ export type BootstrapInput = {
   spec?: Record<string, unknown>
   docsMarkdown?: string
   gitTemplate?: string
+  /** Markdown describing the generated SDKs, written to sdk.md for the docs agent. */
+  sdkContext?: string
 }
 
 export function runtimeAssetPath(rel: string): string {
@@ -134,6 +136,12 @@ export function bootstrapScript(input: BootstrapInput): string {
   if (input.docsMarkdown) {
     lines.push(
       `printf '%s' '${base64(input.docsMarkdown)}' | base64 -d > docs.md`,
+    )
+  }
+
+  if (input.sdkContext) {
+    lines.push(
+      `printf '%s' '${base64(input.sdkContext)}' | base64 -d > sdk.md`,
     )
   }
 

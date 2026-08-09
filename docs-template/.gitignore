@@ -1,0 +1,7 @@
+node_modules/
+dist/
+
+# Weldrr build context (injected at bootstrap, not part of the published site)
+docs.md
+spec.json
+sdk.md

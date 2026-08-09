@@ -19,7 +19,8 @@ You are generating a production-grade SDK from an API specification.
 
 ## Steps
 1. Read the spec and map out the endpoints, schemas, auth schemes, and SDK surface.
-2. Review the template's conventions and dependencies; install any additional runtime dependencies you need.
+2. **Work entirely inside `/workspace`** — including any temporary/verify files. Do not write to `/tmp` or other paths outside the workspace; opencode will block it and the build will hang. Keep scratch files under `/workspace` and remove them before committing.
+3. Review the template's conventions and dependencies; install any additional runtime dependencies you need.
 3. Implement:
    - HTTP client wrapper / request handling consistent with the template.
    - Typed models for the spec's schemas.
