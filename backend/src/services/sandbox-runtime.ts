@@ -13,6 +13,7 @@ export type BootstrapInput = {
   sandboxId: string
   spec?: Record<string, unknown>
   docsMarkdown?: string
+  gitTemplate?: string
 }
 
 export function runtimeAssetPath(rel: string): string {
@@ -97,6 +98,21 @@ export function bootstrapScript(input: BootstrapInput): string {
     'cd /workspace',
     `mkdir -p .opencode/skills`,
   ]
+
+  // A shallow template clone breaks pushing to the (empty) target repo:
+  // "index-pack failed" / "did not receive expected object". Deepen history
+  // against the template repo so the push sends a complete pack.
+  if (input.gitTemplate) {
+    lines.push(
+      'if [ -f .git/shallow ]; then',
+      `  log_template_url='${input.gitTemplate}'`,
+      `  if git remote add template "${input.gitTemplate}" 2>/dev/null; then`,
+      '    git fetch --unshallow template || git fetch --depth=100 template || true',
+      '    git remote remove template 2>/dev/null || true',
+      '  fi',
+      'fi',
+    )
+  }
 
   for (const skill of skills) {
     const dir = path.dirname(skill.rel)

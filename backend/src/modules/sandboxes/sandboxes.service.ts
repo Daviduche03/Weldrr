@@ -378,6 +378,7 @@ export const sandboxService = {
     const docsMarkdown = await waitForDiscovery(row.projectId, 30_000)
 
     let spec = row.spec ?? undefined
+    let gitTemplate = ''
     if (row.projectId) {
       const project = await projectRepository.findByIdGlobal(row.projectId)
       if (project) {
@@ -385,6 +386,12 @@ export const sandboxService = {
           project.spec ??
           (project.specRaw ? parseSpec(project.specRaw) : undefined) ??
           undefined
+        // For discovery the workspace is the project's own repo; for sdk/docs
+        // it's the scaffolded template (also baked into startup.sh).
+        gitTemplate =
+          row.jobType === 'discovery'
+            ? (project.gitRepo?.cloneUrl ?? '')
+            : templateFor(row.jobType, row.language ?? undefined)
       }
     }
 
@@ -395,6 +402,7 @@ export const sandboxService = {
       sandboxId: row.id,
       spec,
       docsMarkdown,
+      gitTemplate,
     })
   },
 
