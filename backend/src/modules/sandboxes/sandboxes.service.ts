@@ -324,6 +324,18 @@ export const sandboxService = {
       gitBranch = push?.gitBranch
     }
 
+    // Resolve registry publish tokens for SDK builds (npm for TS/JS, PyPI for Python).
+    let npmToken: string | undefined
+    let pypiToken: string | undefined
+    if (project && input.jobType === 'sdk') {
+      if (input.language === 'typescript' || !input.language) {
+        npmToken = (await connectionService.getToken(workspaceId, 'npm')) ?? undefined
+      }
+      if (input.language === 'python') {
+        pypiToken = (await connectionService.getToken(workspaceId, 'pypi')) ?? undefined
+      }
+    }
+
     try {
       const provisioned = await provisionSandbox({
         sandboxId: row.id,
@@ -337,6 +349,8 @@ export const sandboxService = {
         ...(gitToken ? { gitToken } : {}),
         ...(gitBranch ? { gitBranch } : {}),
         ...(artifactVersion ? { artifactVersion } : {}),
+        ...(npmToken ? { npmToken } : {}),
+        ...(pypiToken ? { pypiToken } : {}),
       })
 
       await sandboxRepository.update(workspaceId, row.id, {
@@ -464,6 +478,18 @@ export const sandboxService = {
       }
     }
 
+    // Re-resolve registry tokens for SDK builds so the .npmrc / TWINE_* env is
+    // written into the sandbox at bootstrap time.
+    let npmToken: string | undefined
+    let pypiToken: string | undefined
+    if (row.jobType === 'sdk' && row.workspaceId && (row.language === 'typescript' || row.language === 'python' || !row.language)) {
+      if (row.language === 'python') {
+        pypiToken = (await connectionService.getToken(row.workspaceId, 'pypi')) ?? undefined
+      } else {
+        npmToken = (await connectionService.getToken(row.workspaceId, 'npm')) ?? undefined
+      }
+    }
+
     return bootstrapScript({
       model: config.sandbox.opencodeModel,
       providerApiKey: config.sandbox.providerApiKey,
@@ -473,6 +499,8 @@ export const sandboxService = {
       docsMarkdown,
       gitTemplate,
       sdkContext,
+      ...(npmToken ? { npmToken } : {}),
+      ...(pypiToken ? { pypiToken } : {}),
     })
   },
 
@@ -684,7 +712,7 @@ async function autoStartArtifactBuilds(project: Project, workspaceId: string): P
 
   const jobs: { jobType: 'sdk' | 'docs'; language?: SandboxLanguage }[] = [
     ...languages.map((language) => ({ jobType: 'sdk' as const, language })),
-    { jobType: 'docs' as const },
+    ...(project.generateDocs ? [{ jobType: 'docs' as const }] : []),
   ]
 
   for (const job of jobs) {

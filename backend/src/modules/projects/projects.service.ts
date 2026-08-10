@@ -29,6 +29,7 @@ function toResponse(project: Project): ProjectResponse {
     docsVersion: project.docsVersion,
     sdkLanguages: project.sdkLanguages,
     cliEnabled: project.cliEnabled,
+    generateDocs: project.generateDocs,
     gitRepo: project.gitRepo,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
@@ -111,6 +112,7 @@ export const projectService = {
       docsUrl: '',
       sdkLanguages: input.sdkLanguages ?? [],
       cliEnabled: input.cliEnabled ?? false,
+      generateDocs: input.generateDocs ?? true,
       publishMode: input.publishMode ?? 'automerge',
     })
 
@@ -156,6 +158,7 @@ export const projectService = {
       ...(input.docsUrl !== undefined ? { docsUrl: input.docsUrl } : {}),
       ...(input.sdkLanguages !== undefined ? { sdkLanguages: input.sdkLanguages } : {}),
       ...(input.cliEnabled !== undefined ? { cliEnabled: input.cliEnabled } : {}),
+      ...(input.generateDocs !== undefined ? { generateDocs: input.generateDocs } : {}),
       ...(input.publishMode !== undefined ? { publishMode: input.publishMode } : {}),
     })
     if (!project) throw new NotFoundError('Project not found')

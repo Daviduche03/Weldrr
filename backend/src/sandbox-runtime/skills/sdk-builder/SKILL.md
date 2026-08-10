@@ -29,6 +29,18 @@ You are generating a production-grade SDK from an API specification.
 4. Run the template's test suite (`npm test`, `pytest`, etc.) and make it pass. If no tests exist, add a smoke test that instantiates the client.
 5. Ensure formatting/linting passes (`npm run lint`, etc.).
 
+## Publish to a package registry
+If a registry token is present, publish the package to the public registry so users can install it. The token is injected into the environment as described below.
+
+- **npm (TypeScript/JavaScript):** a `.npmrc` with `//registry.npmjs.org/:_authToken=...` is already written in the workspace root. Before publishing:
+  - Ensure `package.json` has `name`, `version` (set to `$WELDRR_ARTIFACT_VERSION`), `description`, a `repository`, a `files` list (or `main`/`types`/`exports` pointing at `dist`), and `types` pointing at the built declarations.
+  - Build first (`npm run build`, `tsc`, etc.) so `dist/` exists.
+  - Then `npm publish`. If the package name/version already exists on the registry, you may bump the version and retry once; otherwise note it in the summary.
+- **PyPI (Python):** a `~/.pypirc` is already written with an API-token credential (`username = __token__`). Ensure `pyproject.toml` has a valid `name`, `version`, `description`, and `[build-system]`. Build the distribution, then upload:
+  - `python -m build` (or `pip install build && python -m build`)
+  - `twine upload dist/*`
+- If no registry token is present, skip publishing and rely on the git push only.
+
 ## Completion
 When the SDK is finished:
 
@@ -37,9 +49,10 @@ When the SDK is finished:
 3. If a git remote `origin` is configured (it will be for GitHub-connected projects):
    - `git push -u origin HEAD` — credentials are pre-configured. If the push fails, retry once, then continue regardless and note it in the summary.
    - Create a **version tag**: `git tag "v$WELDRR_ARTIFACT_VERSION"` (if set) and `git push origin "v$WELDRR_ARTIFACT_VERSION"`.
-4. **MUST** call the `report_sdk_complete` tool with:
+4. **Publish** the package to npm/PyPI as described above (if a token is present). Note the published package name and version in the summary.
+5. **MUST** call the `report_sdk_complete` tool with:
    - `status`: `"finished"` (or `"failed"` if you hit an unrecoverable blocker)
-   - `summary`: a one-line description of what was built (include the version, e.g. `TypeScript SDK v1.0.0 for PayGrid`)
+   - `summary`: a one-line description of what was built (include the version, e.g. `TypeScript SDK v1.0.0 for PayGrid`, and the published npm/PyPI package name if published)
    - `artifactUrl`: the origin remote URL (e.g. `https://github.com/{owner}/{repo}`) if the push succeeded
 
 Only call `report_sdk_complete` when you are genuinely done — do not call it after every step.

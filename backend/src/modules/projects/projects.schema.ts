@@ -19,6 +19,7 @@ const projectFields = z.object({
   sdkLanguages: z.array(z.string().min(1).max(50)).max(10).optional(),
   cliEnabled: z.boolean().optional(),
   publishMode: z.enum(['automerge', 'pr']).optional(),
+  generateDocs: z.boolean().optional(),
 })
 
 export const createProjectSchema = projectFields.superRefine((value, ctx) => {

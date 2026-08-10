@@ -26,6 +26,7 @@ export type ProjectResponse = {
   docsVersion: string | null
   sdkLanguages: string[]
   cliEnabled: boolean
+  generateDocs: boolean
   gitRepo: GitRepo | null
   createdAt: Date
   updatedAt: Date
@@ -41,6 +42,7 @@ export type CreateProjectInput = {
   gitRepo?: GitRepo
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  generateDocs?: boolean
   publishMode?: PublishMode
 }
 
@@ -49,6 +51,7 @@ export type UpdateProjectInput = Partial<CreateProjectInput> & {
   docsUrl?: string
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  generateDocs?: boolean
   publishMode?: PublishMode
 }
 

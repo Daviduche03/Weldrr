@@ -59,6 +59,7 @@ export type Project = {
   docsVersion: string | null
   sdkLanguages: string[]
   cliEnabled: boolean
+  generateDocs: boolean
   gitRepo: GitRepo | null
   createdAt: string
   updatedAt: string
@@ -73,6 +74,7 @@ export type CreateProjectInput = {
   gitRepo?: GitRepo
   sdkLanguages?: string[]
   cliEnabled?: boolean
+  generateDocs?: boolean
   publishMode?: PublishMode
 }
 

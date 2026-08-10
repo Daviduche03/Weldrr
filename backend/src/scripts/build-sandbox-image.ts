@@ -4,15 +4,20 @@ import { imageBuildCommands } from '@/services/sandbox-runtime'
 import { logger } from '@/utils/logger'
 
 async function main(): Promise<void> {
+  const force = process.argv.includes('--force')
   const modal = getModalClient()
   const app = await modal.apps.fromName(config.modal.appName, { createIfMissing: true })
 
-  try {
-    await modal.images.fromName(config.modal.imageName)
-    logger.info({ image: config.modal.imageName }, 'Sandbox image already exists — skipping build')
-    return
-  } catch {
-    logger.info({ image: config.modal.imageName }, 'Sandbox image not found — building')
+  if (!force) {
+    try {
+      await modal.images.fromName(config.modal.imageName)
+      logger.info({ image: config.modal.imageName }, 'Sandbox image already exists — use --force to rebuild')
+      return
+    } catch {
+      logger.info({ image: config.modal.imageName }, 'Sandbox image not found — building')
+    }
+  } else {
+    logger.info({ image: config.modal.imageName }, 'Forced rebuild requested')
   }
 
   const image = modal.images.fromRegistry('node:22-slim').dockerfileCommands(imageBuildCommands())

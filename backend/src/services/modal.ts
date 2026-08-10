@@ -53,6 +53,10 @@ export type SandboxProvisionInput = {
   gitToken?: string
   gitBranch?: string
   artifactVersion?: string
+  /** npm publish token (workspace connection). */
+  npmToken?: string
+  /** PyPI API token (workspace connection). */
+  pypiToken?: string
 }
 
 export type SandboxProvision = {
@@ -79,6 +83,8 @@ export async function provisionSandbox(input: SandboxProvisionInput): Promise<Sa
     ...(input.gitToken ? { WELDRR_GIT_TOKEN: input.gitToken } : {}),
     ...(input.gitBranch ? { WELDRR_GIT_BRANCH: input.gitBranch } : {}),
     ...(input.artifactVersion ? { WELDRR_ARTIFACT_VERSION: input.artifactVersion } : {}),
+    ...(input.npmToken ? { WELDRR_NPM_TOKEN: input.npmToken } : {}),
+    ...(input.pypiToken ? { WELDRR_PYPI_TOKEN: input.pypiToken } : {}),
   })
 
   const sandbox = await modal.sandboxes.create(app, image, {

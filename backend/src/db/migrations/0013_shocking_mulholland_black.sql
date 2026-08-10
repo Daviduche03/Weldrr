@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "generate_docs" boolean DEFAULT true NOT NULL;

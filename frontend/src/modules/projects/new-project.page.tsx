@@ -47,6 +47,7 @@ export function NewProjectPage() {
   const [specText, setSpecText] = useState('')
   const [gitRepo, setGitRepo] = useState<GitRepo | null>(null)
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['typescript'])
+  const [generateDocs, setGenerateDocs] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -118,6 +119,7 @@ export function NewProjectPage() {
         specSource: source,
         sdkLanguages: selectedLanguages,
         cliEnabled: true,
+        generateDocs,
         ...(source === 'url' ? { specUrl: specText.trim() } : {}),
         ...(source === 'paste' || source === 'upload'
           ? { specRaw: specText }
@@ -457,14 +459,40 @@ export function NewProjectPage() {
                         </button>
                       )
                     })}
-                  </div>
+</div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-4">
+                <div>
+                  <label className="text-sm font-medium">Generate documentation</label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Host a documentation site for this API. Turn off for SDKs only.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={generateDocs}
+                  onClick={() => setGenerateDocs((v) => !v)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors',
+                    generateDocs ? 'bg-brand' : 'bg-muted',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block size-4 transform rounded-full bg-background shadow transition-transform',
+                      generateDocs ? 'translate-x-6' : 'translate-x-1',
+                    )}
+                  />
+                </button>
+              </div>
 
                 <ul className="mt-6 space-y-3 border-t border-border pt-5">
                   {[
-                    'Documentation website',
+                    ...(generateDocs ? ['Documentation website'] : []),
                     `${selectedLanguages.length || 'No'} SDK ${selectedLanguages.length === 1 ? 'language' : 'languages'}`,
-                    'Command-line interface',
+                    ...(generateDocs ? ['Command-line interface'] : []),
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2.5 text-sm">
                       <svg

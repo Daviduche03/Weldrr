@@ -302,13 +302,14 @@ export function ProjectDetailPage() {
     ])
   }
 
-  const handleSaveName = async () => {
+  const handleSaveName = async (nextName: string) => {
     if (!project || saving) return
-    const trimmed = name.trim()
+    const trimmed = nextName.trim()
     if (!trimmed || trimmed === project.name) return
     setSaving(true)
     try {
       await updateProject.mutateAsync({ id: project.id, input: { name: trimmed } })
+      setName(trimmed)
     } finally {
       setSaving(false)
     }

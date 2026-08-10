@@ -38,6 +38,9 @@ export const projects = pgTable(
       .notNull()
       .default([]),
     cliEnabled: boolean('cli_enabled').notNull().default(false),
+    /** Whether to generate/host a documentation site for this project.
+     *  When false only SDKs are built. */
+    generateDocs: boolean('generate_docs').notNull().default(true),
     /** How generated artifacts reach the team: automerge pushes to main
      *  directly (fast), 'pr' opens a pull request for review. */
     publishMode: text('publish_mode', { enum: ['automerge', 'pr'] as const })

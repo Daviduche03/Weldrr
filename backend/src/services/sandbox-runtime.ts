@@ -16,6 +16,10 @@ export type BootstrapInput = {
   gitTemplate?: string
   /** Markdown describing the generated SDKs, written to sdk.md for the docs agent. */
   sdkContext?: string
+  /** npm publish token (writes .npmrc). */
+  npmToken?: string
+  /** PyPI API token (used as TWINE_PASSWORD). */
+  pypiToken?: string
 }
 
 export function runtimeAssetPath(rel: string): string {
@@ -36,7 +40,8 @@ export function imageBuildCommands(): string[] {
   const callback = readRuntimeAsset('mcp-callback.mjs')
 
   return [
-    'RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl && rm -rf /var/lib/apt/lists/*',
+    'RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl python3 python3-pip python3-venv && rm -rf /var/lib/apt/lists/*',
+    'RUN pip3 install --break-system-packages --no-cache-dir build twine',
     'RUN npm install -g opencode-ai',
     'RUN mkdir -p /opt/weldrr',
     `RUN printf '%s' '${base64(startup)}' | base64 -d > /opt/weldrr/startup.sh && chmod +x /opt/weldrr/startup.sh`,
@@ -142,6 +147,26 @@ export function bootstrapScript(input: BootstrapInput): string {
   if (input.sdkContext) {
     lines.push(
       `printf '%s' '${base64(input.sdkContext)}' | base64 -d > sdk.md`,
+    )
+  }
+
+  // npm publish auth — write .npmrc at the package root so `npm publish` can
+  // push without interactive login.
+  if (input.npmToken) {
+    lines.push(
+      `printf '%s' '${base64(`//registry.npmjs.org/:_authToken=${input.npmToken}\n`)}' | base64 -d > .npmrc`,
+    )
+  }
+
+  // PyPI publish auth — write ~/.pypirc so `twine upload` (and `python -m
+  // twine upload`) authenticate with the API token (username is `__token__`).
+  // Written as a file rather than exported env vars because the bootstrap runs
+  // in a child shell whose exports do not survive into the agent process.
+  if (input.pypiToken) {
+    const pypirc = `[distutils]\nindex-servers =\n    pypi\n\n[pypi]\nusername = __token__\npassword = ${input.pypiToken}\n`
+    lines.push(
+      `printf '%s' '${base64(pypirc)}' | base64 -d > ~/.pypirc`,
+      `chmod 600 ~/.pypirc`,
     )
   }
 
