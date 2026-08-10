@@ -43,6 +43,11 @@ export const projects = pgTable(
     publishMode: text('publish_mode', { enum: ['automerge', 'pr'] as const })
       .notNull()
       .default('automerge'),
+    /** HEAD commit SHA of the source repo last analyzed by discovery. Used by
+     *  the push webhook to detect changes and re-run the pipeline. */
+    specCommitSha: text('spec_commit_sha'),
+    /** HMAC secret for the GitHub push webhook (one per project). */
+    webhookSecret: text('webhook_secret'),
     spec: jsonb('spec').$type<Record<string, unknown> | null>(),
     specRaw: text('spec_raw'),
     specUrl: text('spec_url'),

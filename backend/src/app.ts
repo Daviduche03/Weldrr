@@ -16,6 +16,7 @@ import { githubRoutes } from '@/modules/github/github.routes'
 import { docsRoutes } from '@/modules/docs/docs.routes'
 import { connectionRoutes } from '@/modules/connections/connections.routes'
 import { publishingRoutes } from '@/modules/publishing/publishing.routes'
+import { webhookRoutes } from '@/modules/webhooks/webhooks.routes'
 import { proxyRoutes } from '@/modules/proxy/proxy.routes'
 import { errorHandler } from '@/middleware/errorHandler'
 import { notFound } from '@/middleware/notFound'
@@ -46,7 +47,17 @@ export function createApp(): Express {
       credentials: true,
     }),
   )
-  app.use(express.json({ limit: '1mb' }))
+  // Capture the raw body for webhook signature verification (GitHub HMACs the
+  // exact bytes). The `verify` hook stores the buffer without consuming it, so
+  // express.json() can still parse the body normally.
+  app.use(
+    express.json({
+      limit: '1mb',
+      verify: (req, _res, buf) => {
+        ;(req as unknown as { rawBody?: string }).rawBody = buf.toString('utf-8')
+      },
+    }),
+  )
   app.use(requestLogger)
 
   app.get('/health', (_req, res) => {
@@ -71,6 +82,7 @@ export function createApp(): Express {
   app.use('/api/projects', docsRoutes)
   app.use('/api/connections', connectionRoutes)
   app.use('/api/projects', publishingRoutes)
+  app.use('/api/webhooks', webhookRoutes)
   app.use('/api/proxy', proxyRoutes)
 
   app.use(notFound)

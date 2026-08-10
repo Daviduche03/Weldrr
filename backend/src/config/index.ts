@@ -6,6 +6,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   PUBLIC_URL: z.string().optional(),
   RAILWAY_PUBLIC_DOMAIN: z.string().optional(),
+  /** Public URL GitHub webhooks are delivered to. In dev, point at the tunnel. */
+  WEBHOOK_URL: z.string().url('WEBHOOK_URL must be a valid URL').or(z.literal('')).default(''),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -89,6 +91,7 @@ export const config = {
   isProduction: env.NODE_ENV === 'production',
   port: env.PORT,
   appUrl: publicUrl,
+  webhookUrl: env.WEBHOOK_URL || publicUrl,
   databaseUrl: env.DATABASE_URL,
   logLevel: env.LOG_LEVEL,
   corsOrigins: env.CORS_ORIGINS.split(',')

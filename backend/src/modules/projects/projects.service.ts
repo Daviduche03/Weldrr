@@ -4,8 +4,10 @@ import { discoveryRepository } from '@/modules/discoveries/discovery.repository'
 import { discoveryService } from '@/services/discovery'
 import { issueDiscoverySandbox } from '@/modules/sandboxes/sandboxes.service'
 import { versionRepository } from '@/modules/versions/versions.repository'
+import { webhookService } from '@/modules/webhooks/webhooks.service'
 import { NotFoundError } from '@/middleware/errorHandler'
 import { offsetForPage, totalPages } from '@/shared/utils/pagination'
+import { logger } from '@/utils/logger'
 import type {
   ProjectResponse,
   CreateProjectInput,
@@ -126,6 +128,13 @@ export const projectService = {
       }
     } else if (project.specSource === 'url' || project.specSource === 'github') {
       void issueDiscoverySandbox(project.id)
+    }
+
+    // Register a push webhook so future repo changes re-trigger discovery → SDK/docs.
+    if (project.specSource === 'github' && project.gitRepo) {
+      void webhookService.registerForProject(project.id).catch((err) => {
+        logger.warn({ err, projectId: project.id }, 'Failed to register push webhook')
+      })
     }
 
     return toResponse(project)

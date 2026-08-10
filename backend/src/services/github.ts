@@ -459,3 +459,44 @@ export async function createTag(
 function encodePath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/')
 }
+
+export async function registerWebhook(
+  accessToken: string,
+  fullName: string,
+  input: {
+    url: string
+    secret: string
+    events?: string[]
+  },
+): Promise<{ id: number }> {
+  const data = (await githubRequest(`/repos/${fullName}/hooks`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'web',
+      config: {
+        url: input.url,
+        content_type: 'json',
+        secret: input.secret,
+        insecure_ssl: '0',
+      },
+      events: input.events ?? ['push'],
+      active: true,
+    }),
+  })) as { id: number }
+  return { id: data.id }
+}
+
+export async function getRepoHeadSha(
+  accessToken: string,
+  fullName: string,
+  branch = 'main',
+): Promise<string> {
+  const ref = (await githubRequest(
+    `/repos/${fullName}/git/ref/heads/${branch}`,
+    accessToken,
+  )) as { object?: { sha?: string } }
+  if (!ref.object?.sha) {
+    throw new AppError(502, `Could not resolve HEAD for ${fullName}`)
+  }
+  return ref.object.sha
+}
