@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -21,13 +21,10 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { BlockEditor } from '@/modules/projects/docs-editor/block-editor'
+import { DocsChat } from '@/modules/projects/docs-editor/docs-chat'
 import { cn } from '@/lib/utils'
 
 type TreeMap = Record<string, DocsTreeNode[]>
-
-const MdxPreview = lazy(() =>
-  import('@/modules/projects/docs-editor/mdx-preview').then((m) => ({ default: m.MdxPreview })),
-)
 
 function buildTree(nodes: DocsTreeNode[]): TreeMap {
   const map: TreeMap = {}
@@ -467,45 +464,8 @@ export function DocsEditor({
           )}
         </div>
 
-        {/* Preview */}
-        <aside className="flex w-80 shrink-0 flex-col border-l border-border">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Preview</span>
-            {docsUrl && (
-              <a
-                href={docsUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Open site <ExternalLink className="size-3" />
-              </a>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto bg-muted/20 p-4">
-            {activePath ? (
-              <Suspense
-                fallback={
-                  <div className="space-y-3">
-                    <Skeleton className="h-7 w-2/3" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-11/12" />
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="h-24 w-full" />
-                  </div>
-                }
-              >
-                <div className="docs-prose">
-                  <MdxPreview markdown={content} />
-                </div>
-              </Suspense>
-            ) : (
-              <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-                Rendered preview appears here.
-              </div>
-            )}
-          </div>
-        </aside>
+        {/* Docs AI */}
+        <DocsChat projectId={projectId} docsUrl={docsUrl} activePath={activePath} content={content} />
       </div>
 
       <ConfirmDialog

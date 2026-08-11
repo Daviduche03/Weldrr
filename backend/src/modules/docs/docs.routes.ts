@@ -15,5 +15,6 @@ router.delete('/:projectId/docs/file', asyncHandler(docsController.deleteFile))
 router.post('/:projectId/docs/publish', asyncHandler(docsController.publish))
 router.get('/:projectId/docs/branding', asyncHandler(docsController.readBranding))
 router.put('/:projectId/docs/branding', asyncHandler(docsController.writeBranding))
+router.post('/:projectId/docs/chat', asyncHandler(docsController.chat))
 
 export { router as docsRoutes }

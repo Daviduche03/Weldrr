@@ -1,6 +1,9 @@
+import { generateText } from 'ai'
+import { openai } from '@ai-sdk/openai'
 import { AppError, NotFoundError } from '@/middleware/errorHandler'
 import { projectRepository } from '@/modules/projects/projects.repository'
 import { connectionService } from '@/modules/connections/connections.service'
+import { config } from '@/config'
 import {
   listRepoTree,
   readRepoFile,
@@ -143,6 +146,67 @@ export const docsService = {
     } catch {
       return {}
     }
+  },
+
+  async chat(
+    workspaceId: string,
+    projectId: string,
+    input: {
+      messages: { role: 'user' | 'assistant'; content: string }[]
+      file?: string
+      content?: string
+    },
+  ): Promise<{ reply: string }> {
+    if (!config.ai.openaiApiKey) {
+      throw new AppError(503, 'AI chat is not configured — set OPENAI_API_KEY to enable it')
+    }
+
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+
+    let pages: string[] = []
+    let fileContext: { path: string; content: string } | null = null
+    try {
+      const ref = await this.resolveRepo(workspaceId, projectId)
+      const nodes = await listRepoTree(ref.accessToken, ref.fullName, ref.branch)
+      pages = nodes
+        .filter((n) => n.type === 'blob' && isEditable(n.path) && fileType(n.path) === 'mdx')
+        .map((n) => n.path)
+
+      if (input.file && isEditable(input.file)) {
+        if (input.content) {
+          fileContext = { path: input.file, content: input.content.slice(0, 20_000) }
+        } else if (nodes.some((n) => n.path === input.file)) {
+          const content = await readRepoFile(ref.accessToken, ref.fullName, input.file, ref.branch)
+          fileContext = { path: input.file, content: content.slice(0, 20_000) }
+        }
+      }
+    } catch (err) {
+      logger.warn({ err }, 'Could not load docs context for AI chat')
+    }
+
+    const pageList = pages.length ? pages.join('\n') : '(none yet)'
+    const system = `You are the docs-writing assistant for Weldrr, helping users write and improve the MDX documentation for their project "${project.name}".
+
+Rules:
+- Write valid Markdown / MDX (standard markdown plus tables, lists, fenced code blocks, blockquotes, inline code).
+- Be accurate and grounded in the file content you are given. Never invent APIs, endpoints, or behavior.
+- Use clear, concise technical writing.
+- When asked for a complete page, return the full MDX. When asked to improve a section, briefly explain, then show the revised markdown in a fenced code block.
+
+Pages in this project's docs (src/docs):
+${pageList}
+${fileContext ? `\nCurrently editing: ${fileContext.path}\n\nCurrent content:\n\`\`\`mdx\n${fileContext.content}\n\`\`\`` : ''}`
+
+    const { text } = await generateText({
+      model: openai(config.ai.model),
+      system,
+      messages: input.messages.map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content,
+      })),
+    })
+    return { reply: text.trim() }
   },
 
   async writeFile(

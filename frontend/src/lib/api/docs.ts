@@ -40,6 +40,15 @@ export type DocsWriteResult = {
   prUrl?: string
 }
 
+export type ChatMessage = {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export type DocsChatResult = {
+  reply: string
+}
+
 export const docsApi = {
   tree: (projectId: string): Promise<DocsTreeNode[]> =>
     http.get<DocsTreeNode[]>(`/api/projects/${projectId}/docs/tree`),
@@ -65,4 +74,10 @@ export const docsApi = {
     assets?: BrandingAsset[],
   ): Promise<{ path: string }> =>
     http.put<{ path: string }>(`/api/projects/${projectId}/docs/branding`, { config, assets }),
+
+  chat: (
+    projectId: string,
+    body: { messages: ChatMessage[]; file?: string; content?: string },
+  ): Promise<DocsChatResult> =>
+    http.post<DocsChatResult>(`/api/projects/${projectId}/docs/chat`, body),
 }

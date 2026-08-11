@@ -28,6 +28,20 @@ const brandingSchema = z.object({
     .optional(),
 })
 
+const chatSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().max(50_000),
+      }),
+    )
+    .min(1)
+    .max(50),
+  file: z.string().max(500).optional(),
+  content: z.string().max(100_000).optional(),
+})
+
 export const docsController = {
   async tree(req: WorkspaceRequest, res: Response<ApiResponse<DocsTreeNode[]>>) {
     const { projectId } = projectIdParamSchema.parse(req.params)
@@ -55,6 +69,13 @@ export const docsController = {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const input = brandingSchema.parse(req.body)
     const data = await docsService.writeBranding(req.workspace.workspaceId, projectId, input)
+    res.json({ status: 'success', data })
+  },
+
+  async chat(req: WorkspaceRequest, res: Response<ApiResponse<{ reply: string }>>) {
+    const { projectId } = projectIdParamSchema.parse(req.params)
+    const input = chatSchema.parse(req.body)
+    const data = await docsService.chat(req.workspace.workspaceId, projectId, input)
     res.json({ status: 'success', data })
   },
 
