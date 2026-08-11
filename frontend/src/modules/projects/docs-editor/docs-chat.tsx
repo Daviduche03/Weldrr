@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, ExternalLink, FileText, Sparkles } from 'lucide-react'
-import { chatStream, type ChatMessage } from '@/lib/api/docs'
+import { useEffect, useMemo, useRef } from 'react'
+import { useChat } from '@ai-sdk/react'
+import { ArrowUp, ExternalLink, FileText, Sparkles, Square } from 'lucide-react'
+import { http } from '@/lib/http'
+import { getTokens } from '@/lib/tokens'
 import { cn } from '@/lib/utils'
 
 const SUGGESTIONS = [
@@ -21,43 +23,36 @@ export function DocsChat({
   activePath: string | null
   content: string
 }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { messages, input, handleInputChange, handleSubmit, append, stop, isLoading, error } =
+    useChat({
+      api: `${http.url}/api/projects/${projectId}/docs/chat`,
+      headers: (() => {
+        const tokens = getTokens()
+        return tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : undefined
+      })(),
+    })
+
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [messages, loading])
+  }, [messages, isLoading])
 
-  async function send(prompt?: string) {
-    const text = (prompt ?? input).trim()
-    if (!text || loading) return
-    const next = [...messages, { role: 'user' as const, content: text }]
-    setMessages([...next, { role: 'assistant', content: '' }])
-    setInput('')
-    setLoading(true)
-    setError(null)
-    try {
-      await chatStream({
-        projectId,
-        messages: next,
-        file: activePath ?? undefined,
-        content: activePath ? content : undefined,
-        onDelta: (full) => {
-          setMessages((m) => {
-            const copy = [...m]
-            copy[copy.length - 1] = { role: 'assistant', content: full }
-            return copy
-          })
-        },
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reach the assistant')
-    } finally {
-      setLoading(false)
-    }
+  const contextBody = {
+    file: activePath ?? undefined,
+    content: activePath ? content : undefined,
+  }
+
+  function sendPrompt(text: string) {
+    const trimmed = text.trim()
+    if (!trimmed || isLoading) return
+    void append({ role: 'user', content: trimmed }, { body: contextBody })
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (isLoading) return
+    void handleSubmit(e, { body: contextBody })
   }
 
   return (
@@ -102,8 +97,8 @@ export function DocsChat({
                 <button
                   key={s}
                   type="button"
-                  onClick={() => void send(s)}
-                  disabled={loading}
+                  onClick={() => sendPrompt(s)}
+                  disabled={isLoading}
                   className="rounded-lg border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-brand/40 hover:bg-accent/40 hover:text-foreground disabled:opacity-50"
                 >
                   {s}
@@ -115,55 +110,67 @@ export function DocsChat({
           <div className="space-y-3">
             {messages.map((m, i) =>
               m.role === 'user' ? (
-                <div key={i} className="flex justify-end">
+                <div key={m.id} className="flex justify-end">
                   <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand px-3 py-2 text-sm text-brand-foreground">
                     <span className="whitespace-pre-wrap">{m.content}</span>
                   </div>
                 </div>
               ) : (
-                <div key={i} className="flex justify-start">
+                <div key={m.id} className="flex justify-start">
                   <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
-                    {loading && i === messages.length - 1 && !m.content ? <LoadingDots /> : <ChatMarkdown text={m.content} />}
+                    {isLoading && i === messages.length - 1 && !m.content ? (
+                      <LoadingDots />
+                    ) : (
+                      <ChatMarkdown text={m.content} />
+                    )}
                   </div>
                 </div>
               ),
             )}
-            {error && <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">{error}</div>}
+            {error && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                {error.message}
+              </div>
+            )}
             <div ref={endRef} />
           </div>
         )}
       </div>
 
-      <div className="border-t border-border p-2.5">
+      <form onSubmit={onSubmit} className="border-t border-border p-2.5">
         <div className="flex items-end gap-1.5">
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                void send()
-              }
-            }}
+            onChange={handleInputChange}
             rows={2}
             spellCheck={false}
             placeholder="Ask about the docs…"
             className="max-h-32 min-h-[2.5rem] flex-1 resize-none rounded-lg bg-muted/40 px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-[3px] focus:ring-ring/30"
           />
-          <button
-            type="button"
-            onClick={() => void send()}
-            disabled={loading || !input.trim()}
-            aria-label="Send message"
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ArrowUp className="size-4" />
-          </button>
+          {isLoading ? (
+            <button
+              type="button"
+              onClick={() => stop()}
+              aria-label="Stop generating"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive text-white transition-colors hover:opacity-90"
+            >
+              <Square className="size-3.5" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              aria-label="Send message"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ArrowUp className="size-4" />
+            </button>
+          )}
         </div>
         <p className="mt-1.5 px-0.5 text-[10px] text-muted-foreground">
           Enter to send · Shift+Enter for a new line
         </p>
-      </div>
+      </form>
     </aside>
   )
 }

@@ -1,9 +1,9 @@
 import type { Response } from 'express'
+import { pipeUIMessageStreamToResponse } from 'ai'
 import { docsService } from '@/modules/docs/docs.service'
 import type { WorkspaceRequest } from '@/shared/types/request'
 import type { ApiResponse, ApiMessageResponse } from '@/shared/types/response'
 import type { DocsTreeNode } from '@/modules/docs/docs.service'
-import { logger } from '@/utils/logger'
 import { z } from 'zod'
 
 const projectIdParamSchema = z.object({ projectId: z.string().min(1) })
@@ -78,25 +78,10 @@ export const docsController = {
     const input = chatSchema.parse(req.body)
 
     const result = await docsService.chatStream(req.workspace.workspaceId, projectId, input)
-
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
+    await pipeUIMessageStreamToResponse({
+      response: res,
+      stream: result.toUIMessageStream(),
     })
-
-    try {
-      for await (const chunk of result.textStream) {
-        res.write(chunk)
-      }
-      res.end()
-    } catch (err) {
-      logger.warn({ err }, 'Docs AI chat stream failed')
-      if (!res.writableEnded) {
-        res.end('\n\n[stream error]')
-      }
-    }
   },
 
   async writeFile(
