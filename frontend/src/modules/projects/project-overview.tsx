@@ -175,16 +175,16 @@ export function ProjectOverview({
             <TableBody>
               {recentVersions.map((v) => (
                 <TableRow key={v.id}>
-                  <TableCell>
+                  <TableCell className="py-2.5">
                     <span className="font-mono text-[13px] font-medium">v{v.version}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2.5">
                     <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs uppercase text-muted-foreground">
                       {v.artifactType === 'sdk' ? 'sdk' : 'doc'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
-                  <TableCell className="w-12">
+                  <TableCell className="py-2.5 text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
+                  <TableCell className="w-12 py-2.5">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
