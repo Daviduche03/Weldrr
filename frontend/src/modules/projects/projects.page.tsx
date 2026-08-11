@@ -4,6 +4,7 @@ import { ArrowUpRight, CircleAlert, FolderPlus, RefreshCw, Search, SearchX } fro
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useProjects } from '@/lib/queries'
 import type { Project } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -35,26 +36,26 @@ function relativeTime(iso: string): string {
 
 function RowSkeleton() {
   return (
-    <tr>
-      <td className="px-6 py-4">
+    <TableRow>
+      <TableCell>
         <Skeleton className="h-4 w-40" />
-      </td>
-      <td className="border-l border-border px-6 py-4">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-5 w-16" />
-      </td>
-      <td className="border-l border-border px-6 py-4">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-4 w-20" />
-      </td>
-      <td className="border-l border-border px-6 py-4">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-4 w-28" />
-      </td>
-      <td className="border-l border-border px-6 py-4">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-4 w-10" />
-      </td>
-      <td className="border-l border-border px-6 py-4">
+      </TableCell>
+      <TableCell className="text-right">
         <Skeleton className="ml-auto h-4 w-16" />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -120,23 +121,23 @@ export function ProjectsPage() {
           />
         ) : filtered === null ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">Project</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">Spec</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">Status</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">SDKs</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">CLI</th>
-                  <th className="border-l border-border px-6 py-3 text-right font-medium">Updated</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Spec</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>SDKs</TableHead>
+                  <TableHead>CLI</TableHead>
+                  <TableHead className="text-right">Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {Array.from({ length: 5 }, (_, i) => (
                   <RowSkeleton key={i} />
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         ) : filtered.length === 0 ? (
           projects && projects.length === 0 ? (
@@ -159,23 +160,23 @@ export function ProjectsPage() {
           )
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">Project</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">Spec</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">Status</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">SDKs</th>
-                  <th className="border-l border-border px-6 py-3 font-medium">CLI</th>
-                  <th className="border-l border-border px-6 py-3 text-right font-medium">Updated</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Spec</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>SDKs</TableHead>
+                  <TableHead>CLI</TableHead>
+                  <TableHead className="text-right">Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filtered.map((project) => {
                   const status = statusMeta[project.status]
                   return (
-                    <tr key={project.id} className="group transition-colors hover:bg-muted">
-                      <td className="px-6 py-4">
+                    <TableRow key={project.id} className="group">
+                      <TableCell>
                         <Link
                           to={`/projects/${project.id}`}
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
@@ -183,8 +184,8 @@ export function ProjectsPage() {
                           {project.name}
                           <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                         </Link>
-                      </td>
-                      <td className="border-l border-border px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span
                           className={cn(
                             'rounded-md px-2 py-0.5 font-mono text-xs font-medium uppercase',
@@ -193,14 +194,14 @@ export function ProjectsPage() {
                         >
                           {project.specType}
                         </span>
-                      </td>
-                      <td className="border-l border-border px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                           <span className={cn('size-1.5 rounded-full', status.dot)} />
                           {status.label}
                         </span>
-                      </td>
-                      <td className="border-l border-border px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="flex flex-wrap gap-1.5">
                           {project.sdkLanguages.length ? (
                             project.sdkLanguages.map((lang) => (
@@ -215,8 +216,8 @@ export function ProjectsPage() {
                             <span className="text-xs text-muted-foreground/60">—</span>
                           )}
                         </span>
-                      </td>
-                      <td className="border-l border-border px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         {project.cliEnabled ? (
                           <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
                             cli
@@ -224,15 +225,15 @@ export function ProjectsPage() {
                         ) : (
                           <span className="text-xs text-muted-foreground/60">—</span>
                         )}
-                      </td>
-                      <td className="border-l border-border px-6 py-4 text-right text-sm text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
                         {relativeTime(project.updatedAt)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

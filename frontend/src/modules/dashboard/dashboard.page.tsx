@@ -12,6 +12,7 @@ import {
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useDashboard } from '@/lib/queries'
 import type { Activity, DashboardMetrics } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -151,20 +152,20 @@ function StatusCardSkeleton() {
 
 function ActivityRowSkeleton() {
   return (
-    <tr>
-      <td className="px-6 py-3.5">
+    <TableRow>
+      <TableCell>
         <Skeleton className="h-4 w-36" />
-      </td>
-      <td className="border-l border-border px-6 py-3.5">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-4 w-56" />
-      </td>
-      <td className="border-l border-border px-6 py-3.5">
+      </TableCell>
+      <TableCell>
         <Skeleton className="h-4 w-16" />
-      </td>
-      <td className="border-l border-border px-6 py-3.5">
+      </TableCell>
+      <TableCell className="text-right">
         <Skeleton className="ml-auto h-4 w-14" />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -247,40 +248,40 @@ export function DashboardPage() {
             <ArrowUpRight className="size-4" />
           </Link>
         </div>
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-border text-xs text-muted-foreground">
-              <th className="px-6 py-3 font-medium">Project</th>
-              <th className="border-l border-border px-6 py-3 font-medium">Activity</th>
-              <th className="border-l border-border px-6 py-3 font-medium">Type</th>
-              <th className="border-l border-border px-6 py-3 text-right font-medium">When</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Project</TableHead>
+              <TableHead>Activity</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">When</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading
               ? Array.from({ length: 4 }, (_, i) => <ActivityRowSkeleton key={i} />)
               : activity.map((item) => {
                   const meta = activityMeta[item.action] ?? { label: item.action, dot: 'bg-muted' }
                   return (
-                    <tr key={item.id} className="transition-colors hover:bg-muted">
-                      <td className="px-6 py-3.5 text-sm font-medium">{item.projectName}</td>
-                      <td className="border-l border-border px-6 py-3.5 text-sm text-muted-foreground">
+                    <TableRow key={item.id}>
+                      <TableCell className="text-sm font-medium">{item.projectName}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
                         {item.detail}
-                      </td>
-                      <td className="border-l border-border px-6 py-3.5">
+                      </TableCell>
+                      <TableCell>
                         <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                           <span className={cn('size-1.5 rounded-full', meta.dot)} />
                           {meta.label}
                         </span>
-                      </td>
-                      <td className="border-l border-border px-6 py-3.5 text-right text-sm text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
                         {relativeTime(item.at)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {!loading && activity.length === 0 && (
           <EmptyState
             icon={<History className="size-6" />}
