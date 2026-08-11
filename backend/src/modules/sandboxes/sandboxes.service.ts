@@ -125,8 +125,6 @@ async function prepareGitPush(
   jobType: 'sdk' | 'docs',
   language?: string,
 ): Promise<{ gitRemote: string; gitToken: string; gitBranch: string } | null> {
-  if (!project.gitRepo) return null
-
   const connection = await connectionService.getConnection(project.workspaceId, 'github')
   if (!connection?.token) {
     logger.warn(
@@ -141,7 +139,9 @@ async function prepareGitPush(
     kind === 'docs'
       ? `${slugify(project.name) || 'project'}-docs`
       : `${slugify(project.name) || 'project'}-sdk${language ? `-${slugify(language)}` : ''}`
-  const isPrivate = project.gitRepo.private
+  // For GitHub-source projects mirror the source repo's visibility; otherwise
+  // default to a public repo so consumers can install the package by URL.
+  const isPrivate = project.gitRepo?.private ?? false
 
   let repo: { cloneUrl: string } | null = null
   for (let attempt = 0; attempt < 5 && !repo; attempt += 1) {

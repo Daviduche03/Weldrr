@@ -40,7 +40,7 @@ export function imageBuildCommands(): string[] {
   const callback = readRuntimeAsset('mcp-callback.mjs')
 
   return [
-    'RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl python3 python3-pip python3-venv && rm -rf /var/lib/apt/lists/*',
+    'RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl python3 python3-pip python3-venv python-is-python3 && rm -rf /var/lib/apt/lists/*',
     'RUN pip3 install --break-system-packages --no-cache-dir build twine',
     'RUN npm install -g opencode-ai',
     'RUN mkdir -p /opt/weldrr',
@@ -67,8 +67,19 @@ export function bootstrapScript(input: BootstrapInput): string {
 
   const provider: Record<string, unknown> = {}
   if (input.providerApiKey) {
-    provider[providerIdFor(input.model)] = {
-      options: { apiKey: input.providerApiKey },
+    const providerId = providerIdFor(input.model)
+    const custom = CUSTOM_PROVIDERS[providerId]
+    if (custom) {
+      provider[providerId] = {
+        name: custom.name,
+        npm: custom.npm,
+        options: { apiKey: input.providerApiKey, baseURL: custom.baseURL },
+        models: custom.models,
+      }
+    } else {
+      provider[providerId] = {
+        options: { apiKey: input.providerApiKey },
+      }
     }
   }
 
@@ -76,6 +87,11 @@ export function bootstrapScript(input: BootstrapInput): string {
     {
       $schema: 'https://opencode.ai/config.json',
       model: input.model,
+      // Use the same model for opencode's internal "small" tasks (session
+      // titles, summarization) so it doesn't try to reach the default OpenCode
+      // Zen endpoint, which is unreachable inside the isolated sandbox and can
+      // block the agent loop when a tool call completes.
+      small_model: input.model,
       ...(Object.keys(provider).length > 0 ? { provider } : {}),
       mcp: {
         'weldrr-callback': {
@@ -177,6 +193,42 @@ export function bootstrapScript(input: BootstrapInput): string {
 
 function providerIdFor(model: string): string {
   return model.split('/')[0] ?? 'anthropic'
+}
+
+/**
+ * Custom, OpenAI-compatible providers that opencode doesn't know about out of
+ * the box. Configured so the sandbox's opencode.json can talk to them via the
+ * AI SDK's openai-compatible driver. Keyed by provider id (the part of the
+ * model id before the first '/').
+ */
+const CUSTOM_PROVIDERS: Record<
+  string,
+  {
+    name: string
+    npm: string
+    baseURL: string
+    models: Record<string, { name?: string; id?: string }>
+  }
+> = {
+  'cline-pass': {
+    name: 'Cline Pass',
+    npm: '@ai-sdk/openai-compatible',
+    baseURL: 'https://api.cline.bot/api/v1',
+    models: {
+      'deepseek-v4-flash': {
+        name: 'deepseek-v4-flash',
+        id: 'cline-pass/deepseek-v4-flash',
+      },
+    },
+  },
+  'opencode-go': {
+    name: 'OpenCode Go',
+    npm: '@ai-sdk/openai-compatible',
+    baseURL: 'https://opencode.ai/zen/go/v1',
+    models: {
+      'deepseek-v4-flash': { name: 'DeepSeek V4 Flash' },
+    },
+  },
 }
 
 export const runtimeInfo = {
