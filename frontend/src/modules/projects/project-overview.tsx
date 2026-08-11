@@ -141,53 +141,58 @@ export function ProjectOverview({
       </section>
 
       {/* Recent versions */}
-      <section className="mt-8">
-        <h2 className="text-sm font-semibold text-foreground">Recent versions</h2>
+      <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-background">
+        <div
+          className="flex items-center justify-between gap-4 border-b border-border bg-muted px-6 py-3"
+          style={{
+            backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
+            backgroundSize: '12px 12px',
+          }}
+        >
+          <h2 className="text-sm font-medium text-foreground">Recent versions</h2>
+          <span className="text-xs text-muted-foreground">{versions.length} total</span>
+        </div>
         {recentVersions.length === 0 ? (
-          <p className="mt-3 border-t border-border pt-4 text-sm text-muted-foreground">
-            No versions published yet.
-          </p>
+          <p className="px-6 py-8 text-sm text-muted-foreground">No versions published yet.</p>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Version</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Published</TableHead>
-                  <TableHead className="w-12" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Version</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Published</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentVersions.map((v) => (
+                <TableRow key={v.id}>
+                  <TableCell>
+                    <span className="font-mono text-[13px] font-medium">v{v.version}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs uppercase text-muted-foreground">
+                      {v.artifactType === 'sdk' ? 'sdk' : 'doc'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
+                  <TableCell>
+                    {v.artifactUrl && (
+                      <a
+                        href={v.artifactUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label={`Open version ${v.version}`}
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentVersions.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell>
-                      <span className="font-mono text-[13px] font-medium">v{v.version}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs uppercase text-muted-foreground">
-                        {v.artifactType === 'sdk' ? 'sdk' : 'doc'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
-                    <TableCell>
-                      {v.artifactUrl && (
-                        <a
-                          href={v.artifactUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-muted-foreground transition-colors hover:text-foreground"
-                          aria-label={`Open version ${v.version}`}
-                        >
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
     </div>
