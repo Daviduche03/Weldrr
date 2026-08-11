@@ -56,16 +56,6 @@ const sdkStatusMeta: Record<Sdk['status'], { label: string; dot: string }> = {
   failed: { label: 'Failed', dot: 'bg-rose-500' },
 }
 
-const buildStatusMeta: Record<Sandbox['status'], { label: string; dot: string }> = {
-  issuing: { label: 'Issuing', dot: 'bg-sky-500' },
-  starting: { label: 'Starting', dot: 'bg-sky-500' },
-  ready: { label: 'Provisioned', dot: 'bg-sky-500' },
-  building: { label: 'Building', dot: 'bg-sky-500' },
-  finished: { label: 'Published', dot: 'bg-emerald-500' },
-  failed: { label: 'Failed', dot: 'bg-rose-500' },
-  terminated: { label: 'Stopped', dot: 'bg-muted-foreground' },
-}
-
 const languageLabels: Record<string, string> = {
   typescript: 'TypeScript',
   python: 'Python',
@@ -411,81 +401,11 @@ export function ProjectDetailPage() {
             sdks={sdkList}
             versions={versionList}
             builds={[...sdkBuilds, ...docsBuilds]}
+            onPublishSdk={() => void publishSdk()}
+            onPublishDocs={() => void publishDocs()}
+            publishingSdk={publishing}
+            publishingDocs={publishingDocs}
           />
-
-          {/* Publish artifacts */}
-          <section className="mt-10 max-w-2xl">
-            <h2 className="text-sm font-semibold text-foreground">Artifacts</h2>
-            <div className="mt-3 divide-y divide-border border-t border-border">
-              <div className="flex items-center gap-3 py-4">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium">
-                    SDK <span className="text-muted-foreground">· {languageLabels[primaryLanguage]}</span>
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    {latestBuild ? (
-                      <StatusLabel
-                        label={buildStatusMeta[latestBuild.status].label}
-                        dot={buildStatusMeta[latestBuild.status].dot}
-                      />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {project.sdkVersion ? `v${project.sdkVersion} published` : 'Not generated yet'}
-                      </span>
-                    )}
-                    {sdkVersion?.artifactUrl && (
-                      <a
-                        href={sdkVersion.artifactUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <GitBranch className="size-3" />
-                        repo
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" onClick={publishSdk} disabled={publishing}>
-                  <Rocket />
-                  {publishing ? 'Publishing…' : 'Publish'}
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-3 py-4">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium">Docs</div>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    {docsBuild ? (
-                      <StatusLabel
-                        label={buildStatusMeta[docsBuild.status].label}
-                        dot={buildStatusMeta[docsBuild.status].dot}
-                      />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        {project.docsVersion ? `v${project.docsVersion}` : 'Not published yet'}
-                      </span>
-                    )}
-                    {project.docsUrl && (
-                      <a
-                        href={project.docsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <GitBranch className="size-3" />
-                        repo
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" onClick={publishDocs} disabled={publishingDocs}>
-                  <Rocket />
-                  {publishingDocs ? 'Publishing…' : 'Publish'}
-                </Button>
-              </div>
-            </div>
-          </section>
         </div>
 
         <div className={cn(tab === 'Docs' ? '' : 'hidden')}>

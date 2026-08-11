@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { GitBranch, MoreHorizontal, Package } from 'lucide-react'
+import { GitBranch, MoreHorizontal, Package, Rocket } from 'lucide-react'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import {
@@ -98,12 +98,20 @@ export function ProjectOverview({
   sdks,
   versions,
   builds,
+  onPublishSdk,
+  onPublishDocs,
+  publishingSdk = false,
+  publishingDocs = false,
 }: {
   project: Project
   endpoints: DiscoveryEndpoint[]
   sdks: Sdk[]
   versions: ArtifactVersion[]
   builds: Sandbox[]
+  onPublishSdk: () => void
+  onPublishDocs: () => void
+  publishingSdk?: boolean
+  publishingDocs?: boolean
 }) {
   const succeeded = builds.filter((b) => b.status === 'finished').length
   const sdkVersions = versions.filter((v) => v.artifactType === 'sdk')
@@ -211,6 +219,18 @@ export function ProjectOverview({
                           <Package />
                           View package
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {v.artifactType === 'sdk' ? (
+                          <DropdownMenuItem onClick={onPublishSdk} disabled={publishingSdk}>
+                            <Rocket />
+                            {publishingSdk ? 'Publishing…' : 'Publish SDK'}
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={onPublishDocs} disabled={publishingDocs}>
+                            <Rocket />
+                            {publishingDocs ? 'Publishing…' : 'Publish docs'}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem disabled>
                           Set as current version
