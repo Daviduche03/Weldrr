@@ -7,7 +7,6 @@ import {
   ExternalLink,
   FileQuestion,
   GitBranch,
-  LoaderCircle,
   RefreshCw,
   Rocket,
   Trash2,
@@ -67,14 +66,6 @@ const buildStatusMeta: Record<Sandbox['status'], { label: string; dot: string }>
   terminated: { label: 'Stopped', dot: 'bg-muted-foreground' },
 }
 
-const methodColors: Record<string, string> = {
-  GET: 'text-emerald-600 dark:text-emerald-400',
-  POST: 'text-sky-600 dark:text-sky-400',
-  PUT: 'text-amber-600 dark:text-amber-400',
-  PATCH: 'text-violet-600 dark:text-violet-400',
-  DELETE: 'text-rose-600 dark:text-rose-400',
-}
-
 const languageLabels: Record<string, string> = {
   typescript: 'TypeScript',
   python: 'Python',
@@ -126,14 +117,6 @@ function StatusLabel({ label, dot }: { label: string; dot: string }) {
       {label}
     </span>
   )
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 export function formatTime(iso: string): string {
@@ -235,15 +218,6 @@ export function ProjectDetailPage() {
     () => versionList.find((v) => v.artifactType === 'sdk'),
     [versionList],
   )
-
-  const endpointSummary = useMemo(() => {
-    if (!discovery?.endpoints) return { total: 0, byMethod: {} as Record<string, number> }
-    const byMethod: Record<string, number> = {}
-    for (const ep of discovery.endpoints) {
-      byMethod[ep.method] = (byMethod[ep.method] ?? 0) + 1
-    }
-    return { total: discovery.endpoints.length, byMethod }
-  }, [discovery])
 
   const updateProject = useUpdateProject()
   const removeProject = useRemoveProject()
@@ -440,164 +414,78 @@ export function ProjectDetailPage() {
           />
 
           {/* Publish artifacts */}
-          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            {/* Left column */}
-            <div className="min-w-0">
-              {/* API surface */}
-              <section>
-                <div className="flex items-baseline justify-between gap-4">
-                  <h2 className="text-sm font-semibold text-foreground">API surface</h2>
-                  {discovery && (
-                    <span className="text-xs text-muted-foreground">{endpointSummary.total} endpoints</span>
-                  )}
-                </div>
-                <div className="mt-3 border-t border-border">
-                  {!discovery ? (
-                    <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-                      <LoaderCircle className="size-4 animate-spin" />
-                      Loading endpoints…
-                    </div>
-                  ) : discovery.status === 'failed' ? (
-                    <div className="py-8">
-                      <p className="text-sm text-rose-600 dark:text-rose-400">Discovery failed.</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{discovery.error}</p>
-                    </div>
-                  ) : discovery.endpoints.length === 0 ? (
-                    <div className="py-8 text-sm text-muted-foreground">
-                      No endpoints extracted yet. Run discovery to analyze your spec.
-                    </div>
-                  ) : (
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-border text-xs text-muted-foreground">
-                          <th className="py-2.5 pr-4 font-medium">Method</th>
-                          <th className="py-2.5 pr-4 font-medium">Endpoint</th>
-                          <th className="py-2.5 font-medium">Summary</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {discovery.endpoints.map((ep, i) => (
-                          <tr key={i}>
-                            <td className="py-2.5 pr-4 align-top">
-                              <span
-                                className={cn(
-                                  'font-mono text-xs font-semibold',
-                                  methodColors[ep.method] ?? 'text-muted-foreground',
-                                )}
-                              >
-                                {ep.method}
-                              </span>
-                            </td>
-                            <td className="py-2.5 pr-4 align-top font-mono text-[13px]">{ep.path}</td>
-                            <td className="py-2.5 align-top text-[13px] text-muted-foreground">
-                              {ep.summary ?? '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </section>
-
-              {/* Project */}
-              <section className="mt-10">
-                <h2 className="text-sm font-semibold text-foreground">Project</h2>
-                <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
-                  {[
-                    { label: 'Spec type', value: project.specType.toUpperCase() },
-                    { label: 'Source', value: project.specSource },
-                    { label: 'Docs version', value: project.docsVersion ? `v${project.docsVersion}` : '—' },
-                    { label: 'SDK version', value: project.sdkVersion ? `v${project.sdkVersion}` : '—' },
-                    { label: 'Updated', value: formatDate(project.updatedAt) },
-                    { label: 'Created', value: formatDate(project.createdAt) },
-                  ].map((row) => (
-                    <div key={row.label}>
-                      <dt className="text-xs text-muted-foreground">{row.label}</dt>
-                      <dd className="mt-1 font-mono text-[13px] capitalize">{row.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            </div>
-
-            {/* Right column */}
-            <div className="min-w-0">
-              {/* Artifacts */}
-              <section>
-                <h2 className="text-sm font-semibold text-foreground">Artifacts</h2>
-                <div className="mt-3 divide-y divide-border border-t border-border">
-                  <div className="flex items-center gap-3 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium">
-                        SDK <span className="text-muted-foreground">· {languageLabels[primaryLanguage]}</span>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        {latestBuild ? (
-                          <StatusLabel
-                            label={buildStatusMeta[latestBuild.status].label}
-                            dot={buildStatusMeta[latestBuild.status].dot}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {project.sdkVersion ? `v${project.sdkVersion} published` : 'Not generated yet'}
-                          </span>
-                        )}
-                        {sdkVersion?.artifactUrl && (
-                          <a
-                            href={sdkVersion.artifactUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            <GitBranch className="size-3" />
-                            repo
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={publishSdk} disabled={publishing}>
-                      <Rocket />
-                      {publishing ? 'Publishing…' : 'Publish'}
-                    </Button>
+          <section className="mt-10 max-w-2xl">
+            <h2 className="text-sm font-semibold text-foreground">Artifacts</h2>
+            <div className="mt-3 divide-y divide-border border-t border-border">
+              <div className="flex items-center gap-3 py-4">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">
+                    SDK <span className="text-muted-foreground">· {languageLabels[primaryLanguage]}</span>
                   </div>
-
-                  <div className="flex items-center gap-3 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium">Docs</div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        {docsBuild ? (
-                          <StatusLabel
-                            label={buildStatusMeta[docsBuild.status].label}
-                            dot={buildStatusMeta[docsBuild.status].dot}
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {project.docsVersion ? `v${project.docsVersion}` : 'Not published yet'}
-                          </span>
-                        )}
-                        {project.docsUrl && (
-                          <a
-                            href={project.docsUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                          >
-                            <GitBranch className="size-3" />
-                            repo
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={publishDocs} disabled={publishingDocs}>
-                      <Rocket />
-                      {publishingDocs ? 'Publishing…' : 'Publish'}
-                    </Button>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    {latestBuild ? (
+                      <StatusLabel
+                        label={buildStatusMeta[latestBuild.status].label}
+                        dot={buildStatusMeta[latestBuild.status].dot}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {project.sdkVersion ? `v${project.sdkVersion} published` : 'Not generated yet'}
+                      </span>
+                    )}
+                    {sdkVersion?.artifactUrl && (
+                      <a
+                        href={sdkVersion.artifactUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <GitBranch className="size-3" />
+                        repo
+                      </a>
+                    )}
                   </div>
                 </div>
-              </section>
+                <Button size="sm" variant="outline" onClick={publishSdk} disabled={publishing}>
+                  <Rocket />
+                  {publishing ? 'Publishing…' : 'Publish'}
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-3 py-4">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">Docs</div>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    {docsBuild ? (
+                      <StatusLabel
+                        label={buildStatusMeta[docsBuild.status].label}
+                        dot={buildStatusMeta[docsBuild.status].dot}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {project.docsVersion ? `v${project.docsVersion}` : 'Not published yet'}
+                      </span>
+                    )}
+                    {project.docsUrl && (
+                      <a
+                        href={project.docsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <GitBranch className="size-3" />
+                        repo
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" onClick={publishDocs} disabled={publishingDocs}>
+                  <Rocket />
+                  {publishingDocs ? 'Publishing…' : 'Publish'}
+                </Button>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
 
         <div className={cn(tab === 'Docs' ? '' : 'hidden')}>

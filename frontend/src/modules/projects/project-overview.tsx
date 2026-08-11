@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
-import { cn } from '@/lib/utils'
 import { formatTime } from '@/modules/projects/project-detail.page'
 
 function formatNumber(n: number): string {
@@ -97,8 +96,6 @@ export function ProjectOverview({
   versions: ArtifactVersion[]
   builds: Sandbox[]
 }) {
-  const sdkBuilds = builds.filter((b) => b.jobType === 'sdk')
-  const docsBuilds = builds.filter((b) => b.jobType === 'docs')
   const succeeded = builds.filter((b) => b.status === 'finished').length
   const sdkVersions = versions.filter((v) => v.artifactType === 'sdk')
   const docsVersions = versions.filter((v) => v.artifactType === 'docs')
