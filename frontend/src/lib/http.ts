@@ -1,4 +1,5 @@
 import { clearTokens, getTokens, setTokens } from '@/lib/tokens'
+import { getActiveWorkspaceId } from '@/lib/active-workspace'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 
@@ -37,6 +38,8 @@ async function request<T>(path: string, options: HttpOptions, retried = false): 
   if (auth) {
     const tokens = getTokens()
     if (tokens) headers['Authorization'] = `Bearer ${tokens.accessToken}`
+    const activeWorkspaceId = getActiveWorkspaceId()
+    if (activeWorkspaceId) headers['x-workspace-id'] = activeWorkspaceId
   }
 
   const url = new URL(API_BASE_URL + path)

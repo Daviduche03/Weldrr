@@ -79,8 +79,10 @@ export const workspaceService = {
     return toWorkspaceResponse(workspace, user)
   },
 
-  async getCurrent(userId: string): Promise<WorkspaceResponse> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
+  async getCurrent(userId: string, workspaceId?: string): Promise<WorkspaceResponse> {
+    const membership = workspaceId
+      ? await workspaceRepository.findMembershipByUserIdAndWorkspace(userId, workspaceId)
+      : await workspaceRepository.findMembershipByUserId(userId)
     if (!membership) throw new NotFoundError('No workspace found for this user')
 
     const workspace = await workspaceRepository.findById(membership.workspaceId)
@@ -98,6 +100,27 @@ export const workspaceService = {
       createdAt: workspace.createdAt,
       updatedAt: workspace.updatedAt,
     }
+  },
+
+  async list(userId: string): Promise<WorkspaceResponse[]> {
+    const memberships = await workspaceRepository.listMembershipsByUserId(userId)
+    const workspaces: WorkspaceResponse[] = []
+    for (const membership of memberships) {
+      const workspace = await workspaceRepository.findById(membership.workspaceId)
+      if (!workspace) continue
+      const members = await workspaceRepository.listMembers(workspace.id)
+      workspaces.push({
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        plan: workspace.plan,
+        role: membership.role,
+        members: members.length,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+      })
+    }
+    return workspaces
   },
 
   async update(userId: string, input: UpdateWorkspaceInput): Promise<WorkspaceResponse> {

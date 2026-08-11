@@ -5,6 +5,7 @@ import { requireWorkspace, requireRole } from '@/middleware/authorize'
 import { asyncHandler } from '@/shared/utils/async-handler'
 
 const router = Router()
+const listRouter = Router()
 
 router.use(authenticate)
 
@@ -21,4 +22,8 @@ router.post('/members', requireRole('owner', 'admin'), asyncHandler(workspaceCon
 router.patch('/members/:id', requireRole('owner', 'admin'), asyncHandler(workspaceController.updateMemberRole))
 router.delete('/members/:id', requireRole('owner', 'admin'), asyncHandler(workspaceController.removeMember))
 
-export { router as workspaceRoutes }
+// GET /api/workspaces — the user's full workspace list for the switcher.
+listRouter.use(authenticate)
+listRouter.get('/', asyncHandler(workspaceController.list))
+
+export { router as workspaceRoutes, listRouter as workspaceListRoutes }

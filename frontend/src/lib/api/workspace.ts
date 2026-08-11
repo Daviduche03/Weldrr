@@ -15,6 +15,8 @@ export type CreateWorkspaceInput = {
 export const workspaceApi = {
   get: (): Promise<Workspace> => http.get<Workspace>('/api/workspace'),
 
+  list: (): Promise<Workspace[]> => http.get<Workspace[]>('/api/workspaces'),
+
   create: (input: CreateWorkspaceInput): Promise<Workspace> =>
     http.post<Workspace>('/api/workspace', input),
 

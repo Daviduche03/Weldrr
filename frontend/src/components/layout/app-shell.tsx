@@ -33,8 +33,12 @@ const mainNav = [
 const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings }]
 
 function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
-  const { workspace } = useWorkspace()
+  const { workspace, workspaces, switchTo } = useWorkspace()
   const navigate = useNavigate()
+
+  const select = (id: string) => {
+    void switchTo(id)
+  }
 
   return (
     <>
@@ -80,15 +84,20 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           Workspaces
         </div>
         <DropdownMenuSeparator />
-        {workspace && (
-          <DropdownMenuItem>
+        {workspaces.length === 0 && (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+            No workspaces yet.
+          </div>
+        )}
+        {workspaces.map((w) => (
+          <DropdownMenuItem key={w.id} onSelect={() => select(w.id)}>
             <span className="inline-flex size-5 items-center justify-center rounded bg-muted text-muted-foreground">
               <Building2 className="size-3" />
             </span>
-            <span className="min-w-0 flex-1 truncate">{workspace.name}</span>
-            <Check className="size-4" />
+            <span className="min-w-0 flex-1 truncate">{w.name}</span>
+            {w.id === workspace?.id && <Check className="size-4" />}
           </DropdownMenuItem>
-        )}
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/workspaces/new')}>
           <Plus className="size-4" />

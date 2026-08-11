@@ -15,7 +15,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
 export function useWorkspace() {
   const workspace = useWorkspaceStore((s) => s.workspace)
+  const workspaces = useWorkspaceStore((s) => s.workspaces)
   const loading = useWorkspaceStore((s) => s.loading)
   const setWorkspace = useWorkspaceStore((s) => s.setWorkspace)
-  return { workspace, loading, setWorkspace }
+  const switchTo = useWorkspaceStore((s) => s.switchTo)
+  return { workspace, workspaces, loading, setWorkspace, switchTo }
 }

@@ -5,7 +5,7 @@ import swaggerJsdoc from 'swagger-jsdoc'
 import swaggerUi from 'swagger-ui-express'
 import { config } from '@/config'
 import { authRoutes } from '@/modules/auth/auth.routes'
-import { workspaceRoutes } from '@/modules/workspace/workspace.routes'
+import { workspaceRoutes, workspaceListRoutes } from '@/modules/workspace/workspace.routes'
 import { projectRoutes } from '@/modules/projects/projects.routes'
 import { activityRoutes } from '@/modules/activity/activity.routes'
 import { dashboardRoutes } from '@/modules/dashboard/dashboard.routes'
@@ -73,6 +73,7 @@ export function createApp(): Express {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
   app.use('/api/auth', authRoutes)
   app.use('/api/workspace', workspaceRoutes)
+  app.use('/api/workspaces', workspaceListRoutes)
   app.use('/api/projects', projectRoutes, sdkRoutes)
   app.use('/api/activity', activityRoutes)
   app.use('/api/dashboard', dashboardRoutes)

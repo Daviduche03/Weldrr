@@ -15,7 +15,21 @@ export async function requireWorkspace(
       throw new AppError(401, 'Authentication required')
     }
 
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
+    const requestedId = (req.headers['x-workspace-id'] as string | undefined)?.trim()
+
+    let membership
+    if (requestedId) {
+      membership = await workspaceRepository.findMembershipByUserIdAndWorkspace(
+        userId,
+        requestedId,
+      )
+      if (!membership) {
+        throw new AppError(403, 'You are not a member of that workspace')
+      }
+    } else {
+      membership = await workspaceRepository.findMembershipByUserId(userId)
+    }
+
     if (!membership) {
       throw new AppError(404, 'No workspace found for this user')
     }

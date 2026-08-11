@@ -25,7 +25,12 @@ export const workspaceController = {
   },
 
   async get(req: WorkspaceRequest, res: Response<ApiResponse<WorkspaceResponse>>) {
-    const data = await workspaceService.getCurrent(req.user.sub)
+    const data = await workspaceService.getCurrent(req.user.sub, req.workspace.workspaceId)
+    res.json({ status: 'success', data })
+  },
+
+  async list(req: WorkspaceRequest, res: Response<ApiResponse<WorkspaceResponse[]>>) {
+    const data = await workspaceService.list(req.user.sub)
     res.json({ status: 'success', data })
   },
 

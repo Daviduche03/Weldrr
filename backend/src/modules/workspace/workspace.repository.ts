@@ -52,6 +52,27 @@ export const workspaceRepository = {
     return member
   },
 
+  async findMembershipByUserIdAndWorkspace(
+    userId: string,
+    workspaceId: string,
+  ): Promise<Membership | undefined> {
+    const [member] = await db()
+      .select()
+      .from(workspaceMembers)
+      .where(
+        and(eq(workspaceMembers.userId, userId), eq(workspaceMembers.workspaceId, workspaceId)),
+      )
+    return member
+  },
+
+  async listMembershipsByUserId(userId: string): Promise<Membership[]> {
+    return db()
+      .select()
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, userId))
+      .orderBy(workspaceMembers.createdAt)
+  },
+
   async findMembershipByEmail(workspaceId: string, email: string): Promise<WorkspaceMember | undefined> {
     const [member] = await db()
       .select()
