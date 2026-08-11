@@ -77,7 +77,6 @@ export function SettingsPage() {
   const [profileSaved, saveProfileFlash] = useFlash()
   const [workspaceSaved, saveWorkspaceFlash] = useFlash()
   const [planSaved, savePlanFlash] = useFlash()
-  const [formInitialized, setFormInitialized] = useState(false)
 
   // Source of truth queries (cached by react-query, so navigating back to
   // settings doesn't refetch). Local state below mirrors them for editing.
@@ -96,12 +95,11 @@ export function SettingsPage() {
   }, [membersQuery.data])
 
   useEffect(() => {
-    if (!workspace || formInitialized) return
-    setFormInitialized(true)
+    if (!workspace) return
     setWsName(workspace.name)
     setWsSlug(workspace.slug)
     setSelectedPlan(workspace.plan)
-  }, [workspace, formInitialized])
+  }, [workspace])
 
   const updateProfileMutation = useUpdateProfile()
   const updateWorkspaceMutation = useUpdateWorkspace()
