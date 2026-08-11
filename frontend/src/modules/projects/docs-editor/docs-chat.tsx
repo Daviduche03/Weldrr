@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { ArrowUp, ExternalLink, FileText, Sparkles, Square } from 'lucide-react'
 import { http } from '@/lib/http'
 import { getTokens } from '@/lib/tokens'
@@ -23,36 +24,39 @@ export function DocsChat({
   activePath: string | null
   content: string
 }) {
-  const { messages, input, handleInputChange, handleSubmit, append, stop, isLoading, error } =
-    useChat({
-      api: `${http.url}/api/projects/${projectId}/docs/chat`,
-      headers: (() => {
-        const tokens = getTokens()
-        return tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : undefined
-      })(),
-    })
+  const [input, setInput] = useState('')
 
+  const { messages, status, error, sendMessage, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: `${http.url}/api/projects/${projectId}/docs/chat`,
+      headers: () => {
+        const tokens = getTokens()
+        return tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {}
+      },
+      body: () => ({
+        file: activePath ?? undefined,
+        content: activePath ? content : undefined,
+      }),
+    }),
+  })
+
+  const isLoading = status === 'submitted' || status === 'streaming'
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, isLoading])
 
-  const contextBody = {
-    file: activePath ?? undefined,
-    content: activePath ? content : undefined,
-  }
-
   function sendPrompt(text: string) {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
-    void append({ role: 'user', content: trimmed }, { body: contextBody })
+    void sendMessage({ text: trimmed })
+    setInput('')
   }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (isLoading) return
-    void handleSubmit(e, { body: contextBody })
+    sendPrompt(input)
   }
 
   return (
@@ -129,7 +133,7 @@ export function DocsChat({
             )}
             {error && (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-                {error.message}
+                {error?.message}
               </div>
             )}
             <div ref={endRef} />
@@ -141,7 +145,13 @@ export function DocsChat({
         <div className="flex items-end gap-1.5">
           <textarea
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendPrompt(input)
+              }
+            }}
             rows={2}
             spellCheck={false}
             placeholder="Ask about the docs…"
@@ -159,7 +169,7 @@ export function DocsChat({
           ) : (
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input?.trim()}
               aria-label="Send message"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
