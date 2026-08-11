@@ -124,12 +124,18 @@ export function ProjectOverview({
       </div>
 
       {/* Daily activity */}
-      <section className="mt-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-sm font-semibold text-foreground">Daily activity</h2>
+      <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-background">
+        <div
+          className="flex items-center justify-between gap-4 border-b border-border bg-muted px-6 py-3"
+          style={{
+            backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
+            backgroundSize: '12px 12px',
+          }}
+        >
+          <h2 className="text-sm font-medium text-foreground">Daily activity</h2>
           <span className="text-xs text-muted-foreground">Last 30 days · builds</span>
         </div>
-        <div className="mt-3 rounded-xl border border-border bg-background p-4">
+        <div className="p-4">
           <ActivityChart builds={builds} />
         </div>
       </section>
