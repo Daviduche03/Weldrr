@@ -50,6 +50,28 @@ async function githubRequest(
   return res.json()
 }
 
+export async function getGitHubRepo(
+  accessToken: string,
+  name: string,
+): Promise<{ cloneUrl: string; htmlUrl: string } | null> {
+  const res = await fetch(`${GITHUB_API}/repos/${name}`, {
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: 'application/vnd.github+json',
+      'x-github-api-version': '2022-11-28',
+      'user-agent': 'weldrr',
+    },
+    signal: AbortSignal.timeout(15_000),
+  })
+  if (res.status === 404) return null
+  if (res.status === 401 || res.status === 403) {
+    throw new AppError(401, 'GitHub connection expired — please reconnect')
+  }
+  if (!res.ok) throw new AppError(502, `GitHub API returned HTTP ${res.status}`)
+  const data = (await res.json()) as { clone_url: string; html_url: string }
+  return { cloneUrl: data.clone_url, htmlUrl: data.html_url }
+}
+
 export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
   const data = (await githubRequest('/user', accessToken)) as {
     id: number

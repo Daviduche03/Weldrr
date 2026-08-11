@@ -29,7 +29,7 @@ import type { Sandbox, DiscoveryEndpoint, Project } from '@/db/schema'
 import type { SandboxJobType, SandboxLanguage } from '@/modules/sandboxes/sandboxes.types'
 import { slugify } from '@/shared/utils/slug'
 import { connectionService } from '@/modules/connections/connections.service'
-import { createGitHubRepo } from '@/services/github'
+import { createGitHubRepo, getGitHubRepo } from '@/services/github'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
 
@@ -144,18 +144,29 @@ async function prepareGitPush(
   const isPrivate = project.gitRepo?.private ?? false
 
   let repo: { cloneUrl: string } | null = null
-  for (let attempt = 0; attempt < 5 && !repo; attempt += 1) {
-    const name = attempt === 0 ? baseName : `${baseName}-${attempt + 1}`
-    try {
-      repo = await createGitHubRepo(connection.token, {
-        name,
-        description: `Weldrr-generated ${language ?? ''} SDK for ${project.name}`.trim(),
-        private: isPrivate,
-      })
-    } catch (err) {
-      const isConflict = err instanceof AppError && err.statusCode === 409
-      if (!isConflict) throw err
-      if (attempt === 4) throw err
+  // First try to reuse an existing repo of the base name (so reruns push to the
+  // same stable target rather than piling up `-2`, `-3`, ... shells). Only if it
+  // does not exist do we create a new one.
+  const existing = await getGitHubRepo(connection.token, baseName).catch(() => null)
+  if (existing) {
+    repo = { cloneUrl: existing.cloneUrl }
+  } else {
+    for (let attempt = 0; attempt < 5 && !repo; attempt += 1) {
+      const name = attempt === 0 ? baseName : `${baseName}-${attempt + 1}`
+      // Skip names that already exist so creation doesn't 409 into dead ends.
+      const occupied = await getGitHubRepo(connection.token, name).catch(() => null)
+      if (occupied) continue
+      try {
+        repo = await createGitHubRepo(connection.token, {
+          name,
+          description: `Weldrr-generated ${language ?? ''} SDK for ${project.name}`.trim(),
+          private: isPrivate,
+        })
+      } catch (err) {
+        const isConflict = err instanceof AppError && err.statusCode === 409
+        if (!isConflict) throw err
+        if (attempt === 4) throw err
+      }
     }
   }
 
