@@ -35,6 +35,8 @@ function base64(value: string): string {
 }
 
 /** Dockerfile steps that bake the runtime assets into the sandbox image. */
+const OPENCODE_VERSION = '1.18.15'
+
 export function imageBuildCommands(): string[] {
   const startup = readRuntimeAsset('startup.sh')
   const callback = readRuntimeAsset('mcp-callback.mjs')
@@ -42,7 +44,7 @@ export function imageBuildCommands(): string[] {
   return [
     'RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl python3 python3-pip python3-venv python-is-python3 && rm -rf /var/lib/apt/lists/*',
     'RUN pip3 install --break-system-packages --no-cache-dir build twine',
-    'RUN npm install -g opencode-ai',
+    `RUN npm install -g opencode-ai@${OPENCODE_VERSION}`,
     'RUN mkdir -p /opt/weldrr',
     `RUN printf '%s' '${base64(startup)}' | base64 -d > /opt/weldrr/startup.sh && chmod +x /opt/weldrr/startup.sh`,
     `RUN printf '%s' '${base64(callback)}' | base64 -d > /opt/weldrr/mcp-callback.mjs && chmod +x /opt/weldrr/mcp-callback.mjs`,
@@ -109,6 +111,11 @@ export function bootstrapScript(input: BootstrapInput): string {
         list: 'allow',
         read: 'allow',
         task: 'allow',
+        // The agent legitimately reads ~/.pypirc, ~/.npmrc and writes to
+        // /tmp/opencode during builds. Without this, opencode raises an
+        // un-answerable `external_directory` prompt (no human in the sandbox)
+        // and the agent loop hangs forever.
+        external_directory: 'allow',
       },
     },
     null,

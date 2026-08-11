@@ -59,7 +59,8 @@ if [ ! -f /workspace/opencode.json ]; then
     "grep": "allow",
     "list": "allow",
     "read": "allow",
-    "task": "allow"
+    "task": "allow",
+    "external_directory": "allow"
   }
 }
 EOF
