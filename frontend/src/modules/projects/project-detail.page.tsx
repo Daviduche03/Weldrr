@@ -91,15 +91,6 @@ function Card({
   )
 }
 
-function VersionChip({ version }: { version: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-      <span className="text-muted-foreground">v</span>
-      {version}
-    </span>
-  )
-}
-
 function StatusLabel({ label, dot }: { label: string; dot: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -341,8 +332,6 @@ export function ProjectDetailPage() {
               {project.name}
             </h1>
             <StatusLabel label={status.label} dot={status.dot} />
-            {project.sdkVersion && <VersionChip version={project.sdkVersion} />}
-            {project.docsVersion && <VersionChip version={project.docsVersion} />}
             {project.gitRepo && (
               <a
                 href={`https://github.com/${project.gitRepo.fullName}`}
