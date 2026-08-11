@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { DocsEditor } from '@/modules/projects/docs-editor/docs-editor'
 import { SdkViewer } from '@/modules/projects/docs-editor/sdk-viewer'
 import { ProjectSettings } from '@/modules/projects/project-settings'
+import { ProjectOverview } from '@/modules/projects/project-overview'
 import {
   useProject,
   useDiscovery,
@@ -135,7 +136,7 @@ function formatDate(iso: string): string {
   })
 }
 
-function formatTime(iso: string): string {
+export function formatTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -429,7 +430,17 @@ export function ProjectDetailPage() {
 
       <div className="mt-6">
         <div className={cn(tab === 'Overview' ? '' : 'hidden')}>
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          {/* Metrics dashboard */}
+          <ProjectOverview
+            project={project}
+            endpoints={discovery?.endpoints ?? []}
+            sdks={sdkList}
+            versions={versionList}
+            builds={[...sdkBuilds, ...docsBuilds]}
+          />
+
+          {/* Publish artifacts */}
+          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Left column */}
             <div className="min-w-0">
               {/* API surface */}
@@ -584,41 +595,6 @@ export function ProjectDetailPage() {
                     </Button>
                   </div>
                 </div>
-              </section>
-
-              {/* Versions */}
-              <section className="mt-10">
-                <h2 className="text-sm font-semibold text-foreground">Versions</h2>
-                {versionList.length === 0 ? (
-                  <p className="mt-3 border-t border-border pt-4 text-sm text-muted-foreground">
-                    No versions published yet.
-                  </p>
-                ) : (
-                  <ul className="mt-3 divide-y divide-border border-t border-border">
-                    {versionList.slice(0, 6).map((v) => (
-                      <li key={v.id} className="flex items-center gap-3 py-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[13px] font-medium">v{v.version}</span>
-                            <span className="text-xs capitalize text-muted-foreground">{v.artifactType}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">{formatTime(v.createdAt)}</div>
-                        </div>
-                        {v.artifactUrl && (
-                          <a
-                            href={v.artifactUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label={`Open version ${v.version}`}
-                          >
-                            <ExternalLink className="size-3.5" />
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </section>
             </div>
           </div>
