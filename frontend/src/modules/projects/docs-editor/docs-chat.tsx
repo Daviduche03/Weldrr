@@ -13,6 +13,17 @@ const SUGGESTIONS = [
   'Draft an FAQ section',
 ]
 
+function messageText(m: { content?: string; parts?: { type?: string; text?: string }[] }): string {
+  if (m.content) return m.content
+  if (Array.isArray(m.parts)) {
+    return m.parts
+      .filter((p) => p.type === 'text' && p.text)
+      .map((p) => p.text ?? '')
+      .join('')
+  }
+  return ''
+}
+
 export function DocsChat({
   projectId,
   docsUrl,
@@ -116,16 +127,16 @@ export function DocsChat({
               m.role === 'user' ? (
                 <div key={m.id} className="flex justify-end">
                   <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand px-3 py-2 text-sm text-brand-foreground">
-                    <span className="whitespace-pre-wrap">{m.content}</span>
+                    <span className="whitespace-pre-wrap">{messageText(m)}</span>
                   </div>
                 </div>
               ) : (
                 <div key={m.id} className="flex justify-start">
                   <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
-                    {isLoading && i === messages.length - 1 && !m.content ? (
+                    {isLoading && i === messages.length - 1 && !messageText(m) ? (
                       <LoadingDots />
                     ) : (
-                      <ChatMarkdown text={m.content} />
+                      <ChatMarkdown text={messageText(m)} />
                     )}
                   </div>
                 </div>
