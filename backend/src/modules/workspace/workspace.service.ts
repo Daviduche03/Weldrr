@@ -30,6 +30,21 @@ function sortMembers(members: WorkspaceMember[]): WorkspaceMember[] {
   return [...members].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role])
 }
 
+/** Resolves the caller's membership in the given workspace (falls back to the
+ * first membership when no workspace id is supplied). All workspace-scoped
+ * operations must use this so they target the active workspace, never the
+ * user's first membership. */
+async function resolveMembership(
+  userId: string,
+  workspaceId?: string,
+): Promise<NonNullable<Awaited<ReturnType<typeof workspaceRepository.findMembershipByUserIdAndWorkspace>>>> {
+  const membership = workspaceId
+    ? await workspaceRepository.findMembershipByUserIdAndWorkspace(userId, workspaceId)
+    : await workspaceRepository.findMembershipByUserId(userId)
+  if (!membership) throw new NotFoundError('No workspace found for this user')
+  return membership
+}
+
 async function toWorkspaceResponse(
   workspace: NonNullable<Awaited<ReturnType<typeof workspaceRepository.findById>>>,
   user: User,
@@ -123,9 +138,8 @@ export const workspaceService = {
     return workspaces
   },
 
-  async update(userId: string, input: UpdateWorkspaceInput): Promise<WorkspaceResponse> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async update(userId: string, workspaceId: string, input: UpdateWorkspaceInput): Promise<WorkspaceResponse> {
+    const membership = await resolveMembership(userId, workspaceId)
 
     if (input.plan && membership.role !== 'owner') {
       throw new ForbiddenError('Only the workspace owner can change the plan')
@@ -170,25 +184,22 @@ export const workspaceService = {
     }
   },
 
-  async delete(userId: string): Promise<void> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async delete(userId: string, workspaceId: string): Promise<void> {
+    const membership = await resolveMembership(userId, workspaceId)
     if (membership.role !== 'owner') throw new ForbiddenError('Only the owner can delete the workspace')
 
     await workspaceRepository.deleteWorkspace(membership.workspaceId)
   },
 
-  async listMembers(userId: string): Promise<MemberResponse[]> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async listMembers(userId: string, workspaceId: string): Promise<MemberResponse[]> {
+    const membership = await resolveMembership(userId, workspaceId)
 
     const members = await workspaceRepository.listMembers(membership.workspaceId)
     return sortMembers(members).map(toMemberResponse)
   },
 
-  async inviteMember(userId: string, input: InviteMemberInput): Promise<MemberResponse> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async inviteMember(userId: string, workspaceId: string, input: InviteMemberInput): Promise<MemberResponse> {
+    const membership = await resolveMembership(userId, workspaceId)
 
     const existing = await workspaceRepository.findMembershipByEmail(membership.workspaceId, input.email)
     if (existing) throw new AppError(409, 'That email is already a member')
@@ -212,9 +223,13 @@ export const workspaceService = {
     return toMemberResponse(member)
   },
 
-  async updateMemberRole(userId: string, memberId: string, role: WorkspaceRole): Promise<MemberResponse> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async updateMemberRole(
+    userId: string,
+    workspaceId: string,
+    memberId: string,
+    role: WorkspaceRole,
+  ): Promise<MemberResponse> {
+    const membership = await resolveMembership(userId, workspaceId)
 
     if (!['admin', 'member'].includes(role)) {
       throw new AppError(400, 'Invalid role')
@@ -242,9 +257,8 @@ export const workspaceService = {
     return toMemberResponse(updated)
   },
 
-  async removeMember(userId: string, memberId: string): Promise<void> {
-    const membership = await workspaceRepository.findMembershipByUserId(userId)
-    if (!membership) throw new NotFoundError('No workspace found for this user')
+  async removeMember(userId: string, workspaceId: string, memberId: string): Promise<void> {
+    const membership = await resolveMembership(userId, workspaceId)
 
     const target = await workspaceRepository.findMemberById(memberId)
     if (!target || target.workspaceId !== membership.workspaceId) {
