@@ -198,8 +198,24 @@ export function bootstrapScript(input: BootstrapInput): string {
   return lines.join('\n')
 }
 
-function providerIdFor(model: string): string {
+export function providerIdFor(model: string): string {
   return model.split('/')[0] ?? 'anthropic'
+}
+
+/**
+ * Resolves the OpenAI-compatible provider credentials + endpoint that a given
+ * model id should talk to. Reused by the sandbox bootstrap and by server-side
+ * callers (e.g. the docs AI chat) so they hit the same provider "sub" and URL
+ * the sandboxes use.
+ */
+export function resolveOpenAiCompatibleProvider(
+  model: string,
+  apiKey: string,
+): { providerId: string; baseURL: string; apiKey: string } | null {
+  const providerId = providerIdFor(model)
+  const custom = CUSTOM_PROVIDERS[providerId]
+  if (!custom || !custom.baseURL) return null
+  return { providerId, baseURL: custom.baseURL, apiKey }
 }
 
 /**

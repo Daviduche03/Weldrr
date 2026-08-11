@@ -1,9 +1,10 @@
 import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { AppError, NotFoundError } from '@/middleware/errorHandler'
 import { projectRepository } from '@/modules/projects/projects.repository'
 import { connectionService } from '@/modules/connections/connections.service'
 import { config } from '@/config'
+import { resolveOpenAiCompatibleProvider } from '@/services/sandbox-runtime'
 import {
   listRepoTree,
   readRepoFile,
@@ -157,9 +158,23 @@ export const docsService = {
       content?: string
     },
   ): Promise<{ reply: string }> {
-    if (!config.ai.openaiApiKey) {
-      throw new AppError(503, 'AI chat is not configured — set OPENAI_API_KEY to enable it')
+    const modelId = config.sandbox.opencodeModel
+    const resolved = resolveOpenAiCompatibleProvider(modelId, config.sandbox.providerApiKey)
+    if (!resolved) {
+      throw new AppError(
+        503,
+        'AI chat is not configured — set SANDBOX_OPENCODE_MODEL and SANDBOX_PROVIDER_API_KEY to enable it',
+      )
     }
+
+    const provider = createOpenAICompatible({
+      name: resolved.providerId,
+      baseURL: resolved.baseURL,
+      apiKey: resolved.apiKey,
+    })
+    // The openai-compatible endpoint expects the bare model id (the part after
+    // the provider prefix), matching how the sandbox's opencode resolves it.
+    const model = provider(modelId.split('/').slice(1).join('/') || modelId)
 
     const project = await projectRepository.findById(workspaceId, projectId)
     if (!project) throw new NotFoundError('Project not found')
@@ -199,7 +214,7 @@ ${pageList}
 ${fileContext ? `\nCurrently editing: ${fileContext.path}\n\nCurrent content:\n\`\`\`mdx\n${fileContext.content}\n\`\`\`` : ''}`
 
     const { text } = await generateText({
-      model: openai(config.ai.model),
+      model,
       system,
       messages: input.messages.map((m) => ({
         role: m.role === 'assistant' ? 'assistant' : 'user',
