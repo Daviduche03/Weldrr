@@ -29,16 +29,22 @@ const brandingSchema = z.object({
     .optional(),
 })
 
-const chatSchema = z.object({
-  messages: z
+const chatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().max(50_000).optional(),
+  text: z.string().max(50_000).optional(),
+  parts: z
     .array(
-      z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string().max(50_000),
-      }),
+      z.union([
+        z.object({ type: z.literal('text'), text: z.string() }),
+        z.object({ type: z.string(), text: z.string().optional() }),
+      ]),
     )
-    .min(1)
-    .max(50),
+    .optional(),
+})
+
+const chatSchema = z.object({
+  messages: z.array(chatMessageSchema).min(1).max(50),
   file: z.string().max(500).optional(),
   content: z.string().max(100_000).optional(),
 })

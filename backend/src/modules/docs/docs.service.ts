@@ -153,7 +153,12 @@ export const docsService = {
     workspaceId: string,
     projectId: string,
     input: {
-      messages: { role: 'user' | 'assistant'; content: string }[]
+      messages: {
+        role: 'user' | 'assistant'
+        content?: string
+        text?: string
+        parts?: { type: string; text?: string }[]
+      }[]
       file?: string
       content?: string
     },
@@ -215,7 +220,14 @@ export const docsService = {
           : ''),
       messages: input.messages.map((m) => ({
         role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content,
+        content:
+          m.content ??
+          m.text ??
+          (m.parts
+            ?.filter((p) => p.type === 'text' && p.text)
+            .map((p) => p.text ?? '')
+            .join('') ??
+          ''),
       })),
     })
   },
