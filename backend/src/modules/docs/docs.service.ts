@@ -1,4 +1,4 @@
-import { generateText } from 'ai'
+import { streamText } from 'ai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { AppError, NotFoundError } from '@/middleware/errorHandler'
 import { projectRepository } from '@/modules/projects/projects.repository'
@@ -149,7 +149,7 @@ export const docsService = {
     }
   },
 
-  async chat(
+  async chatStream(
     workspaceId: string,
     projectId: string,
     input: {
@@ -157,7 +157,7 @@ export const docsService = {
       file?: string
       content?: string
     },
-  ): Promise<{ reply: string }> {
+  ): Promise<ReturnType<typeof streamText>> {
     const modelId = config.sandbox.opencodeModel
     const resolved = resolveOpenAiCompatibleProvider(modelId, config.sandbox.providerApiKey)
     if (!resolved) {
@@ -200,28 +200,24 @@ export const docsService = {
       logger.warn({ err }, 'Could not load docs context for AI chat')
     }
 
-    const pageList = pages.length ? pages.join('\n') : '(none yet)'
-    const system = `You are the docs-writing assistant for Weldrr, helping users write and improve the MDX documentation for their project "${project.name}".
-
-Rules:
-- Write valid Markdown / MDX (standard markdown plus tables, lists, fenced code blocks, blockquotes, inline code).
-- Be accurate and grounded in the file content you are given. Never invent APIs, endpoints, or behavior.
-- Use clear, concise technical writing.
-- When asked for a complete page, return the full MDX. When asked to improve a section, briefly explain, then show the revised markdown in a fenced code block.
-
-Pages in this project's docs (src/docs):
-${pageList}
-${fileContext ? `\nCurrently editing: ${fileContext.path}\n\nCurrent content:\n\`\`\`mdx\n${fileContext.content}\n\`\`\`` : ''}`
-
-    const { text } = await generateText({
+    return streamText({
       model,
-      system,
+      system:
+        `You are the docs-writing assistant for Weldrr, helping users write and improve the MDX documentation for their project "${project.name}".\n\n` +
+        'Rules:\n' +
+        '- Write valid Markdown / MDX (standard markdown plus tables, lists, fenced code blocks, blockquotes, inline code).\n' +
+        '- Be accurate and grounded in the file content you are given. Never invent APIs, endpoints, or behavior.\n' +
+        '- Use clear, concise technical writing.\n' +
+        '- When asked for a complete page, return the full MDX. When asked to improve a section, briefly explain, then show the revised markdown in a fenced code block.\n\n' +
+        `Pages in this project's docs (src/docs):\n${pages.length ? pages.join('\n') : '(none yet)'}` +
+        (fileContext
+          ? `\n\nCurrently editing: ${fileContext.path}\n\nCurrent content:\n\`\`\`mdx\n${fileContext.content}\n\`\`\``
+          : ''),
       messages: input.messages.map((m) => ({
         role: m.role === 'assistant' ? 'assistant' : 'user',
         content: m.content,
       })),
     })
-    return { reply: text.trim() }
   },
 
   async writeFile(

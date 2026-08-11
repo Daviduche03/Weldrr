@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUp, ExternalLink, FileText, Sparkles } from 'lucide-react'
-import { docsApi, type ChatMessage } from '@/lib/api/docs'
+import { chatStream, type ChatMessage } from '@/lib/api/docs'
 import { cn } from '@/lib/utils'
 
 const SUGGESTIONS = [
@@ -35,17 +35,24 @@ export function DocsChat({
     const text = (prompt ?? input).trim()
     if (!text || loading) return
     const next = [...messages, { role: 'user' as const, content: text }]
-    setMessages(next)
+    setMessages([...next, { role: 'assistant', content: '' }])
     setInput('')
     setLoading(true)
     setError(null)
     try {
-      const result = await docsApi.chat(projectId, {
+      await chatStream({
+        projectId,
         messages: next,
         file: activePath ?? undefined,
         content: activePath ? content : undefined,
+        onDelta: (full) => {
+          setMessages((m) => {
+            const copy = [...m]
+            copy[copy.length - 1] = { role: 'assistant', content: full }
+            return copy
+          })
+        },
       })
-      setMessages((m) => [...m, { role: 'assistant', content: result.reply }])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reach the assistant')
     } finally {
@@ -116,23 +123,10 @@ export function DocsChat({
               ) : (
                 <div key={i} className="flex justify-start">
                   <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
-                    <ChatMarkdown text={m.content} />
+                    {loading && i === messages.length - 1 && !m.content ? <LoadingDots /> : <ChatMarkdown text={m.content} />}
                   </div>
                 </div>
               ),
-            )}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-border bg-muted/30 px-3 py-2.5">
-                  {[0, 1, 2].map((d) => (
-                    <span
-                      key={d}
-                      className="size-1.5 animate-bounce rounded-full bg-muted-foreground"
-                      style={{ animationDelay: `${d * 120}ms` }}
-                    />
-                  ))}
-                </div>
-              </div>
             )}
             {error && <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">{error}</div>}
             <div ref={endRef} />
@@ -175,6 +169,20 @@ export function DocsChat({
 }
 
 /* ------------------------------ Chat markdown ---------------------------- */
+
+function LoadingDots() {
+  return (
+    <div className="flex items-center gap-1 py-0.5">
+      {[0, 1, 2].map((d) => (
+        <span
+          key={d}
+          className="size-1.5 animate-bounce rounded-full bg-muted-foreground"
+          style={{ animationDelay: `${d * 120}ms` }}
+        />
+      ))}
+    </div>
+  )
+}
 
 type ChatBlock =
   | { type: 'code'; lang: string; code: string }

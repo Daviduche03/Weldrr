@@ -3,6 +3,7 @@ import { docsService } from '@/modules/docs/docs.service'
 import type { WorkspaceRequest } from '@/shared/types/request'
 import type { ApiResponse, ApiMessageResponse } from '@/shared/types/response'
 import type { DocsTreeNode } from '@/modules/docs/docs.service'
+import { logger } from '@/utils/logger'
 import { z } from 'zod'
 
 const projectIdParamSchema = z.object({ projectId: z.string().min(1) })
@@ -72,11 +73,30 @@ export const docsController = {
     res.json({ status: 'success', data })
   },
 
-  async chat(req: WorkspaceRequest, res: Response<ApiResponse<{ reply: string }>>) {
+  async chat(req: WorkspaceRequest, res: Response) {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const input = chatSchema.parse(req.body)
-    const data = await docsService.chat(req.workspace.workspaceId, projectId, input)
-    res.json({ status: 'success', data })
+
+    const result = await docsService.chatStream(req.workspace.workspaceId, projectId, input)
+
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    })
+
+    try {
+      for await (const chunk of result.textStream) {
+        res.write(chunk)
+      }
+      res.end()
+    } catch (err) {
+      logger.warn({ err }, 'Docs AI chat stream failed')
+      if (!res.writableEnded) {
+        res.end('\n\n[stream error]')
+      }
+    }
   },
 
   async writeFile(
