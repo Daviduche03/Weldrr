@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatTime } from '@/modules/projects/project-detail.page'
 
 function formatNumber(n: number): string {
@@ -53,7 +54,7 @@ function ActivityChart({ builds }: { builds: Sandbox[] }) {
 
   return (
     <div>
-      <div className="flex h-28 items-end gap-1">
+      <div className="flex h-48 items-end gap-1">
         {days.map((d, i) => (
           <div key={i} className="group flex flex-1 flex-col items-center gap-0.5" title={`${d.label} — ${d.sdk} SDK, ${d.docs} docs builds`}>
             <div
@@ -141,33 +142,46 @@ export function ProjectOverview({
             No versions published yet.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-border border-t border-border">
-            {recentVersions.map((v) => (
-              <li key={v.id} className="flex items-center gap-3 py-3">
-                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] uppercase text-muted-foreground">
-                  {v.artifactType === 'sdk' ? 'sdk' : 'doc'}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[13px] font-medium">v{v.version}</span>
-                    <span className="text-xs capitalize text-muted-foreground">{v.artifactType}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{formatTime(v.createdAt)}</div>
-                </div>
-                {v.artifactUrl && (
-                  <a
-                    href={v.artifactUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                    aria-label={`Open version ${v.version}`}
-                  >
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Published</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentVersions.map((v) => (
+                  <TableRow key={v.id}>
+                    <TableCell>
+                      <span className="font-mono text-[13px] font-medium">v{v.version}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs uppercase text-muted-foreground">
+                        {v.artifactType === 'sdk' ? 'sdk' : 'doc'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
+                    <TableCell>
+                      {v.artifactUrl && (
+                        <a
+                          href={v.artifactUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label={`Open version ${v.version}`}
+                        >
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </section>
     </div>
