@@ -92,6 +92,12 @@ export async function provisionSandbox(input: SandboxProvisionInput): Promise<Sa
     command: ['bash', '/opt/weldrr/startup.sh'],
     encryptedPorts: [config.sandbox.opencodePort],
     timeoutMs: config.sandbox.timeoutMs,
+    // Long agent runs keep growing the context (docs.md, spec, tool results),
+    // so give the sandbox headroom to avoid OOM stalls mid-build.
+    cpu: 2,
+    cpuLimit: 4,
+    memoryMiB: 4096,
+    memoryLimitMiB: 8192,
     // Agents work *inside* the opencode web process, which Modal does not count
     // as "active" for idle detection. Idle-killing would silently terminate a
     // working agent, so scope the lifetime to the hard timeout instead and rely
