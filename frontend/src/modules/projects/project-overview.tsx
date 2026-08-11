@@ -1,6 +1,14 @@
 import { useMemo } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { GitBranch, MoreHorizontal, Package } from 'lucide-react'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatTime } from '@/modules/projects/project-detail.page'
 
@@ -176,18 +184,40 @@ export function ProjectOverview({
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{formatTime(v.createdAt)}</TableCell>
-                  <TableCell>
-                    {v.artifactUrl && (
-                      <a
-                        href={v.artifactUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label={`Open version ${v.version}`}
-                      >
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    )}
+                  <TableCell className="w-12">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Actions for v${v.version}`}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuItem
+                          disabled={!v.artifactUrl}
+                          onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
+                        >
+                          <GitBranch />
+                          View repo
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!v.artifactUrl}
+                          onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
+                        >
+                          <Package />
+                          View package
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem disabled>
+                          Set as current version
+                          <span className="ml-auto text-xs text-muted-foreground">soon</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
