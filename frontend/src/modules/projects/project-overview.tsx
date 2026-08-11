@@ -64,7 +64,7 @@ function ActivityChart({ builds }: { builds: Sandbox[] }) {
     <div>
       <div className="flex h-48 items-end gap-1">
         {days.map((d, i) => (
-          <div key={i} className="group flex flex-1 flex-col items-center gap-0.5" title={`${d.label} — ${d.sdk} SDK, ${d.docs} docs builds`}>
+          <div key={i} className="group flex h-full flex-1 flex-col items-center justify-end gap-0.5" title={`${d.label} — ${d.sdk} SDK, ${d.docs} docs builds`}>
             <div
               className="w-full rounded-sm bg-brand/80 transition-opacity group-hover:opacity-100"
               style={{ height: `${(d.sdk / max) * 100}%`, minHeight: d.sdk > 0 ? 3 : 1, opacity: d.sdk === 0 ? 0.15 : undefined }}
