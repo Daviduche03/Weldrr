@@ -7,7 +7,6 @@ import { workspaceApi } from '@/lib/api/workspace'
 import type { Member, Plan, User } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/modules/workspace/workspace-provider'
-import { useAuth } from '@/modules/auth/auth-provider'
 import { useMe, useMembers, useUpdateProfile, useUpdateWorkspace, useInviteMember, useUpdateMemberRole, useRemoveMember } from '@/lib/queries'
 import { tabs, type SettingsTab } from '@/modules/settings/settings.data'
 import { useFlash } from '@/modules/settings/settings.hooks'
@@ -52,8 +51,7 @@ function SettingsSkeleton() {
 export function SettingsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { signOut } = useAuth()
-  const { workspace, setWorkspace } = useWorkspace()
+  const { workspace, setWorkspace, removeCurrent } = useWorkspace()
   const [tab, setTab] = useState<SettingsTab>(() =>
     new URLSearchParams(location.search).get('connections') ? 'Connections' : 'Profile',
   )
@@ -188,8 +186,11 @@ export function SettingsPage() {
     try {
       await workspaceApi.remove()
       setPending(null)
-      await signOut()
-      navigate('/')
+      setDeletingWorkspace(false)
+      const next = await removeCurrent()
+      if (!next) {
+        navigate('/onboarding')
+      }
     } catch (err) {
       setBanner(err instanceof Error ? err.message : 'Failed to delete workspace')
       setDeletingWorkspace(false)

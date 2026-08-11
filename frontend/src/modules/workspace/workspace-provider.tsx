@@ -19,5 +19,6 @@ export function useWorkspace() {
   const loading = useWorkspaceStore((s) => s.loading)
   const setWorkspace = useWorkspaceStore((s) => s.setWorkspace)
   const switchTo = useWorkspaceStore((s) => s.switchTo)
-  return { workspace, workspaces, loading, setWorkspace, switchTo }
+  const removeCurrent = useWorkspaceStore((s) => s.removeCurrent)
+  return { workspace, workspaces, loading, setWorkspace, switchTo, removeCurrent }
 }

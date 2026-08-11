@@ -11,6 +11,7 @@ type WorkspaceState = {
   initialize: () => Promise<void>
   setWorkspace: (workspace: Workspace) => void
   switchTo: (id: string) => Promise<void>
+  removeCurrent: () => Promise<Workspace | null>
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -57,6 +58,39 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       void queryClient.invalidateQueries()
     } catch {
       // switching failed; leave state as-is
+    }
+  },
+
+  /**
+   * Called after the current workspace is deleted. The workspace row is gone
+   * server-side; here we drop it from local state and activate the next
+   * remaining workspace (if any). Returns the newly active workspace, or null
+   * when the user has no workspaces left (caller should send them to
+   * onboarding).
+   */
+  removeCurrent: async () => {
+    const current = get().workspace
+    if (!current) return null
+
+    const remaining = get().workspaces.filter((w) => w.id !== current.id)
+    if (remaining.length === 0) {
+      clearActiveWorkspaceId()
+      set({ workspace: null, workspaces: [] })
+      void queryClient.invalidateQueries()
+      return null
+    }
+
+    const next = remaining[0]
+    setActiveWorkspaceId(next.id)
+    try {
+      const active = await workspaceApi.get()
+      set({ workspace: active, workspaces: remaining })
+      void queryClient.invalidateQueries()
+      return active
+    } catch {
+      set({ workspace: next, workspaces: remaining })
+      void queryClient.invalidateQueries()
+      return next
     }
   },
 }))
