@@ -295,7 +295,7 @@ export function DashboardPage() {
       {/* Quick actions */}
       <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border">
         {[
-          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: Plus },
+          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: Add01Icon },
           { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpen01Icon },
           { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: Refresh01Icon },
         ].map((action) => {
