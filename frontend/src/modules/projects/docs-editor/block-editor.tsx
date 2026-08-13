@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Braces, GripVertical, Hash, List, Plus, Quote, Rows3, Trash2 } from 'lucide-react'
+import { HashtagIcon, LeftToRightListBulletIcon, Add01Icon } from 'hugeicons-react'
+import { Braces, GripVertical, Quote, Rows3, Trash2 } from 'lucide-react'
 import {
   type Block,
   type BlockType,
@@ -11,10 +12,10 @@ import {
 import { cn } from '@/lib/utils'
 
 const ADD_OPTIONS: { type: BlockType; label: string; icon: React.ReactNode }[] = [
-  { type: 'heading', label: 'Heading', icon: <Hash className="size-3.5" /> },
+  { type: 'heading', label: 'Heading', icon: <HashtagIcon className="size-3.5" /> },
   { type: 'paragraph', label: 'Paragraph', icon: <Braces className="size-3.5" /> },
   { type: 'code', label: 'Code block', icon: <Braces className="size-3.5" /> },
-  { type: 'list', label: 'List', icon: <List className="size-3.5" /> },
+  { type: 'list', label: 'List', icon: <LeftToRightListBulletIcon className="size-3.5" /> },
   { type: 'table', label: 'Table', icon: <Rows3 className="size-3.5" /> },
   { type: 'quote', label: 'Quote', icon: <Quote className="size-3.5" /> },
 ]
@@ -278,7 +279,7 @@ function BlockRow({
                 className="flex size-5 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
                 aria-label="Add block"
               >
-                <Plus className="size-3" />
+                <Add01Icon className="size-3" />
               </button>
             </div>
           )}

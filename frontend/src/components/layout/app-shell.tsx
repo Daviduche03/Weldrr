@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Building2,
-  Check,
-  ChevronsUpDown,
-  LayoutDashboard,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-  Rocket,
-  Settings,
-} from 'lucide-react'
+  Building01Icon,
+  DashboardBrowsingIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  Settings01Icon,
+  Add01Icon,
+  RocketIcon,
+} from 'hugeicons-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/ui/button'
@@ -26,11 +25,11 @@ import { useAuth } from '@/modules/auth/auth-provider'
 import { planLabel, useWorkspace } from '@/modules/workspace/workspace-provider'
 
 const mainNav = [
-  { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
-  { label: 'Projects', to: '/projects', icon: Rocket },
+  { label: 'Overview', to: '/dashboard', icon: DashboardBrowsingIcon },
+  { label: 'Projects', to: '/projects', icon: RocketIcon },
 ]
 
-const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings }]
+const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings01Icon }]
 
 function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { workspace, workspaces, switchTo } = useWorkspace()
@@ -50,7 +49,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         >
           <span className="flex size-full items-center justify-center">
             <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
-              <Building2 className="size-4" />
+              <Building01Icon className="size-4" />
             </span>
           </span>
           <span
@@ -92,7 +91,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         {workspaces.map((w) => (
           <DropdownMenuItem key={w.id} onSelect={() => select(w.id)}>
             <span className="inline-flex size-5 items-center justify-center rounded bg-muted text-muted-foreground">
-              <Building2 className="size-3" />
+              <Building01Icon className="size-3" />
             </span>
             <span className="min-w-0 flex-1 truncate">{w.name}</span>
             {w.id === workspace?.id && <Check className="size-4" />}
@@ -100,7 +99,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/workspaces/new')}>
-          <Plus className="size-4" />
+          <Add01Icon className="size-4" />
           Create workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -110,7 +109,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
 }
 
 function SidebarNav({ collapsed }: { collapsed: boolean }) {
-  const renderItems = (items: { label: string; to: string; icon: typeof LayoutDashboard }[]) =>
+  const renderItems = (items: { label: string; to: string; icon: typeof DashboardBrowsingIcon }[]) =>
     items.map((item) => {
       const Icon = item.icon
       return (
@@ -155,7 +154,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
         className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
       >
         <span className="flex size-full items-center justify-center">
-          <Plus className="size-4 shrink-0" />
+          <Add01Icon className="size-4 shrink-0" />
         </span>
         <span
           className={cn(
@@ -200,7 +199,7 @@ export function AppShell() {
                 aria-label="Close menu"
                 className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <PanelLeftClose className="size-5" />
+                <PanelLeftCloseIcon className="size-5" />
               </button>
             </div>
             <SidebarNav collapsed={false} />
@@ -247,9 +246,9 @@ export function AppShell() {
               className="text-muted-foreground hover:text-foreground"
             >
               {collapsed ? (
-                <PanelLeftOpen className="size-4 mr-4" />
+                <PanelLeftOpenIcon className="size-4 mr-4" />
               ) : (
-                <PanelLeftClose className="size-4 " />
+                <PanelLeftCloseIcon className="size-4 " />
               )}
             </Button>
           </span>
@@ -262,8 +261,8 @@ export function AppShell() {
         <SidebarNav collapsed={collapsed} />
 
         <div className={cn('py-3 transition-[padding] duration-300', collapsed ? 'px-2' : 'px-3')}>
-          <div className="grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-2.5">
-            <span className="flex size-9 items-center justify-center">
+          <div className="grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-muted/60 p-1.5">
+            <span className="flex size-8 items-center justify-center">
               <Avatar name={user?.email ?? ''} />
             </span>
             <span
@@ -297,7 +296,7 @@ export function AppShell() {
             aria-label="Open menu"
             className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground lg:hidden"
           >
-            <PanelLeftOpen className="size-4" />
+            <PanelLeftOpenIcon className="size-4" />
             Menu
           </button>
           <div className="flex min-h-[calc(100vh-1.5rem)] flex-col rounded-2xl border border-border bg-muted p-1">

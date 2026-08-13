@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react'
+import { Sun01Icon, Moon01Icon } from 'hugeicons-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/theme-provider'
 
@@ -13,8 +13,8 @@ export function ThemeToggle() {
       aria-label="Toggle theme"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
     >
-      <Sun className="size-5 dark:hidden" />
-      <Moon className="hidden size-5 dark:block" />
+      <Sun01Icon className="size-5 dark:hidden" />
+      <Moon01Icon className="hidden size-5 dark:block" />
     </Button>
   )
 }

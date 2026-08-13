@@ -82,7 +82,7 @@ export function Integrations() {
                 key={item.name}
                 className="col-span-12 flex flex-col bg-background p-8 transition-colors duration-300 ease-in-out hover:bg-muted md:col-span-4"
               >
-                <span className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
+                <span className="inline-flex size-12 items-center justify-center rounded-xl border border-brand/15 bg-brand/5 text-brand">
                   <Icon className="size-6" />
                 </span>
                 <h3 className="mt-6 text-xl font-semibold tracking-tight">{item.name}</h3>
@@ -100,7 +100,7 @@ export function Integrations() {
                 key={item.name}
                 className="col-span-12 flex flex-col bg-background p-8 transition-colors duration-300 ease-in-out hover:bg-muted sm:col-span-6 lg:col-span-3"
               >
-                <span className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
+                <span className="inline-flex size-12 items-center justify-center rounded-xl border border-brand/15 bg-brand/5 text-brand">
                   <Icon className="size-6" />
                 </span>
                 <h3 className="mt-6 text-xl font-semibold tracking-tight">{item.name}</h3>

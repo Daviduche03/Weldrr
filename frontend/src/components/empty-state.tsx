@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Inbox } from 'lucide-react'
+import { InboxIcon } from 'hugeicons-react'
 import { cn } from '@/lib/utils'
 
 export function EmptyState({
@@ -23,7 +23,7 @@ export function EmptyState({
       )}
     >
       <span className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground">
-        {icon ?? <Inbox className="size-6" />}
+        {icon ?? <InboxIcon className="size-6" />}
       </span>
       <h3 className="mt-4 text-lg font-semibold tracking-tight">{title}</h3>
       {description && (

@@ -1,4 +1,5 @@
-import { Check, ChevronsUpDown, Plus, Trash2, UserPlus, Users } from 'lucide-react'
+import { Add01Icon, UserAdd01Icon, UserGroupIcon } from 'hugeicons-react'
+import { Check, ChevronsUpDown, Trash2 } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,7 +45,7 @@ export function MembersSection({
       </div>
       {members.length === 0 ? (
         <EmptyState
-          icon={<Users className="size-6" />}
+          icon={<UserGroupIcon className="size-6" />}
           title="No members yet"
           description="Invite your team to collaborate on this workspace."
           className="py-12"
@@ -104,7 +105,7 @@ export function MembersSection({
       )}
       <div className="flex flex-wrap items-center gap-3 border-t border-border px-6 py-4">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <UserPlus className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <UserAdd01Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
@@ -114,7 +115,7 @@ export function MembersSection({
           />
         </div>
         <Button size="sm" onClick={onInvite}>
-          <Plus />
+          <Add01Icon />
           Invite member
         </Button>
       </div>

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  Folder02Icon,
+  FolderOpenIcon,
+  Refresh01Icon,
+  CodeSquareIcon,
+} from 'hugeicons-react'
+import {
   ChevronDown,
   ChevronRight,
-  FileCode2,
-  Folder,
-  FolderOpen,
-  RefreshCw,
   ExternalLink,
   Braces,
 } from 'lucide-react'
@@ -116,7 +118,7 @@ export function SdkViewer({
               style={{ paddingLeft: `${depth * 12 + 8}px` }}
             >
               {open ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
-              {open ? <FolderOpen className="size-4 shrink-0 text-brand" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />}
+              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <Folder02Icon className="size-4 shrink-0 text-muted-foreground" />}
               <span className="truncate">{node.name}</span>
             </button>
             {open && <div>{renderChildren(childPath, depth + 1)}</div>}
@@ -141,7 +143,7 @@ export function SdkViewer({
           )}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
-          <FileCode2 className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
+          <CodeSquareIcon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
           <span className="truncate">{node.name}</span>
           {badge && (
             <span className="ml-auto font-mono text-[10px] uppercase text-muted-foreground/60">{badge}</span>
@@ -160,7 +162,7 @@ export function SdkViewer({
             {language} · source
           </span>
           <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void treeQuery.refetch()} className="text-muted-foreground">
-            <RefreshCw className={cn('size-3.5', loadingTree && 'animate-spin')} />
+            <Refresh01Icon className={cn('size-3.5', loadingTree && 'animate-spin')} />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
@@ -229,7 +231,7 @@ export function SdkViewer({
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
             <div>
-              <FileCode2 className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+              <CodeSquareIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
               Select a file from the tree to view its source.
             </div>
           </div>

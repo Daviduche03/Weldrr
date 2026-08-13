@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { GitBranch, MoreHorizontal, Package, Rocket } from 'lucide-react'
+import { GitBranchIcon, MoreHorizontalIcon, PackageIcon, RocketIcon } from 'hugeicons-react'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import {
@@ -70,7 +70,7 @@ function ActivityChart({ builds }: { builds: Sandbox[] }) {
               style={{ height: `${(d.sdk / max) * 100}%`, minHeight: d.sdk > 0 ? 3 : 1, opacity: d.sdk === 0 ? 0.15 : undefined }}
             />
             <div
-              className="w-full rounded-sm bg-violet-400/80 dark:bg-violet-500/80 transition-opacity group-hover:opacity-100"
+              className="w-full rounded-sm bg-orange-400/80 dark:bg-orange-500/80 transition-opacity group-hover:opacity-100"
               style={{ height: `${(d.docs / max) * 100}%`, minHeight: d.docs > 0 ? 3 : 1, opacity: d.docs === 0 ? 0.15 : undefined }}
             />
           </div>
@@ -83,7 +83,7 @@ function ActivityChart({ builds }: { builds: Sandbox[] }) {
             <span className="size-2 rounded-sm bg-brand/80" /> SDK
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-sm bg-violet-400/80 dark:bg-violet-500/80" /> Docs
+            <span className="size-2 rounded-sm bg-orange-400/80 dark:bg-orange-500/80" /> Docs
           </span>
         </div>
         <span>{days[days.length - 1]?.label}</span>
@@ -201,7 +201,7 @@ export function ProjectOverview({
                           aria-label={`Actions for v${v.version}`}
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <MoreHorizontal />
+                          <MoreHorizontalIcon />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52">
@@ -209,25 +209,25 @@ export function ProjectOverview({
                           disabled={!v.artifactUrl}
                           onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
                         >
-                          <GitBranch />
+                          <GitBranchIcon />
                           View repo
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={!v.artifactUrl}
                           onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
                         >
-                          <Package />
+                          <PackageIcon />
                           View package
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {v.artifactType === 'sdk' ? (
                           <DropdownMenuItem onClick={onPublishSdk} disabled={publishingSdk}>
-                            <Rocket />
+                            <RocketIcon />
                             {publishingSdk ? 'Publishing…' : 'Publish SDK'}
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={onPublishDocs} disabled={publishingDocs}>
-                            <Rocket />
+                            <RocketIcon />
                             {publishingDocs ? 'Publishing…' : 'Publish docs'}
                           </DropdownMenuItem>
                         )}

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { BookOpen, LoaderCircle, Puzzle, Sparkles, type LucideIcon } from 'lucide-react'
+import { BookOpen01Icon, PuzzleIcon, SparklesIcon } from 'hugeicons-react'
+import { LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LogoMark } from '@/components/logo'
@@ -33,10 +34,10 @@ function parseEmails(text: string): string[] {
     .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
 }
 
-const productOptions: { value: Product; label: string; desc: string; icon: LucideIcon }[] = [
-  { value: 'docs', label: 'Docs', desc: 'A hosted documentation site for your API.', icon: BookOpen },
-  { value: 'sdk', label: 'SDKs', desc: 'Type-safe client libraries for your API.', icon: Puzzle },
-  { value: 'both', label: 'Both', desc: 'Documentation and SDKs, generated together.', icon: Sparkles },
+const productOptions: { value: Product; label: string; desc: string; icon: ComponentType<{ className?: string }> }[] = [
+  { value: 'docs', label: 'Docs', desc: 'A hosted documentation site for your API.', icon: BookOpen01Icon },
+  { value: 'sdk', label: 'SDKs', desc: 'Type-safe client libraries for your API.', icon: PuzzleIcon },
+  { value: 'both', label: 'Both', desc: 'Documentation and SDKs, generated together.', icon: SparklesIcon },
 ]
 
 export function OnboardingPage() {

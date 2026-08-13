@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ArrowUp, ExternalLink, FileText, Sparkles, Square } from 'lucide-react'
+import { ArrowUp01Icon, File02Icon, SparklesIcon, SquareIcon } from 'hugeicons-react'
+import { ExternalLink } from 'lucide-react'
 import { http } from '@/lib/http'
 import { getTokens } from '@/lib/tokens'
 import { cn } from '@/lib/utils'
@@ -74,7 +75,7 @@ export function DocsChat({
     <aside className="flex w-80 shrink-0 flex-col border-l border-border">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
         <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          <Sparkles className="size-3 text-brand" />
+          <SparklesIcon className="size-3 text-brand" />
           Docs AI
         </span>
         {docsUrl && (
@@ -91,7 +92,7 @@ export function DocsChat({
 
       {activePath && (
         <div className="flex items-center gap-1.5 border-b border-border bg-muted/30 px-3 py-1.5">
-          <FileText className="size-3 shrink-0 text-muted-foreground" />
+          <File02Icon className="size-3 shrink-0 text-muted-foreground" />
           <span className="truncate font-mono text-[10px] text-muted-foreground" title={activePath}>
             {activePath}
           </span>
@@ -175,7 +176,7 @@ export function DocsChat({
               aria-label="Stop generating"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive text-white transition-colors hover:opacity-90"
             >
-              <Square className="size-3.5" />
+              <SquareIcon className="size-3.5" />
             </button>
           ) : (
             <button
@@ -184,7 +185,7 @@ export function DocsChat({
               aria-label="Send message"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ArrowUp className="size-4" />
+              <ArrowUp01Icon className="size-4" />
             </button>
           )}
         </div>

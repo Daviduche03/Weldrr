@@ -1,4 +1,4 @@
-import { CreditCard, Download } from 'lucide-react'
+import { CreditCardIcon, Download01Icon } from 'hugeicons-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { Plan } from '@/lib/types'
@@ -100,7 +100,7 @@ export function BillingSection({
         <div className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3.5">
           <div className="flex items-center gap-3">
             <span className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-              <CreditCard className="size-4" />
+              <CreditCardIcon className="size-4" />
             </span>
             <div>
               <div className="font-mono text-sm">•••• •••• •••• 4242</div>
@@ -123,7 +123,7 @@ export function BillingSection({
                 <Badge variant="secondary">{invoice.status}</Badge>
                 <span className="text-sm font-medium tabular-nums">{invoice.amount}</span>
                 <Button size="icon-sm" variant="ghost" aria-label={`Download ${invoice.period} invoice`}>
-                  <Download />
+                  <Download01Icon />
                 </Button>
               </div>
             </li>

@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeft,
+  ArrowLeft01Icon,
+  FileUnknownIcon,
+  GitBranchIcon,
+  Refresh01Icon,
+  RocketIcon,
+} from 'hugeicons-react'
+import {
   Braces,
   ExternalLink,
-  FileQuestion,
-  GitBranch,
-  RefreshCw,
-  Rocket,
   Trash2,
 } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
@@ -299,7 +301,7 @@ export function ProjectDetailPage() {
   if (error) {
     return (
       <EmptyState
-        icon={<FileQuestion className="size-6" />}
+        icon={<FileUnknownIcon className="size-6" />}
         title="Project not found"
         description="It may have been deleted, or the link is incorrect."
         action={
@@ -324,7 +326,7 @@ export function ProjectDetailPage() {
             to="/projects"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft01Icon className="size-4" />
             Projects
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -339,7 +341,7 @@ export function ProjectDetailPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <GitBranch className="size-3.5" />
+                <GitBranchIcon className="size-3.5" />
                 {project.gitRepo.fullName}
                 <ExternalLink className="size-3" />
               </a>
@@ -352,11 +354,11 @@ export function ProjectDetailPage() {
             onClick={handleRegenerate}
             className="text-muted-foreground"
           >
-            <RefreshCw className={cn(project.status === 'generating' && 'animate-spin')} />
+            <Refresh01Icon className={cn(project.status === 'generating' && 'animate-spin')} />
             Re-run discovery
           </Button>
           <Button onClick={publishSdk} disabled={publishing || !project.sdkLanguages.length && !project.gitRepo}>
-            <Rocket />
+            <RocketIcon />
             {publishing ? 'Publishing…' : 'Publish SDK'}
           </Button>
         </div>
@@ -439,7 +441,7 @@ export function ProjectDetailPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    icon={<FileQuestion className="size-6" />}
+                    icon={<FileUnknownIcon className="size-6" />}
                     title="Docs couldn't be generated"
                     description={discovery.error ?? 'Discovery failed for this project.'}
                   />

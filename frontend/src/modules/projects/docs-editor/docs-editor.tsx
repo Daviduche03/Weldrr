@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  File02Icon,
+  Folder02Icon,
+  FolderOpenIcon,
+  Add01Icon,
+  RocketIcon,
+  Refresh01Icon,
+  GitBranchIcon,
+} from 'hugeicons-react'
+import {
   ChevronDown,
   ChevronRight,
-  FileText,
-  Folder,
-  FolderOpen,
-  Plus,
   Trash2,
   Save,
-  Rocket,
-  RefreshCw,
   ExternalLink,
-  GitBranch,
   LoaderCircle,
   Check,
 } from 'lucide-react'
@@ -233,7 +235,7 @@ export function DocsEditor({
               style={{ paddingLeft: `${depth * 12 + 8}px` }}
             >
               {open ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
-              {open ? <FolderOpen className="size-4 shrink-0 text-brand" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />}
+              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <Folder02Icon className="size-4 shrink-0 text-muted-foreground" />}
               <span className="truncate">{node.name}</span>
             </button>
             {open && <div>{renderChildren(childPath, depth + 1)}</div>}
@@ -255,7 +257,7 @@ export function DocsEditor({
           )}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
-          <FileText className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
+          <File02Icon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
           <span className="truncate">{node.name}</span>
           {node.kind === 'mdx' && (
             <span className="ml-auto font-mono text-[10px] uppercase text-muted-foreground/60">mdx</span>
@@ -274,10 +276,10 @@ export function DocsEditor({
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pages</span>
             <div className="flex items-center gap-1">
               <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void loadTree()} className="text-muted-foreground">
-                <RefreshCw className={cn('size-3.5', loadingTree && 'animate-spin')} />
+                <Refresh01Icon className={cn('size-3.5', loadingTree && 'animate-spin')} />
               </Button>
               <Button size="icon-sm" variant="ghost" aria-label="New page" onClick={() => setShowNewPage((s) => !s)}>
-                <Plus className="size-3.5" />
+                <Add01Icon className="size-3.5" />
               </Button>
             </div>
           </div>
@@ -360,7 +362,7 @@ export function DocsEditor({
                 Save now
               </Button>
               <Button size="sm" disabled={!activePath || publishing} onClick={() => void handlePublish()}>
-                {publishing ? <LoaderCircle className="size-3.5 animate-spin" /> : <Rocket className="size-3.5" />}
+                {publishing ? <LoaderCircle className="size-3.5 animate-spin" /> : <RocketIcon className="size-3.5" />}
                 {publishing ? 'Publishing…' : 'Publish'}
               </Button>
               {activePath && (
@@ -386,7 +388,7 @@ export function DocsEditor({
 
           {prInfo && (
             <div className="flex items-center gap-2 border-b border-border bg-sky-500/5 px-4 py-2 text-xs text-sky-600 dark:text-sky-400">
-              <GitBranch className="size-3.5 shrink-0" />
+              <GitBranchIcon className="size-3.5 shrink-0" />
               <span>
                 Saved as PR{' '}
                 <span className="font-mono font-medium">#{prInfo.prNumber}</span> — review and merge
@@ -457,7 +459,7 @@ export function DocsEditor({
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
               <div>
-                <FileText className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+                <File02Icon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
                 Select a page from the tree to edit it, or create a new one.
               </div>
             </div>

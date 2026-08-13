@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, LoaderCircle } from 'lucide-react'
+import { ArrowRight01Icon } from 'hugeicons-react'
+import { LoaderCircle } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -256,7 +257,7 @@ export function LoginPage() {
               >
                 Privacy Policy
               </a>
-              . <ArrowRight className="inline size-3" aria-hidden="true" />
+              . <ArrowRight01Icon className="inline size-3" aria-hidden="true" />
             </p>
           </div>
         </div>

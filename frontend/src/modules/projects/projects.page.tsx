@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CircleAlert, FolderPlus, RefreshCw, Search, SearchX } from 'lucide-react'
+import { ArrowUpRight01Icon, Alert01Icon, FolderAddIcon, Refresh01Icon, Search01Icon } from 'hugeicons-react'
+import { SearchX } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -97,7 +98,7 @@ export function ProjectsPage() {
               : `${filtered.length} ${filtered.length === 1 ? 'project' : 'projects'}`}
           </h2>
           <div className="relative w-full sm:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search01Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -109,12 +110,12 @@ export function ProjectsPage() {
 
         {error ? (
           <EmptyState
-            icon={<CircleAlert className="size-6" />}
+            icon={<Alert01Icon className="size-6" />}
             title="Couldn't load projects"
             description={error instanceof Error ? error.message : 'Please try again'}
             action={
               <Button size="lg" variant="outline" onClick={() => void refetch()}>
-                <RefreshCw />
+                <Refresh01Icon />
                 Try again
               </Button>
             }
@@ -142,7 +143,7 @@ export function ProjectsPage() {
         ) : filtered.length === 0 ? (
           projects && projects.length === 0 ? (
             <EmptyState
-              icon={<FolderPlus className="size-6" />}
+              icon={<FolderAddIcon className="size-6" />}
               title="No projects yet"
               description="Connect your first API spec and we'll generate docs, SDKs, and a CLI for it."
               action={
@@ -182,7 +183,7 @@ export function ProjectsPage() {
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
                         >
                           {project.name}
-                          <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                          <ArrowUpRight01Icon className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                         </Link>
                       </TableCell>
                       <TableCell>
