@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
 import {
-  ArrowUpRight,
-  BadgeCheck,
-  BookOpen,
-  CircleAlert,
-  History,
-  LoaderCircle,
-  Plus,
-  RefreshCw,
-} from 'lucide-react'
+  ArrowUpRight01Icon,
+  CheckmarkBadge01Icon,
+  BookOpen01Icon,
+  Alert01Icon,
+  Clock01Icon,
+  Add01Icon,
+  Refresh01Icon,
+} from 'hugeicons-react'
+import { LoaderCircle } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -47,7 +47,7 @@ function formatNumber(n: number): string {
   return String(n)
 }
 
-const usageColors = ['#8d54ff', '#06b6d4', '#f59e0b', '#10b981'] as const
+const usageColors = ['#f97316', '#06b6d4', '#f59e0b', '#10b981'] as const
 
 const statusCards = [
   {
@@ -55,7 +55,7 @@ const statusCards = [
     value: (m: DashboardMetrics) => m.readyProjects,
     hint: 'Docs, SDKs, and CLI are live',
     to: '/projects',
-    icon: BadgeCheck,
+    icon: CheckmarkBadge01Icon,
   },
   {
     label: 'Generating',
@@ -69,7 +69,7 @@ const statusCards = [
     value: (m: DashboardMetrics) => m.failedProjects,
     hint: 'Generation failed — check the spec',
     to: '/projects',
-    icon: CircleAlert,
+    icon: Alert01Icon,
   },
 ]
 
@@ -185,7 +185,7 @@ export function DashboardPage() {
         </div>
         <Button size="lg" asChild>
           <Link to="/projects/new">
-            <Plus />
+            <Add01Icon />
             New project
           </Link>
         </Button>
@@ -245,7 +245,7 @@ export function DashboardPage() {
             className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-muted"
           >
             All projects
-            <ArrowUpRight className="size-4" />
+            <ArrowUpRight01Icon className="size-4" />
           </Link>
         </div>
         <Table>
@@ -284,7 +284,7 @@ export function DashboardPage() {
         </Table>
         {!loading && activity.length === 0 && (
           <EmptyState
-            icon={<History className="size-6" />}
+            icon={<Clock01Icon className="size-6" />}
             title="No activity yet"
             description="Connect your first spec to get started."
             className="py-12"
@@ -296,8 +296,8 @@ export function DashboardPage() {
       <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border">
         {[
           { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: Plus },
-          { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpen },
-          { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: RefreshCw },
+          { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpen01Icon },
+          { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: Refresh01Icon },
         ].map((action) => {
           const Icon = action.icon
           return (

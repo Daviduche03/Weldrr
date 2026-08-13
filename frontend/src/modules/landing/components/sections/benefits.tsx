@@ -10,17 +10,17 @@ function DocsSvg() {
       <circle cx="42" cy="24" r="4" fill="#ffbd2e" />
       <circle cx="56" cy="24" r="4" fill="#27c93f" />
       <rect x="150" y="16" width="70" height="16" rx="8" fill="#e5e7eb" />
-      <rect x="24" y="48" width="120" height="12" rx="6" fill="#8d54ff" fillOpacity="0.15" />
+      <rect x="24" y="48" width="120" height="12" rx="6" fill="#f97316" fillOpacity="0.15" />
       <rect x="24" y="72" width="100" height="8" rx="4" fill="#d1d5db" />
       <rect x="24" y="88" width="110" height="8" rx="4" fill="#d1d5db" />
       <rect x="24" y="104" width="90" height="8" rx="4" fill="#d1d5db" />
       <rect x="24" y="120" width="80" height="8" rx="4" fill="#d1d5db" />
       <rect x="158" y="48" width="64" height="104" rx="8" fill="#f9fafb" stroke="#e5e7eb" />
-      <rect x="168" y="60" width="44" height="10" rx="5" fill="#8d54ff" fillOpacity="0.15" />
+      <rect x="168" y="60" width="44" height="10" rx="5" fill="#f97316" fillOpacity="0.15" />
       <rect x="168" y="80" width="34" height="6" rx="3" fill="#d1d5db" />
       <rect x="168" y="94" width="38" height="6" rx="3" fill="#d1d5db" />
       <rect x="168" y="108" width="28" height="6" rx="3" fill="#d1d5db" />
-      <rect x="168" y="126" width="44" height="14" rx="7" fill="#8d54ff" />
+      <rect x="168" y="126" width="44" height="14" rx="7" fill="#f97316" />
     </svg>
   )
 }
@@ -34,8 +34,8 @@ function SdksSvg() {
       <circle cx="28" cy="24" r="4" fill="#ff5f56" />
       <circle cx="42" cy="24" r="4" fill="#ffbd2e" />
       <circle cx="56" cy="24" r="4" fill="#27c93f" />
-      <rect x="24" y="48" width="88" height="8" rx="4" fill="#8d54ff" />
-      <rect x="128" y="48" width="88" height="8" rx="4" fill="#8d54ff" />
+      <rect x="24" y="48" width="88" height="8" rx="4" fill="#f97316" />
+      <rect x="128" y="48" width="88" height="8" rx="4" fill="#f97316" />
       <rect x="24" y="66" width="88" height="44" rx="8" fill="#f3f4f6" />
       <rect x="128" y="66" width="88" height="44" rx="8" fill="#f3f4f6" />
       <rect x="34" y="76" width="40" height="6" rx="3" fill="#9ca3af" />
@@ -44,8 +44,8 @@ function SdksSvg() {
       <rect x="138" y="76" width="40" height="6" rx="3" fill="#9ca3af" />
       <rect x="138" y="88" width="68" height="6" rx="3" fill="#e5e7eb" />
       <rect x="138" y="100" width="54" height="6" rx="3" fill="#e5e7eb" />
-      <rect x="24" y="122" width="46" height="20" rx="10" fill="#8d54ff" fillOpacity="0.12" />
-      <text x="47" y="135" textAnchor="middle" fontSize="9" fontWeight="600" fill="#8d54ff">ts</text>
+      <rect x="24" y="122" width="46" height="20" rx="10" fill="#f97316" fillOpacity="0.12" />
+      <text x="47" y="135" textAnchor="middle" fontSize="9" fontWeight="600" fill="#f97316">ts</text>
       <rect x="78" y="122" width="46" height="20" rx="10" fill="#2563eb" fillOpacity="0.12" />
       <text x="101" y="135" textAnchor="middle" fontSize="9" fontWeight="600" fill="#2563eb">py</text>
       <rect x="132" y="122" width="46" height="20" rx="10" fill="#16a34a" fillOpacity="0.12" />
@@ -85,13 +85,13 @@ function AiChatSvg() {
       <circle cx="28" cy="24" r="4" fill="#ff5f56" />
       <circle cx="42" cy="24" r="4" fill="#ffbd2e" />
       <circle cx="56" cy="24" r="4" fill="#27c93f" />
-      <rect x="24" y="48" width="150" height="22" rx="8" fill="#8d54ff" fillOpacity="0.12" />
-      <rect x="32" y="54" width="96" height="6" rx="3" fill="#8d54ff" fillOpacity="0.5" />
-      <rect x="180" y="52" width="42" height="14" rx="7" fill="#8d54ff" />
+      <rect x="24" y="48" width="150" height="22" rx="8" fill="#f97316" fillOpacity="0.12" />
+      <rect x="32" y="54" width="96" height="6" rx="3" fill="#f97316" fillOpacity="0.5" />
+      <rect x="180" y="52" width="42" height="14" rx="7" fill="#f97316" />
       <path d="M195 57l4 3 6-6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="24" y="80" width="150" height="26" rx="8" fill="#8d54ff" fillOpacity="0.12" />
-      <rect x="32" y="88" width="120" height="6" rx="3" fill="#8d54ff" fillOpacity="0.4" />
-      <rect x="32" y="98" width="88" height="6" rx="3" fill="#8d54ff" fillOpacity="0.4" />
+      <rect x="24" y="80" width="150" height="26" rx="8" fill="#f97316" fillOpacity="0.12" />
+      <rect x="32" y="88" width="120" height="6" rx="3" fill="#f97316" fillOpacity="0.4" />
+      <rect x="32" y="98" width="88" height="6" rx="3" fill="#f97316" fillOpacity="0.4" />
       <rect x="60" y="118" width="160" height="26" rx="8" fill="#f3f4f6" />
       <rect x="68" y="126" width="72" height="6" rx="3" fill="#9ca3af" />
       <rect x="68" y="136" width="52" height="6" rx="3" fill="#d1d5db" />

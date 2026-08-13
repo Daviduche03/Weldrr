@@ -153,12 +153,12 @@ export function BrandingSection({ projectId }: { projectId: string }) {
         <div className="mt-2 grid max-w-md gap-3 sm:grid-cols-2">
           <ColorField
             label="Primary"
-            value={config.colors?.primary ?? '#8d54ff'}
+            value={config.colors?.primary ?? '#f97316'}
             onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, primary: v } }))}
           />
           <ColorField
             label="Accent"
-            value={config.colors?.accent ?? '#8d54ff'}
+            value={config.colors?.accent ?? '#f97316'}
             onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, accent: v } }))}
           />
         </div>

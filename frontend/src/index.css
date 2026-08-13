@@ -16,7 +16,7 @@
   --card-foreground: #111827;
   --popover: #ffffff;
   --popover-foreground: #111827;
-  --primary: #8d54ff;
+  --primary: #f97316;
   --primary-foreground: #ffffff;
   --secondary: #f9fafb;
   --secondary-foreground: #111827;
@@ -30,15 +30,15 @@
   --input: #e5e7eb;
   --ring: #cbd5e1;
 
-  /* Weldrr brand accent — violet */
-  --brand: #8d54ff;
+  /* Weldrr brand accent — orange */
+  --brand: #f97316;
   --brand-foreground: #ffffff;
-  --brand-soft: #f4efff;
-  --brand-muted: #7a4aff;
+  --brand-soft: #fff1e6;
+  --brand-muted: #ea580c;
 
   --sidebar-background: #ffffff;
   --sidebar-foreground: #111827;
-  --sidebar-primary: #8d54ff;
+  --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f3f4f6;
   --sidebar-accent-foreground: #111827;
@@ -54,8 +54,8 @@
   --card-foreground: #eee;
   --popover: #171717;
   --popover-foreground: #eee;
-  --primary: #e5e5e5;
-  --primary-foreground: #171717;
+  --primary: #f97316;
+  --primary-foreground: #1a0a00;
   --secondary: #262626;
   --secondary-foreground: #eee;
   --muted: #18191b;
@@ -68,14 +68,14 @@
   --input: #ffffff26;
   --ring: #a1a1a1;
 
-  --brand: #8d54ff;
+  --brand: #f97316;
   --brand-foreground: #ffffff;
-  --brand-soft: rgba(141, 84, 255, 0.12);
-  --brand-muted: #a78bfa;
+  --brand-soft: rgba(249, 115, 22, 0.14);
+  --brand-muted: #fb923c;
 
   --sidebar-background: #0d0d0d;
   --sidebar-foreground: #eee;
-  --sidebar-primary: #8d54ff;
+  --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #262626;
   --sidebar-accent-foreground: #eee;
