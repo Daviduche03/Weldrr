@@ -19,12 +19,33 @@ You are generating comprehensive API documentation from an API specification.
 1. Read the spec and map out every endpoint, schema, and authentication scheme.
 2. Review the template's structure (navigation, page layout, code examples).
 3. **Work entirely inside `/workspace`** — including any temporary/verify files. Do not write to `/tmp` or other paths outside the workspace; opencode will block it and the build will hang. Use `/workspace` (e.g. `/workspace/verify.mjs`) for scratch files and delete them before committing.
-4. Produce docs covering:
+4. **Organize pages into sections by folder.** Navigation is derived from the page tree: each top-level folder under `src/docs/` becomes a section (a top-bar tab AND a sidebar group). `index.mdx` at a folder's root is that section's landing page; the root `index.mdx` is Home. Structure:
+   ```text
+   src/docs/
+     index.mdx                  → Home
+     getting-started/
+       index.mdx                → Getting started (landing)
+       authentication.mdx
+       quickstart.mdx
+     reference/
+       index.mdx                → API reference (landing)
+       agent-completions.mdx    → one page per endpoint/resource
+       health.mdx
+     sdk/
+       index.mdx                → SDKs (landing)
+       typescript.mdx
+       python.mdx
+   ```
+   - Create folders per section — do not dump pages flat into `src/docs/`.
+   - Reference: **one page per endpoint** under `reference/`.
+   - Name folders so alphabetical order reads well (Home is pinned first): e.g. `getting-started`, `reference`, `sdk`, `resources`.
+   - Each section folder should have an `index.mdx` overview landing page.
+   - Produce docs covering:
    - Getting started / quickstart with real request examples.
    - Authentication guide matching the spec's auth schemes.
    - A reference page for every endpoint: params, request bodies, response shapes, errors.
    - Schema/type reference generated from the spec definitions.
-4. **Write the SDK docs** — the API has generated SDKs (see `sdk.md`), and users need to know how to use them. Create a page per language under `src/docs/` (e.g. `sdk-typescript.mdx`, `sdk-python.mdx`) and link them from the nav/index. Each SDK page must include:
+4. **Write the SDK docs** — the API has generated SDKs (see `sdk.md`), and users need to know how to use them. Create a page per language under `src/docs/sdk/` (e.g. `typescript.mdx`, `python.mdx`) and link them from the SDK landing. Each SDK page must include:
    - **Installation** — the exact install/import command for the package (from `sdk.md`).
    - **Quickstart** — instantiate the client with the base URL + auth, then make one real call.
    - **Client setup** — how to configure auth (API key / bearer), base URL, and any timeouts/retries.

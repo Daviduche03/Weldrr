@@ -120,7 +120,7 @@ function mintlifyDocsSystemPrompt(): string {
     'There is no Weldrr discovery docs.md/spec.json for this project — instead, the Mintlify documentation source is cloned at /workspace/mintlify-source.',
     'Read /workspace/mintlify-source thoroughly FIRST: its config (mint.json or docs.json) tells you the site name, brand colors, logo, and navigation; its .mdx pages hold the real content (guides, reference, examples).',
     'Understand the API surface: every endpoint, request body, response shape, and auth scheme.',
-    'Follow the injected docs-builder skill and its completion protocol, but build the Weldrr docs site in /workspace FROM the Mintlify content — do not copy pages verbatim: write a reference page per resource/endpoint with params, request bodies, responses, and errors, populate src/data/endpoints.json with the endpoint schemas, and keep examples accurate to the source.',
+    'Follow the injected docs-builder skill and its completion protocol, but build the Weldrr docs site in /workspace FROM the Mintlify content — do not copy pages verbatim: organize pages into section folders under src/docs/ (getting-started/, reference/, sdk/, resources/), write a reference page per resource/endpoint under reference/, populate src/data/endpoints.json with the endpoint schemas, and keep examples accurate to the source.',
     'When finished, call the report_sdk_complete tool exactly once with status "finished" and artifactUrl set to the docs repo origin URL.',
   ].join(' ')
 }
@@ -920,7 +920,7 @@ function mintlifyDocsPrompt(name: string): string {
   return [
     `Build the API documentation site for "${name}".`,
     'The Mintlify source is at /workspace/mintlify-source — read its config (mint.json/docs.json) and .mdx pages to learn the product, the API surface, and how the docs are organized.',
-    'Follow the docs-builder skill: populate the Weldrr template pages, create a reference page per resource/endpoint, write src/data/endpoints.json, and verify the build.',
+    'Follow the docs-builder skill: organize pages into section folders under src/docs/ (getting-started/, reference/, sdk/, resources/ — each with an index.mdx landing), create a reference page per resource/endpoint under reference/, write src/data/endpoints.json, and verify the build.',
     'Port the real content from the Mintlify source — do not leave the template placeholders or invent endpoints.',
     'Include the versioning steps: commit, push, and tag with WELDRR_ARTIFACT_VERSION.',
   ].join(' ')
