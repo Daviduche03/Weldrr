@@ -10,9 +10,11 @@ import {
   readRepoFile,
   writeRepoFile,
   deleteRepoFile,
+  commitFiles,
   getRepoDefaultBranch,
   type RepoTreeNode,
 } from '@/services/github'
+import { planMintlifyImport } from '@/services/mintlify'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
 import { publishingService } from '@/services/publishing'
@@ -352,6 +354,86 @@ export const docsService = {
 
     logger.info({ projectId }, 'Branding updated')
     return { path: BRANDING_PATH }
+  },
+
+  /**
+   * Imports a Mintlify docs repo into the project's Weldrr docs repo. Reads
+   * the source repo's `mint.json` + `.mdx` pages, flattens Mintlify-specific
+   * MDX to plain markdown, maps the page slugs to `src/docs/`, and writes a
+   * `branding.json` — all in a single efficient commit via the git data API.
+   */
+  async importMintlify(
+    workspaceId: string,
+    projectId: string,
+    input: { repoUrl: string },
+  ): Promise<{
+    imported: number
+    navigation: string[]
+    branding: Record<string, unknown>
+  }> {
+    const sourceFullName = fullNameFromUrl(input.repoUrl)
+    if (!sourceFullName) {
+      throw new AppError(400, 'Provide a valid GitHub Mintlify repo URL')
+    }
+
+    const connection = await connectionService.getConnection(workspaceId, 'github')
+    if (!connection?.token) {
+      throw new AppError(400, 'No GitHub connection for this workspace')
+    }
+
+    // Where the imported docs land.
+    const target = await this.resolveRepo(workspaceId, projectId)
+
+    // Read the source repo structure + branch.
+    let sourceBranch = 'main'
+    try {
+      sourceBranch = await getRepoDefaultBranch(connection.token, sourceFullName)
+    } catch {
+      sourceBranch = 'main'
+    }
+    const tree = await listRepoTree(connection.token, sourceFullName, sourceBranch)
+
+    const sourceFileReads = new Map<string, Promise<string | null>>()
+    const sourceRead = (path: string): Promise<string | null> => {
+      const existing = sourceFileReads.get(path)
+      if (existing) return existing
+      const p = readRepoFile(connection.token, sourceFullName, path, sourceBranch).catch(() => null)
+      sourceFileReads.set(path, p)
+      return p
+    }
+
+    const plan = await planMintlifyImport({
+      token: connection.token,
+      fullName: sourceFullName,
+      branch: sourceBranch,
+      tree,
+      readFile: sourceRead,
+    })
+
+    if (plan.files.length === 0) {
+      throw new AppError(400, 'No Mintlify pages found to import')
+    }
+
+    // Write branding + all converted pages in one commit.
+    const brandingContent = JSON.stringify(plan.branding, null, 2)
+    await commitFiles(connection.token, target.fullName, {
+      branch: target.branch,
+      message: 'docs: import Mintlify docs',
+      files: [
+        { path: BRANDING_PATH, content: brandingContent },
+        ...plan.files.map((f) => ({ path: f.path, content: f.content })),
+      ],
+    })
+
+    logger.info(
+      { projectId, imported: plan.files.length, source: sourceFullName },
+      'Mintlify docs imported',
+    )
+    return {
+      imported: plan.files.length,
+      navigation: plan.navigation,
+      branding: plan.branding,
+    }
   },
 
   async publish(workspaceId: string, projectId: string): Promise<{ version: string }> {

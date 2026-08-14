@@ -49,6 +49,10 @@ const chatSchema = z.object({
   content: z.string().max(100_000).optional(),
 })
 
+const importMintlifySchema = z.object({
+  repoUrl: z.string().url('Provide a valid GitHub repo URL').max(500),
+})
+
 export const docsController = {
   async tree(req: WorkspaceRequest, res: Response<ApiResponse<DocsTreeNode[]>>) {
     const { projectId } = projectIdParamSchema.parse(req.params)
@@ -110,6 +114,18 @@ export const docsController = {
   async publish(req: WorkspaceRequest, res: Response<ApiResponse<{ version: string }>>) {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const data = await docsService.publish(req.workspace.workspaceId, projectId)
+    res.json({ status: 'success', data })
+  },
+
+  async importMintlify(
+    req: WorkspaceRequest,
+    res: Response<
+      ApiResponse<{ imported: number; navigation: string[]; branding: Record<string, unknown> }>
+    >,
+  ) {
+    const { projectId } = projectIdParamSchema.parse(req.params)
+    const input = importMintlifySchema.parse(req.body)
+    const data = await docsService.importMintlify(req.workspace.workspaceId, projectId, input)
     res.json({ status: 'success', data })
   },
 }

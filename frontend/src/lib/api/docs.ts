@@ -65,4 +65,13 @@ export const docsApi = {
     assets?: BrandingAsset[],
   ): Promise<{ path: string }> =>
     http.put<{ path: string }>(`/api/projects/${projectId}/docs/branding`, { config, assets }),
+
+  importMintlify: (
+    projectId: string,
+    repoUrl: string,
+  ): Promise<{ imported: number; navigation: string[]; branding: Record<string, unknown> }> =>
+    http.post<{ imported: number; navigation: string[]; branding: Record<string, unknown> }>(
+      `/api/projects/${projectId}/docs/import-mintlify`,
+      { repoUrl },
+    ),
 }

@@ -302,6 +302,87 @@ export async function writeRepoFile(
   })
 }
 
+/**
+ * Efficiently writes a batch of files (and optional deletes) in a single
+ * commit: all blobs are created in parallel, then one tree, one commit, and
+ * one ref update. Use this instead of writeRepoFile per file when applying
+ * many changes at once.
+ */
+export async function commitFiles(
+  accessToken: string,
+  fullName: string,
+  input: {
+    branch?: string
+    files: { path: string; content: string; encoding?: 'utf-8' | 'base64' }[]
+    deletes?: string[]
+    message: string
+  },
+): Promise<void> {
+  const branch = input.branch ?? 'main'
+  const message = input.message
+
+  const baseCommitSha = await getRepoRef(accessToken, fullName, branch).then((r) => r.commitSha)
+  const commitData = (await githubRequest(
+    `/repos/${fullName}/git/commits/${baseCommitSha}`,
+    accessToken,
+  )) as { tree?: { sha?: string } }
+  const baseTreeSha = commitData.tree?.sha ?? baseCommitSha
+
+  // Current tree, so we can keep untouched entries and drop deleted ones.
+  const existing = await listRepoTree(accessToken, fullName, branch)
+  const existingShas = new Map(existing.map((n) => [n.path, n.sha]))
+  const existingTypes = new Map(existing.map((n) => [n.path, n.type]))
+
+  const deletePaths = new Set(input.deletes ?? [])
+  const writePaths = new Set(input.files.map((f) => f.path))
+
+  // Create all blobs in parallel.
+  const tree: { path: string; mode: string; type: string; sha: string }[] = []
+  await Promise.all(
+    input.files.map(async (file) => {
+      const blob = (await githubRequest(`/repos/${fullName}/git/blobs`, accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          content: file.content,
+          ...(file.encoding && file.encoding !== 'utf-8' ? { encoding: file.encoding } : {}),
+        }),
+      })) as { sha: string }
+      tree.push({ path: file.path, mode: '100644', type: 'blob', sha: blob.sha })
+    }),
+  )
+
+  // Retain every existing entry that isn't deleted or overwritten.
+  for (const [path, sha] of existingShas) {
+    if (deletePaths.has(path) || writePaths.has(path)) continue
+    const isTree = existingTypes.get(path) === 'tree'
+    tree.push({
+      path,
+      mode: isTree ? '040000' : '100644',
+      type: isTree ? 'tree' : 'blob',
+      sha,
+    })
+  }
+
+  const newTree = (await githubRequest(`/repos/${fullName}/git/trees`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ base_tree: baseTreeSha, tree }),
+  })) as { sha: string }
+
+  const newCommit = (await githubRequest(`/repos/${fullName}/git/commits`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({
+      message,
+      tree: newTree.sha,
+      parents: [baseCommitSha],
+    }),
+  })) as { sha: string }
+
+  await githubRequest(`/repos/${fullName}/git/refs/heads/${branch}`, accessToken, {
+    method: 'PATCH',
+    body: JSON.stringify({ sha: newCommit.sha, force: false }),
+  })
+}
+
 export async function deleteRepoFile(
   accessToken: string,
   fullName: string,
@@ -309,7 +390,7 @@ export async function deleteRepoFile(
   message = `docs: delete ${path}`,
   branch = 'main',
 ): Promise<void> {
-  // GitHub's contents DELETE requires the current blob sha.
+
   const current = (await githubRequest(
     `/repos/${fullName}/contents/${encodePath(path)}?ref=${encodeURIComponent(branch)}`,
     accessToken,
