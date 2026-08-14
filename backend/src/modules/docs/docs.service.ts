@@ -500,11 +500,20 @@ export const docsService = {
       throw new AppError(400, 'No Mintlify pages found to import')
     }
 
+    // Drop template placeholder pages (e.g. src/docs/index.mdx from the
+    // scaffold) that the import doesn't cover, so the tree mirrors the source.
+    const writtenPaths = new Set(plan.files.map((f) => f.path))
+    const targetTree = await listRepoTree(connection.token, target.fullName, target.branch)
+    const staleDocs = targetTree
+      .filter((n) => n.type === 'blob' && n.path.startsWith('src/docs/') && !writtenPaths.has(n.path))
+      .map((n) => n.path)
+
     // Write branding + all converted pages in one commit.
     const brandingContent = JSON.stringify(plan.branding, null, 2)
     await commitFiles(connection.token, target.fullName, {
       branch: target.branch,
       message: 'docs: import Mintlify docs',
+      deletes: staleDocs,
       files: [
         { path: BRANDING_PATH, content: brandingContent },
         ...plan.files.map((f) => ({ path: f.path, content: f.content })),

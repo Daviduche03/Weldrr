@@ -6,8 +6,9 @@ import type { RepoTreeNode } from '@/services/github'
  * `branding.json`, rendered as plain MDX).
  *
  * Mintlify layout it understands:
- *  - `mint.json` at the repo root: `name`, `colors`, `logo`, `navigation`.
- *  - a content directory (mint.json `content`, default `docs`) holding `.mdx`.
+ *  - `mint.json` (or `docs.json`) at the repo root: `name`, `colors`, `logo`,
+ *    `navigation`, `content`.
+ *  - a content directory (config `content`, default `docs`) holding `.mdx`.
  *  - Mintlify-specific MDX components (Tabs, Card, Note/Warning, CodeGroup,
  *    Accordion, RequestExample, etc.) which are flattened to plain markdown.
  */
@@ -73,12 +74,13 @@ export function resolveContentBase(config: Record<string, unknown> | null, tree:
   return tree.some((n) => n.path === 'docs' && n.type === 'tree') ? 'docs' : ''
 }
 
-/** Extract the page slugs referenced by mint.json `navigation`. */
+/** Extract the page slugs referenced by the config `navigation`. Handles both
+ * the classic mint.json array of groups/pages and the docs.json `{ tabs:
+ * [{ groups: [{ pages: [...] }] }] }` object schema. */
 export function extractNavigationSlugs(config: Record<string, unknown> | null): string[] {
   const nav = config?.navigation
-  if (!Array.isArray(nav)) return []
-
   const slugs = new Set<string>()
+
   const walk = (items: unknown[]): void => {
     for (const item of items) {
       if (typeof item === 'string') {
@@ -95,7 +97,25 @@ export function extractNavigationSlugs(config: Record<string, unknown> | null): 
       }
     }
   }
-  walk(nav)
+
+  if (Array.isArray(nav)) {
+    walk(nav)
+  } else if (nav && typeof nav === 'object') {
+    // docs.json style: { tabs: [{ tab, groups: [{ group, pages }] }] }.
+    const tabs = (nav as Record<string, unknown>).tabs
+    if (Array.isArray(tabs)) {
+      for (const tab of tabs) {
+        if (!tab || typeof tab !== 'object') continue
+        const groups = (tab as Record<string, unknown>).groups
+        if (Array.isArray(groups)) walk(groups)
+        // Some configs put pages directly under a tab.
+        const pages = (tab as Record<string, unknown>).pages
+        if (Array.isArray(pages)) walk(pages)
+      }
+    }
+    const groups = (nav as Record<string, unknown>).groups
+    if (Array.isArray(groups)) walk(groups)
+  }
   return [...slugs]
 }
 
@@ -262,22 +282,48 @@ function unwrap(s: string): string {
   return s.replace(/^<p>\s?/, '').replace(/\s?<\/p>$/, '')
 }
 
-/** Map mint.json branding → Weldrr branding.json config. */
+/** Map Mintlify config branding → Weldrr branding.json config. */
 export function toBranding(config: Record<string, unknown> | null): Record<string, unknown> {
-  const colors = (config?.colors as Record<string, unknown>) ?? {}
-  const brand = (config?.favicon ?? config?.logo ?? '') as string
+  const colors = (config?.colors as Record<string, unknown> | undefined) ?? {}
   const out: Record<string, unknown> = {
-    siteName: (config?.name as string) ?? 'Docs',
+    siteName: typeof config?.name === 'string' && config.name.trim() ? config.name : 'Docs',
   }
+
+  // Mintlify colors: `primary` is the brand color; `light`/`dark` are the
+  // primary color per theme. Pick a real accent rather than the white light-mode
+  // value that some configs ship with.
   const primary = typeof colors.primary === 'string' ? colors.primary : undefined
-  const accent = typeof colors.light === 'string' ? colors.light : undefined
+  const light = typeof colors.light === 'string' ? colors.light : undefined
+  const dark = typeof colors.dark === 'string' ? colors.dark : undefined
+  const isWhiteish = (hex?: string): boolean => {
+    if (!hex) return true
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex)
+    if (!m) return true
+    const n = parseInt(m[1], 16)
+    const r = (n >> 16) & 255
+    const g = (n >> 8) & 255
+    const b = n & 255
+    return (r * 299 + g * 587 + b * 114) / 1000 > 235
+  }
+  const accent = !isWhiteish(light) ? light : !isWhiteish(dark) ? dark : undefined
   if (primary || accent) {
     out.colors = {
       ...(primary ? { primary } : {}),
       ...(accent ? { accent } : {}),
     }
   }
-  if (brand) out.logo = brand
+
+  // Mintlify `logo` may be a path or a `{ light, dark }` pair; `favicon` is
+  // usually a single path.
+  const rawLogo = config?.logo
+  const logo =
+    typeof rawLogo === 'string'
+      ? rawLogo
+      : rawLogo && typeof rawLogo === 'object'
+        ? (rawLogo as Record<string, unknown>).light
+        : undefined
+  if (typeof logo === 'string' && logo.trim()) out.logo = logo
+  if (typeof config?.favicon === 'string' && config.favicon.trim()) out.favicon = config.favicon
   return out
 }
 
@@ -291,9 +337,11 @@ export async function planMintlifyImport(input: {
 }): Promise<MintImportPlan> {
   const { token, fullName, branch, tree, readFile } = input
 
-  // Find mint.json at root.
-  const mintPath = tree.find((n) => n.path === 'mint.json')?.path ?? 'mint.json'
-  const rawConfig = await readRepoRaw(token, fullName, mintPath, branch)
+  // Find the config file at the repo root — Mintlify uses `mint.json`, but
+  // older setups ship `docs.json` instead.
+  const configPath =
+    ['mint.json', 'docs.json'].find((p) => tree.some((n) => n.path === p)) ?? 'mint.json'
+  const rawConfig = await readRepoRaw(token, fullName, configPath, branch)
   const config = rawConfig ? parseMintConfig(rawConfig) : null
 
   const contentBase = resolveContentBase(config, tree)
@@ -322,7 +370,10 @@ export async function planMintlifyImport(input: {
     const src = sourcePathForSlug(clean, contentBase, tree)
     const raw = await readFile(src)
     if (raw === null) continue
-    files.push({ path: `src/docs/${clean}.mdx`, content: flattenMdx(raw) })
+    // Nav slugs may already include the content base prefix (docs.json), so
+    // normalize to a path relative to the content base for src/docs/.
+    const rel = contentBase && clean.startsWith(`${contentBase}/`) ? clean.slice(contentBase.length + 1) : clean
+    files.push({ path: `src/docs/${rel}.mdx`, content: flattenMdx(raw) })
   }
 
   return {

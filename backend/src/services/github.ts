@@ -352,7 +352,7 @@ export async function commitFiles(
 
   // Create all blobs with a bounded concurrency — firing hundreds of requests
   // in parallel trips GitHub's abuse/rate limits (403), so keep it small.
-  const tree: { path: string; mode: string; type: string; sha: string }[] = []
+  const tree: { path: string; mode: string; type: string; sha: string | null }[] = []
   const CONCURRENCY = 8
   let idx = 0
   const workers = Array.from({ length: CONCURRENCY }, async () => {
@@ -372,7 +372,9 @@ export async function commitFiles(
   })
   await Promise.all(workers)
 
-  // Retain every existing entry that isn't deleted or overwritten.
+  // Retain every existing entry that isn't deleted or overwritten. Deleted
+  // paths are emitted explicitly with a null sha — with base_tree, omitted
+  // entries are inherited, so this is the only way to actually drop files.
   for (const [path, sha] of existingShas) {
     if (deletePaths.has(path) || writePaths.has(path)) continue
     const isTree = existingTypes.get(path) === 'tree'
@@ -381,6 +383,15 @@ export async function commitFiles(
       mode: isTree ? '040000' : '100644',
       type: isTree ? 'tree' : 'blob',
       sha,
+    })
+  }
+  for (const path of deletePaths) {
+    const isTree = existingTypes.get(path) === 'tree'
+    tree.push({
+      path,
+      mode: isTree ? '040000' : '100644',
+      type: isTree ? 'tree' : 'blob',
+      sha: null,
     })
   }
 
