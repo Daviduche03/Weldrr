@@ -11,10 +11,14 @@ import {
   writeRepoFile,
   deleteRepoFile,
   commitFiles,
+  createGitHubRepo,
+  getGitHubRepo,
+  getGitHubBlobBase64,
   getRepoDefaultBranch,
   type RepoTreeNode,
 } from '@/services/github'
 import { planMintlifyImport } from '@/services/mintlify'
+import { slugify } from '@/shared/utils/slug'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
 import { publishingService } from '@/services/publishing'
@@ -357,6 +361,87 @@ export const docsService = {
   },
 
   /**
+   * Ensures the project has a Weldrr docs repo, provisioning one from the
+   * docs template when it doesn't exist yet. Returns the repo reference to
+   * write into. This lets a Mintlify import create its own repo without an
+   * agent sandbox.
+   */
+  async ensureDocsRepo(
+    workspaceId: string,
+    projectId: string,
+    token: string,
+  ): Promise<{ fullName: string; accessToken: string; branch: string }> {
+    const project = await projectRepository.findById(workspaceId, projectId)
+    if (!project) throw new NotFoundError('Project not found')
+
+    if (project.docsUrl) {
+      return this.resolveRepo(workspaceId, projectId)
+    }
+
+    const baseName = `${slugify(project.name) || 'project'}-docs`
+    const isPrivate = project.gitRepo?.private ?? false
+
+    let fullName: string
+    let cloneUrl: string
+    const existing = await getGitHubRepo(token, baseName).catch(() => null)
+    if (existing) {
+      fullName = fullNameFromUrl(existing.cloneUrl)
+      cloneUrl = existing.cloneUrl
+    } else {
+      let created: { fullName: string; cloneUrl: string } | null = null
+      for (let attempt = 0; attempt < 5 && !created; attempt += 1) {
+        const name = attempt === 0 ? baseName : `${baseName}-${attempt + 1}`
+        try {
+          created = await createGitHubRepo(token, {
+            name,
+            description: `Weldrr docs for ${project.name}`,
+            private: isPrivate,
+            // Seed an initial commit so the Git Data API accepts our blobs.
+            autoInit: true,
+          })
+        } catch (err) {
+          const isConflict = err instanceof AppError && err.statusCode === 409
+          if (!isConflict) throw err
+          if (attempt === 4) throw err
+        }
+      }
+      if (!created) throw new AppError(500, 'Could not create a docs repository')
+      fullName = created.fullName
+      cloneUrl = created.cloneUrl
+    }
+
+    // Scaffold the site from the docs template (no agent needed).
+    const templateUrl = config.sandbox.templates['docs'] ?? ''
+    const templateFull = fullNameFromUrl(templateUrl)
+    if (templateFull) {
+      let templateBranch = 'main'
+      try {
+        templateBranch = await getRepoDefaultBranch(token, templateFull)
+      } catch {
+        templateBranch = 'main'
+      }
+      const templateTree = await listRepoTree(token, templateFull, templateBranch)
+      const files: { path: string; content: string; encoding: 'base64' }[] = []
+      for (const node of templateTree) {
+        if (node.type !== 'blob') continue
+        const content = await getGitHubBlobBase64(token, templateFull, node.sha)
+        files.push({ path: node.path, content, encoding: 'base64' })
+      }
+      if (files.length > 0) {
+        await commitFiles(token, fullName, {
+          branch: 'main',
+          files,
+          message: 'chore: scaffold docs site from Weldrr template',
+        })
+      }
+    }
+
+    // Record the repo as the project's docs repo.
+    await projectRepository.update(workspaceId, projectId, { docsUrl: cloneUrl })
+    return { fullName, accessToken: token, branch: 'main' }
+  },
+
+  /**
    * Imports a Mintlify docs repo into the project's Weldrr docs repo. Reads
    * the source repo's `mint.json` + `.mdx` pages, flattens Mintlify-specific
    * MDX to plain markdown, maps the page slugs to `src/docs/`, and writes a
@@ -381,8 +466,9 @@ export const docsService = {
       throw new AppError(400, 'No GitHub connection for this workspace')
     }
 
-    // Where the imported docs land.
-    const target = await this.resolveRepo(workspaceId, projectId)
+    // Where the imported docs land — provision the repo if the project has
+    // none yet (no agent sandbox involved).
+    const target = await this.ensureDocsRepo(workspaceId, projectId, connection.token)
 
     // Read the source repo structure + branch.
     let sourceBranch = 'main'

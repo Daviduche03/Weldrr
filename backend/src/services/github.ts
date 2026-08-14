@@ -142,6 +142,9 @@ export async function createGitHubRepo(
     name: string
     description?: string
     private: boolean
+    /** Seed the repo with an initial commit (needed before the Git Data API
+     * accepts blobs/commits). False keeps it empty for agent `git push`. */
+    autoInit?: boolean
   },
 ): Promise<{ fullName: string; cloneUrl: string; htmlUrl: string }> {
   const res = await fetch(`${GITHUB_API}/user/repos`, {
@@ -158,7 +161,7 @@ export async function createGitHubRepo(
       description: input.description ?? 'Generated SDK by Weldrr',
       private: input.private,
       // Empty repo — the agent's `git push` of `main` becomes the default branch.
-      auto_init: false,
+      auto_init: input.autoInit ?? false,
     }),
     signal: AbortSignal.timeout(15_000),
   })
@@ -321,15 +324,26 @@ export async function commitFiles(
   const branch = input.branch ?? 'main'
   const message = input.message
 
-  const baseCommitSha = await getRepoRef(accessToken, fullName, branch).then((r) => r.commitSha)
-  const commitData = (await githubRequest(
-    `/repos/${fullName}/git/commits/${baseCommitSha}`,
-    accessToken,
-  )) as { tree?: { sha?: string } }
-  const baseTreeSha = commitData.tree?.sha ?? baseCommitSha
+  // A repo that has no ref yet (freshly created, no commits) is seeded with
+  // an initial commit; otherwise we commit on top of the current HEAD.
+  let baseCommitSha: string | undefined
+  let baseTreeSha: string | undefined
+  try {
+    baseCommitSha = (await getRepoRef(accessToken, fullName, branch)).commitSha
+    const commitData = (await githubRequest(
+      `/repos/${fullName}/git/commits/${baseCommitSha}`,
+      accessToken,
+    )) as { tree?: { sha?: string } }
+    baseTreeSha = commitData.tree?.sha ?? baseCommitSha
+  } catch {
+    baseCommitSha = undefined
+    baseTreeSha = undefined
+  }
 
   // Current tree, so we can keep untouched entries and drop deleted ones.
-  const existing = await listRepoTree(accessToken, fullName, branch)
+  const existing = baseCommitSha
+    ? await listRepoTree(accessToken, fullName, branch)
+    : []
   const existingShas = new Map(existing.map((n) => [n.path, n.sha]))
   const existingTypes = new Map(existing.map((n) => [n.path, n.type]))
 
@@ -365,7 +379,10 @@ export async function commitFiles(
 
   const newTree = (await githubRequest(`/repos/${fullName}/git/trees`, accessToken, {
     method: 'POST',
-    body: JSON.stringify({ base_tree: baseTreeSha, tree }),
+    body: JSON.stringify({
+      ...(baseTreeSha ? { base_tree: baseTreeSha } : {}),
+      tree,
+    }),
   })) as { sha: string }
 
   const newCommit = (await githubRequest(`/repos/${fullName}/git/commits`, accessToken, {
@@ -373,15 +390,57 @@ export async function commitFiles(
     body: JSON.stringify({
       message,
       tree: newTree.sha,
-      parents: [baseCommitSha],
+      ...(baseCommitSha ? { parents: [baseCommitSha] } : {}),
     }),
   })) as { sha: string }
 
-  await githubRequest(`/repos/${fullName}/git/refs/heads/${branch}`, accessToken, {
-    method: 'PATCH',
-    body: JSON.stringify({ sha: newCommit.sha, force: false }),
-  })
+  if (baseCommitSha) {
+    await githubRequest(`/repos/${fullName}/git/refs/heads/${branch}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: newCommit.sha, force: false }),
+    })
+  } else {
+    await githubRequest(`/repos/${fullName}/git/refs`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: newCommit.sha }),
+    })
+  }
 }
+
+/** Reads a git blob (by sha) as its raw decoded content. */
+export async function getGitHubBlob(
+  accessToken: string,
+  fullName: string,
+  sha: string,
+): Promise<string> {
+  const data = (await githubRequest(`/repos/${fullName}/git/blobs/${sha}`, accessToken)) as {
+    content?: string
+    encoding?: string
+  }
+  if (typeof data.content !== 'string') {
+    throw new AppError(502, `GitHub returned no blob content for ${sha}`)
+  }
+  return data.encoding === 'base64' ? Buffer.from(data.content, 'base64').toString('utf-8') : data.content
+}
+
+/** Reads a git blob (by sha) as its base64 payload, preserving bytes exactly
+ * (safe for binary assets). */
+export async function getGitHubBlobBase64(
+  accessToken: string,
+  fullName: string,
+  sha: string,
+): Promise<string> {
+  const data = (await githubRequest(`/repos/${fullName}/git/blobs/${sha}`, accessToken)) as {
+    content?: string
+    encoding?: string
+  }
+  if (typeof data.content !== 'string') {
+    throw new AppError(502, `GitHub returned no blob content for ${sha}`)
+  }
+  // If GitHub gives raw text, re-encode it so the caller can write it back as base64.
+  return data.encoding === 'base64' ? data.content : Buffer.from(data.content, 'utf-8').toString('base64')
+}
+
 
 export async function deleteRepoFile(
   accessToken: string,
