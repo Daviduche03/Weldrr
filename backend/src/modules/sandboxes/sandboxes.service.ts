@@ -54,6 +54,29 @@ function templateFor(jobType: string, language?: string): string {
   return config.sandbox.templates[jobType] ?? ''
 }
 
+/** Parse a GitHub repo URL into { fullName, branch }. Branch defaults to main
+ * unless the URL carries a `#branch` fragment. */
+function mintlifySourceFromUrl(url: string): { fullName: string; branch: string } {
+  let branch = 'main'
+  let path = url
+  const hashIndex = url.indexOf('#')
+  if (hashIndex !== -1) {
+    branch = url.slice(hashIndex + 1) || 'main'
+    path = url.slice(0, hashIndex)
+  }
+  try {
+    const parsed = new URL(path)
+    if (parsed.hostname === 'github.com') {
+      const fullName = parsed.pathname.replace(/^\/+|\/+$/g, '').replace(/\.git$/, '')
+      if (fullName) return { fullName, branch }
+    }
+  } catch {
+    // fall through
+  }
+  const bare = path.replace(/^\/+|\/+$/g, '').replace(/\.git$/, '')
+  return { fullName: bare, branch }
+}
+
 function defaultPrompt(input: { jobType: string; language?: string }): string {
   if (input.jobType === 'docs') {
     return [
@@ -86,6 +109,19 @@ function discoveryAgentSystemPrompt(): string {
     'Extract every endpoint, its request body, and its responses. Use webfetch/curl to browse the docs as many times as needed.',
     'Follow the injected discovery-agent skill for the exact docs.md format and its completion protocol.',
     'Call report_sdk_complete exactly once after /workspace/docs.md is fully written.',
+  ].join(' ')
+}
+
+/** System prompt for a docs agent whose source is a Mintlify repo (cloned to
+ * /workspace/mintlify-source) rather than Weldrr discovery docs.md/spec.json. */
+function mintlifyDocsSystemPrompt(): string {
+  return [
+    'You are building on behalf of Weldrr. Work inside /workspace.',
+    'There is no Weldrr discovery docs.md/spec.json for this project — instead, the Mintlify documentation source is cloned at /workspace/mintlify-source.',
+    'Read /workspace/mintlify-source thoroughly FIRST: its config (mint.json or docs.json) tells you the site name, brand colors, logo, and navigation; its .mdx pages hold the real content (guides, reference, examples).',
+    'Understand the API surface: every endpoint, request body, response shape, and auth scheme.',
+    'Follow the injected docs-builder skill and its completion protocol, but build the Weldrr docs site in /workspace FROM the Mintlify content — do not copy pages verbatim: write a reference page per resource/endpoint with params, request bodies, responses, and errors, populate src/data/endpoints.json with the endpoint schemas, and keep examples accurate to the source.',
+    'When finished, call the report_sdk_complete tool exactly once with status "finished" and artifactUrl set to the docs repo origin URL.',
   ].join(' ')
 }
 
@@ -412,12 +448,17 @@ export const sandboxService = {
       password,
       `weldrr-${row.id}`,
     )
+    const project = row.projectId
+      ? await projectRepository.findByIdGlobal(row.projectId).catch(() => undefined)
+      : undefined
+    const systemPrompt =
+      project?.specSource === 'mintlify' ? mintlifyDocsSystemPrompt() : discoverySystemPrompt()
     await opencodeSendPrompt(
       row.tunnelUrl,
       password,
       sessionId,
       input.prompt,
-      discoverySystemPrompt(),
+      systemPrompt,
     )
 
     await sandboxRepository.update(workspaceId, row.id, { status: 'building' })
@@ -465,27 +506,44 @@ export const sandboxService = {
       throw new AppError(401, 'Invalid or expired token')
     }
 
-    const docsMarkdown = await waitForDiscovery(row.projectId, 30_000)
+    const project = row.projectId
+      ? await projectRepository.findByIdGlobal(row.projectId)
+      : undefined
+    const isMintlify = project?.specSource === 'mintlify' && !!project?.specUrl
+
+    // Mintlify projects have no discovery run, so there's nothing to wait for.
+    const docsMarkdown = isMintlify ? undefined : await waitForDiscovery(row.projectId, 30_000)
 
     let spec = row.spec ?? undefined
     let gitTemplate = ''
     let sdkContext: string | undefined
-    if (row.projectId) {
-      const project = await projectRepository.findByIdGlobal(row.projectId)
-      if (project) {
+    let mintlifyRepo: string | undefined
+    let mintlifyBranch: string | undefined
+    let githubToken: string | undefined
+    if (project) {
+      // A Mintlify-source project has no discovery spec — the agent reads the
+      // cloned source repo instead. Skip the docs.md/spec plumbing entirely.
+      if (isMintlify) {
+        const parsed = mintlifySourceFromUrl(project.specUrl ?? '')
+        mintlifyRepo = parsed.fullName
+        mintlifyBranch = parsed.branch
+        githubToken =
+          (await connectionService.getToken(row.workspaceId, 'github').catch(() => undefined)) ??
+          undefined
+      } else {
         spec =
           project.spec ??
           (project.specRaw ? parseSpec(project.specRaw) : undefined) ??
           undefined
-        // For discovery the workspace is the project's own repo; for sdk/docs
-        // it's the scaffolded template (also baked into startup.sh).
-        gitTemplate =
-          row.jobType === 'discovery'
-            ? (project.gitRepo?.cloneUrl ?? '')
-            : templateFor(row.jobType, row.language ?? undefined)
-        if (row.jobType === 'docs') {
-          sdkContext = buildSdkContext(project)
-        }
+      }
+      // For discovery the workspace is the project's own repo; for sdk/docs
+      // it's the scaffolded template (also baked into startup.sh).
+      gitTemplate =
+        row.jobType === 'discovery'
+          ? (project.gitRepo?.cloneUrl ?? '')
+          : templateFor(row.jobType, row.language ?? undefined)
+      if (row.jobType === 'docs') {
+        sdkContext = buildSdkContext(project)
       }
     }
 
@@ -510,6 +568,9 @@ export const sandboxService = {
       docsMarkdown,
       gitTemplate,
       sdkContext,
+      ...(mintlifyRepo ? { mintlifyRepo } : {}),
+      ...(mintlifyBranch ? { mintlifyBranch } : {}),
+      ...(githubToken ? { githubToken } : {}),
       ...(npmToken ? { npmToken } : {}),
       ...(pypiToken ? { pypiToken } : {}),
     })
@@ -617,6 +678,25 @@ export const sandboxService = {
       await projectRepository.update(row.workspaceId, row.projectId, {
         docsUrl: input.artifactUrl,
       })
+      // Record a version for agent-generated docs too, so a finished build is
+      // tagged (0.0.1 first time, minor bump after that).
+      const project = await projectRepository.findByIdGlobal(row.projectId)
+      const nextDocsVersion = nextVersion(project?.docsVersion ?? null, 'minor')
+      const existing = await versionRepository.findBySandboxId(row.id)
+      if (!existing) {
+        await versionRepository.create({
+          workspaceId: row.workspaceId,
+          projectId: row.projectId,
+          artifactType: 'docs',
+          version: nextDocsVersion,
+          artifactUrl: input.artifactUrl ?? null,
+          sandboxId: row.id,
+          notes: input.summary ?? null,
+        })
+        await projectRepository.update(row.workspaceId, row.projectId, {
+          docsVersion: nextDocsVersion,
+        })
+      }
     }
 
     if (row.projectId && row.jobType !== 'discovery') {
@@ -833,6 +913,36 @@ export async function issueDiscoverySandbox(projectId: string): Promise<void> {
       status: 'failed',
       error: err instanceof Error ? err.message : 'Discovery failed',
     })
+  }
+}
+
+function mintlifyDocsPrompt(name: string): string {
+  return [
+    `Build the API documentation site for "${name}".`,
+    'The Mintlify source is at /workspace/mintlify-source — read its config (mint.json/docs.json) and .mdx pages to learn the product, the API surface, and how the docs are organized.',
+    'Follow the docs-builder skill: populate the Weldrr template pages, create a reference page per resource/endpoint, write src/data/endpoints.json, and verify the build.',
+    'Port the real content from the Mintlify source — do not leave the template placeholders or invent endpoints.',
+    'Include the versioning steps: commit, push, and tag with WELDRR_ARTIFACT_VERSION.',
+  ].join(' ')
+}
+
+/** Kicks off the agent-driven docs build for a Mintlify-source project: issues
+ * the docs sandbox (which provisions the <name>-docs repo + template) and
+ * starts the agent with the Mintlify source cloned into the workspace. */
+export async function startMintlifyDocsBuild(projectId: string): Promise<void> {
+  try {
+    const project = await projectRepository.findByIdGlobal(projectId)
+    if (!project) return
+    const sandbox = await sandboxService.issue(project.workspaceId, {
+      projectId: project.id,
+      jobType: 'docs',
+    })
+    await sandboxService.start(project.workspaceId, sandbox.id, {
+      prompt: mintlifyDocsPrompt(project.name),
+    })
+    logger.info({ projectId }, 'Started Mintlify docs build (agent)')
+  } catch (err) {
+    logger.error({ err, projectId }, 'Failed to start Mintlify docs build')
   }
 }
 

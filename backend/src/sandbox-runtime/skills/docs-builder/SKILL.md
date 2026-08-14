@@ -9,9 +9,10 @@ You are generating comprehensive API documentation from an API specification.
 
 ## Inputs
 - **`docs.md` (read first):** if present, it is the curated API map from Weldrr discovery — every endpoint, its request body, and responses. Use it as the outline for the reference docs.
+- **`mintlify-source/` (Mintlify projects):** the Mintlify docs repo is cloned here — `mint.json` or `docs.json` is the config (site name, brand colors, logo, navigation) and the `.mdx` pages hold the real content. Read it thoroughly and port that content into the Weldrr template — do not copy pages verbatim; write a reference page per resource/endpoint, populate `src/data/endpoints.json`, and keep examples accurate to the source.
 - **`sdk.md` (if present):** describes the SDKs Weldrr generated for this API — languages, install/import commands, and repo URLs. Use it to write the SDK documentation pages.
 - **`spec.json` (source of truth):** the raw parsed spec. Consult it for exact schemas, enums, constraints, and auth details that `docs.md` may omit. Always cross-check against it.
-- If neither exists, locate the spec with `Glob`/`Grep` (commonly `spec.yaml`, `spec.json`, `openapi.yaml`, or the `spec` directory) before starting.
+- If none of the above exist, locate the spec with `Glob`/`Grep` (commonly `spec.yaml`, `spec.json`, `openapi.yaml`, or the `spec` directory) before starting.
 - The workspace is already scaffolded from a documentation template (e.g. a static site or docs framework). Inspect its structure and conventions first.
 
 ## Steps

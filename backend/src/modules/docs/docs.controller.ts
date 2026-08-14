@@ -1,6 +1,8 @@
 import type { Response } from 'express'
 import { pipeUIMessageStreamToResponse } from 'ai'
 import { docsService } from '@/modules/docs/docs.service'
+import { startMintlifyDocsBuild } from '@/modules/sandboxes/sandboxes.service'
+import { projectRepository } from '@/modules/projects/projects.repository'
 import type { WorkspaceRequest } from '@/shared/types/request'
 import type { ApiResponse, ApiMessageResponse } from '@/shared/types/response'
 import type { DocsTreeNode } from '@/modules/docs/docs.service'
@@ -119,13 +121,19 @@ export const docsController = {
 
   async importMintlify(
     req: WorkspaceRequest,
-    res: Response<
-      ApiResponse<{ imported: number; navigation: string[]; branding: Record<string, unknown> }>
-    >,
+    res: Response<ApiResponse<{ sandboxStarted: boolean }>>,
   ) {
     const { projectId } = projectIdParamSchema.parse(req.params)
     const input = importMintlifySchema.parse(req.body)
-    const data = await docsService.importMintlify(req.workspace.workspaceId, projectId, input)
-    res.json({ status: 'success', data })
+    // The Mintlify source is now ported by an agent (reads the source repo and
+    // generates structured Weldrr docs). Refresh the source URL if given, then
+    // kick off the docs build sandbox.
+    if (input.repoUrl) {
+      await projectRepository.update(req.workspace.workspaceId, projectId, {
+        specUrl: input.repoUrl,
+      })
+    }
+    void startMintlifyDocsBuild(projectId)
+    res.json({ status: 'success', data: { sandboxStarted: true } })
   },
 }

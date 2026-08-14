@@ -69,8 +69,8 @@ export const docsApi = {
   importMintlify: (
     projectId: string,
     repoUrl: string,
-  ): Promise<{ imported: number; navigation: string[]; branding: Record<string, unknown> }> =>
-    http.post<{ imported: number; navigation: string[]; branding: Record<string, unknown> }>(
+  ): Promise<{ sandboxStarted: boolean }> =>
+    http.post<{ sandboxStarted: boolean }>(
       `/api/projects/${projectId}/docs/import-mintlify`,
       { repoUrl },
     ),

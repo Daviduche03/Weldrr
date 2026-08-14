@@ -20,6 +20,12 @@ export type BootstrapInput = {
   npmToken?: string
   /** PyPI API token (used as TWINE_PASSWORD). */
   pypiToken?: string
+  /** Mintlify source repo (owner/repo) cloned to /workspace/mintlify-source
+   * so the docs agent can read the real content instead of an empty spec. */
+  mintlifyRepo?: string
+  mintlifyBranch?: string
+  /** GitHub token used to clone a private Mintlify source repo. */
+  githubToken?: string
 }
 
 export function runtimeAssetPath(rel: string): string {
@@ -130,7 +136,7 @@ export function bootstrapScript(input: BootstrapInput): string {
   ]
 
   // A shallow template clone breaks pushing to the (empty) target repo:
-  // "index-pack failed" / "did not receive expected object". Deepen history
+  // "index-pack failed" / "did not receive expected byte". Deepen history
   // against the template repo so the push sends a complete pack.
   if (input.gitTemplate) {
     lines.push(
@@ -141,6 +147,17 @@ export function bootstrapScript(input: BootstrapInput): string {
       '    git remote remove template 2>/dev/null || true',
       '  fi',
       'fi',
+    )
+  }
+
+  // Mintlify source: clone the docs repo so the agent can read the actual
+  // mint.json/docs.json + .mdx pages and port them into the Weldrr template.
+  if (input.mintlifyRepo) {
+    const url = input.githubToken
+      ? `https://x-access-token:${encodeURIComponent(input.githubToken)}@github.com/${input.mintlifyRepo}.git`
+      : `https://github.com/${input.mintlifyRepo}.git`
+    lines.push(
+      `git clone --depth 1 --branch ${input.mintlifyBranch ?? 'main'} "${url}" /workspace/mintlify-source`,
     )
   }
 
