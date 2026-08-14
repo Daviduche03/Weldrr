@@ -350,10 +350,16 @@ export async function commitFiles(
   const deletePaths = new Set(input.deletes ?? [])
   const writePaths = new Set(input.files.map((f) => f.path))
 
-  // Create all blobs in parallel.
+  // Create all blobs with a bounded concurrency — firing hundreds of requests
+  // in parallel trips GitHub's abuse/rate limits (403), so keep it small.
   const tree: { path: string; mode: string; type: string; sha: string }[] = []
-  await Promise.all(
-    input.files.map(async (file) => {
+  const CONCURRENCY = 8
+  let idx = 0
+  const workers = Array.from({ length: CONCURRENCY }, async () => {
+    for (;;) {
+      const i = idx++
+      const file = input.files[i]
+      if (!file) return
       const blob = (await githubRequest(`/repos/${fullName}/git/blobs`, accessToken, {
         method: 'POST',
         body: JSON.stringify({
@@ -362,8 +368,9 @@ export async function commitFiles(
         }),
       })) as { sha: string }
       tree.push({ path: file.path, mode: '100644', type: 'blob', sha: blob.sha })
-    }),
-  )
+    }
+  })
+  await Promise.all(workers)
 
   // Retain every existing entry that isn't deleted or overwritten.
   for (const [path, sha] of existingShas) {

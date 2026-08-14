@@ -515,6 +515,7 @@ export const docsService = {
       { projectId, imported: plan.files.length, source: sourceFullName },
       'Mintlify docs imported',
     )
+    await projectRepository.update(workspaceId, projectId, { status: 'ready' })
     return {
       imported: plan.files.length,
       navigation: plan.navigation,
