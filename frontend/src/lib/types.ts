@@ -51,7 +51,7 @@ export type Project = {
   id: string
   name: string
   specType: SpecType
-  specSource: 'paste' | 'url' | 'upload' | 'github'
+  specSource: 'paste' | 'url' | 'upload' | 'github' | 'mintlify'
   status: ProjectStatus
   publishMode: PublishMode
   docsUrl: string
@@ -68,7 +68,7 @@ export type Project = {
 export type CreateProjectInput = {
   name: string
   specType: SpecType
-  specSource: 'paste' | 'url' | 'upload' | 'github'
+  specSource: 'paste' | 'url' | 'upload' | 'github' | 'mintlify'
   specUrl?: string
   specRaw?: string
   gitRepo?: GitRepo

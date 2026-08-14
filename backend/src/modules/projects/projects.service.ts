@@ -2,7 +2,7 @@ import { projectRepository } from '@/modules/projects/projects.repository'
 import { activityService } from '@/modules/activity/activity.service'
 import { discoveryRepository } from '@/modules/discoveries/discovery.repository'
 import { discoveryService } from '@/services/discovery'
-import { issueDiscoverySandbox } from '@/modules/sandboxes/sandboxes.service'
+import { issueDiscoverySandbox, startMintlifyDocsBuild } from '@/modules/sandboxes/sandboxes.service'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { webhookService } from '@/modules/webhooks/webhooks.service'
 import { NotFoundError } from '@/middleware/errorHandler'
@@ -130,6 +130,10 @@ export const projectService = {
       }
     } else if (project.specSource === 'url' || project.specSource === 'github') {
       void issueDiscoverySandbox(project.id)
+    } else if (project.specSource === 'mintlify') {
+      // No spec to discover — provision the docs repo, then import Mintlify
+      // content into it (triggered once the docs build completes).
+      void startMintlifyDocsBuild(project.id)
     }
 
     // Register a push webhook so future repo changes re-trigger discovery → SDK/docs.

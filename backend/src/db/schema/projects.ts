@@ -18,7 +18,7 @@ export const projects = pgTable(
       .notNull()
       .default('openapi'),
     specSource: text('spec_source', {
-      enum: ['paste', 'url', 'upload', 'github'] as const,
+      enum: ['paste', 'url', 'upload', 'github', 'mintlify'] as const,
     }).notNull(),
     gitRepo: jsonb('git_repo').$type<{
       provider: string

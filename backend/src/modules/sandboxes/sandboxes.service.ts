@@ -9,6 +9,7 @@ import { provisionSandbox, terminateModalSandbox, readSandboxFile } from '@/serv
 import { bootstrapScript } from '@/services/sandbox-runtime'
 import { discoveryRepository } from '@/modules/discoveries/discovery.repository'
 import { parseSpec, recordDocsVersion } from '@/services/discovery'
+import { docsService } from '@/modules/docs/docs.service'
 import { encryptSecret, decryptSecret } from '@/shared/utils/credential-cipher'
 import { logger } from '@/utils/logger'
 import { publishingService } from '@/services/publishing'
@@ -617,6 +618,18 @@ export const sandboxService = {
       await projectRepository.update(row.workspaceId, row.projectId, {
         docsUrl: input.artifactUrl,
       })
+
+      // Auto-import a project created from a Mintlify repo once its docs repo
+      // is scaffolded: overwrite src/docs + branding.json with the converted
+      // Mintlify content.
+      const project = await projectRepository.findByIdGlobal(row.projectId)
+      if (project && project.specSource === 'mintlify' && project.specUrl) {
+        void docsService
+          .importMintlify(project.workspaceId, project.id, { repoUrl: project.specUrl })
+          .catch((err) => {
+            logger.error({ err, projectId: project.id }, 'Mintlify auto-import failed')
+          })
+      }
     }
 
     if (row.projectId && row.jobType !== 'discovery') {
@@ -833,5 +846,29 @@ export async function issueDiscoverySandbox(projectId: string): Promise<void> {
       status: 'failed',
       error: err instanceof Error ? err.message : 'Discovery failed',
     })
+  }
+}
+
+/**
+ * For projects created with `specSource === 'mintlify'`: starts a docs build
+ * (jobType 'docs') so the scaffolded docs repo is provisioned and the
+ * project's `docsUrl` is set. The Mintlify import then runs automatically in
+ * the docs sandbox callback (see handleCallback), replacing the scaffold
+ * content under `src/docs` + `branding.json`.
+ */
+export async function startMintlifyDocsBuild(projectId: string): Promise<void> {
+  try {
+    const project = await projectRepository.findByIdGlobal(projectId)
+    if (!project) return
+    const sandbox = await sandboxService.issue(project.workspaceId, {
+      projectId: project.id,
+      jobType: 'docs',
+    })
+    await sandboxService.start(project.workspaceId, sandbox.id, {
+      prompt: AUTO_BUILD_PROMPTS.docs(project.name),
+    })
+    logger.info({ projectId }, 'Started Mintlify docs scaffold build')
+  } catch (err) {
+    logger.error({ err, projectId }, 'Failed to start Mintlify docs build')
   }
 }

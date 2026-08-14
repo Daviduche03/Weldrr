@@ -1,6 +1,6 @@
 export type SpecType = 'openapi' | 'graphql' | 'grpc' | 'asyncapi'
 
-export type SpecSource = 'paste' | 'url' | 'upload' | 'github'
+export type SpecSource = 'paste' | 'url' | 'upload' | 'github' | 'mintlify'
 
 export type GitRepo = {
   provider: string

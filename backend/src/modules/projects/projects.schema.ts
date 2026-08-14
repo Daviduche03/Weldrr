@@ -11,7 +11,7 @@ export const gitRepoSchema = z.object({
 const projectFields = z.object({
   name: z.string().trim().min(1, 'Project name is required').max(200),
   specType: z.enum(['openapi', 'graphql', 'grpc', 'asyncapi']),
-  specSource: z.enum(['paste', 'url', 'upload', 'github']),
+  specSource: z.enum(['paste', 'url', 'upload', 'github', 'mintlify']),
   specUrl: z.string().trim().url('Spec URL must be a valid URL').optional(),
   spec: z.record(z.unknown()).optional(),
   specRaw: z.string().max(1_000_000).optional(),
@@ -28,6 +28,13 @@ export const createProjectSchema = projectFields.superRefine((value, ctx) => {
       code: 'custom',
       path: ['gitRepo'],
       message: 'gitRepo is required when specSource is github',
+    })
+  }
+  if (value.specSource === 'mintlify' && !value.specUrl) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['specUrl'],
+      message: 'specUrl (the Mintlify repo) is required when specSource is mintlify',
     })
   }
 })

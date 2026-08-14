@@ -31,7 +31,10 @@ const sources = [
   { value: 'url', label: 'From a URL', hint: 'Fetch remotely' },
   { value: 'upload', label: 'Upload a file', hint: 'JSON or YAML' },
   { value: 'github', label: 'Connect a GitHub repo', hint: 'Build from your codebase' },
+  { value: 'mintlify', label: 'Import from Mintlify', hint: 'Port existing docs' },
 ] as const
+
+type SourceValue = (typeof sources)[number]['value']
 
 const steps = ['Project', 'Spec', 'Generate'] as const
 
@@ -43,7 +46,7 @@ export function NewProjectPage() {
   const [direction, setDirection] = useState<'fwd' | 'back'>('fwd')
   const [name, setName] = useState('')
   const [specType, setSpecType] = useState<SpecType>('openapi')
-  const [source, setSource] = useState<'paste' | 'url' | 'upload' | 'github'>('paste')
+  const [source, setSource] = useState<SourceValue>('paste')
   const [specText, setSpecText] = useState('')
   const [gitRepo, setGitRepo] = useState<GitRepo | null>(null)
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['typescript'])
@@ -106,7 +109,9 @@ export function NewProjectPage() {
       : step === 1
         ? source === 'github'
           ? gitRepo !== null
-          : specText.trim().length > 0
+          : source === 'mintlify'
+            ? specText.trim().length > 0
+            : specText.trim().length > 0
         : true
 
   const handleGenerate = async () => {
@@ -124,6 +129,7 @@ export function NewProjectPage() {
         ...(source === 'paste' || source === 'upload'
           ? { specRaw: specText }
           : {}),
+        ...(source === 'mintlify' ? { specUrl: specText.trim() } : {}),
         ...(source === 'github' && gitRepo ? { gitRepo } : {}),
       })
       setDirection('fwd')
@@ -371,7 +377,9 @@ export function NewProjectPage() {
                       ? 'Paste your spec'
                       : source === 'url'
                         ? 'Spec URL'
-                        : 'File contents'}
+                        : source === 'mintlify'
+                          ? 'Mintlify repo URL'
+                          : 'File contents'}
                   </label>
                   {source === 'paste' ? (
                     <textarea
@@ -388,10 +396,18 @@ export function NewProjectPage() {
                       placeholder={
                         source === 'url'
                           ? 'https://api.example.com/openapi.json'
-                          : 'Paste or drag a file…'
+                          : source === 'mintlify'
+                            ? 'https://github.com/acme/docs'
+                            : 'Paste or drag a file…'
                       }
                       className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-ring focus:ring-[3px] focus:ring-ring/50"
                     />
+                  )}
+                  {source === 'mintlify' && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      We&apos;ll port the Mintlify pages and branding into your Weldrr docs
+                      automatically after the project is created.
+                    </p>
                   )}
                 </div>
               )}
@@ -417,7 +433,9 @@ export function NewProjectPage() {
                       ? 'Spec URL'
                       : source === 'github'
                         ? `GitHub repo${gitRepo ? ` · ${gitRepo.fullName}` : ''}`
-                        : 'Uploaded file'}
+                        : source === 'mintlify'
+                          ? `Mintlify repo${specText.trim() ? ` · ${specText.trim()}` : ''}`
+                          : 'Uploaded file'}
                 </div>
                 {gitRepo && (
                   <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
