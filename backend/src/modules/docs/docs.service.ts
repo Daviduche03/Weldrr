@@ -455,6 +455,7 @@ export const docsService = {
     imported: number
     navigation: string[]
     branding: Record<string, unknown>
+    version: string
   }> {
     const sourceFullName = fullNameFromUrl(input.repoUrl)
     if (!sourceFullName) {
@@ -524,11 +525,21 @@ export const docsService = {
       { projectId, imported: plan.files.length, source: sourceFullName },
       'Mintlify docs imported',
     )
-    await projectRepository.update(workspaceId, projectId, { status: 'ready' })
+    const latest = await versionRepository.latestForProject(projectId, 'docs')
+    const version = nextVersion(latest?.version, 'minor')
+    await versionRepository.create({
+      workspaceId,
+      projectId,
+      artifactType: 'docs',
+      version,
+      notes: `Imported from Mintlify (${sourceFullName})`,
+    })
+    await projectRepository.update(workspaceId, projectId, { status: 'ready', docsVersion: version })
     return {
       imported: plan.files.length,
       navigation: plan.navigation,
       branding: plan.branding,
+      version,
     }
   },
 
