@@ -16,7 +16,7 @@
   --card-foreground: #111827;
   --popover: #ffffff;
   --popover-foreground: #111827;
-  --primary: #f97316;
+  --primary: #c05621;
   --primary-foreground: #ffffff;
   --secondary: #f9fafb;
   --secondary-foreground: #111827;
@@ -31,14 +31,14 @@
   --ring: #cbd5e1;
 
   /* Weldrr brand accent — orange */
-  --brand: #f97316;
+  --brand: #c05621;
   --brand-foreground: #ffffff;
-  --brand-soft: #fff1e6;
-  --brand-muted: #ea580c;
+  --brand-soft: #f7ece1;
+  --brand-muted: #9c4a1c;
 
   --sidebar-background: #ffffff;
   --sidebar-foreground: #111827;
-  --sidebar-primary: #f97316;
+  --sidebar-primary: #c05621;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f3f4f6;
   --sidebar-accent-foreground: #111827;
@@ -54,7 +54,7 @@
   --card-foreground: #eee;
   --popover: #171717;
   --popover-foreground: #eee;
-  --primary: #f97316;
+  --primary: #c05621;
   --primary-foreground: #1a0a00;
   --secondary: #262626;
   --secondary-foreground: #eee;
@@ -68,14 +68,14 @@
   --input: #ffffff26;
   --ring: #a1a1a1;
 
-  --brand: #f97316;
+  --brand: #c05621;
   --brand-foreground: #ffffff;
   --brand-soft: rgba(249, 115, 22, 0.14);
-  --brand-muted: #fb923c;
+  --brand-muted: #cf8549;
 
   --sidebar-background: #0d0d0d;
   --sidebar-foreground: #eee;
-  --sidebar-primary: #f97316;
+  --sidebar-primary: #c05621;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #262626;
   --sidebar-accent-foreground: #eee;

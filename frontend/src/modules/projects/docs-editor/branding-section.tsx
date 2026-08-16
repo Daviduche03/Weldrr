@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, LoaderCircle } from 'lucide-react'
+import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { docsApi, type BrandingConfig } from '@/lib/api/docs'
@@ -153,12 +153,12 @@ export function BrandingSection({ projectId }: { projectId: string }) {
         <div className="mt-2 grid max-w-md gap-3 sm:grid-cols-2">
           <ColorField
             label="Primary"
-            value={config.colors?.primary ?? '#f97316'}
+            value={config.colors?.primary ?? '#c05621'}
             onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, primary: v } }))}
           />
           <ColorField
             label="Accent"
-            value={config.colors?.accent ?? '#f97316'}
+            value={config.colors?.accent ?? '#c05621'}
             onChange={(v) => setConfig((c) => ({ ...c, colors: { ...c.colors, accent: v } }))}
           />
         </div>
@@ -197,12 +197,12 @@ export function BrandingSection({ projectId }: { projectId: string }) {
 
       <div className="flex items-center gap-3 border-t border-border pt-5">
         <Button size="sm" onClick={() => void save()} disabled={saving}>
-          {saving ? <LoaderCircle className="size-3.5 animate-spin" /> : null}
+          {saving ? <ArrowPathIcon className="size-3.5 animate-spin" /> : null}
           Save branding
         </Button>
         {saved && (
           <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-            <Check className="size-3.5" /> Saved — the docs site will redeploy on push.
+            <CheckIcon className="size-3.5" /> Saved — the docs site will redeploy on push.
           </span>
         )}
       </div>

@@ -1,6 +1,12 @@
-import { useMemo } from 'react'
-import { GitBranchIcon, MoreHorizontalIcon, PackageIcon, RocketIcon } from 'hugeicons-react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  CodeBracketIcon,
+  CubeIcon,
+  EllipsisHorizontalIcon,
+  RocketLaunchIcon,
+} from '@heroicons/react/24/solid'
 import type { ArtifactVersion, DiscoveryEndpoint, Project, Sandbox, Sdk } from '@/lib/types'
+import { docsApi } from '@/lib/api/docs'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,10 +22,32 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 1 })
 }
 
+function timeAgo(date: string | null | undefined): string {
+  if (!date) return '—'
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  return `${months}mo ago`
+}
+
 /** Single stat card: label, big value, sub-caption. */
-function StatCard({ label, value, caption }: { label: string; value: React.ReactNode; caption: string }) {
+function StatCard({
+  label,
+  value,
+  caption,
+}: {
+  label: string
+  value: React.ReactNode
+  caption: React.ReactNode
+}) {
   return (
-    <div className="rounded-xl border border-border bg-background p-4">
+    <div className="rounded-xl border border-border bg-muted p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-semibold tracking-tight text-foreground tabular-nums">{value}</div>
       <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{caption}</div>
@@ -93,6 +121,7 @@ function ActivityChart({ builds }: { builds: Sandbox[] }) {
 }
 
 export function ProjectOverview({
+  projectId,
   project,
   endpoints,
   sdks,
@@ -103,6 +132,7 @@ export function ProjectOverview({
   publishingSdk = false,
   publishingDocs = false,
 }: {
+  projectId: string
   project: Project
   endpoints: DiscoveryEndpoint[]
   sdks: Sdk[]
@@ -113,29 +143,90 @@ export function ProjectOverview({
   publishingSdk?: boolean
   publishingDocs?: boolean
 }) {
-  const succeeded = builds.filter((b) => b.status === 'finished').length
-  const sdkVersions = versions.filter((v) => v.artifactType === 'sdk')
-  const docsVersions = versions.filter((v) => v.artifactType === 'docs')
-  const currentSdkVersion = sdkVersions[0]?.version ?? project.sdkVersion
-  const currentDocsVersion = docsVersions[0]?.version ?? project.docsVersion
+  // Count published MDX pages so we can judge documentation coverage.
+  const [docsPages, setDocsPages] = useState<number | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    docsApi
+      .tree(projectId)
+      .then((nodes) => {
+        if (cancelled) return
+        setDocsPages(
+          nodes.filter((n) => n.type === 'blob' && n.path.startsWith('src/docs/') && n.path.endsWith('.mdx'))
+            .length,
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setDocsPages(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
 
-  const stats = [
-    { label: 'Endpoints', value: formatNumber(endpoints.length), caption: 'Public API endpoints discovered' },
-    { label: 'SDKs generated', value: formatNumber(sdks.length), caption: 'SDK packages produced for this project' },
-    { label: 'Versions published', value: formatNumber(versions.length), caption: 'SDK + docs versions recorded' },
-    { label: 'Builds succeeded', value: formatNumber(succeeded), caption: `of ${formatNumber(builds.length)} total builds` },
-    { label: 'SDK version', value: currentSdkVersion ? `v${currentSdkVersion}` : '—', caption: 'Latest published SDK' },
-    { label: 'Docs version', value: currentDocsVersion ? `v${currentDocsVersion}` : '—', caption: 'Latest published docs' },
+  const sortedBuilds = useMemo(
+    () => [...builds].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [builds],
+  )
+  const succeeded = builds.filter((b) => b.status === 'finished').length
+  const lastBuild = sortedBuilds[0] ?? null
+
+  const docsVersions = versions.filter((v) => v.artifactType === 'docs')
+  const lastDocsAt = docsVersions[0]?.createdAt ?? null
+  const specUpdatedAt = project.updatedAt
+  // Docs are stale when the source spec/repo changed after the last docs build.
+  const docsStale =
+    !!lastDocsAt &&
+    !!specUpdatedAt &&
+    new Date(specUpdatedAt).getTime() > new Date(lastDocsAt).getTime() + 60_000
+
+  const enabledLanguages = project.sdkLanguages ?? []
+  const publishedLanguages = sdks.map((s) => s.language)
+
+  const lastBuildValue = lastBuild === null ? '—' : lastBuild.status === 'finished' ? 'Passing' : lastBuild.status === 'failed' ? 'Failed' : lastBuild.status
+
+  const cards: { label: string; value: React.ReactNode; caption: React.ReactNode }[] = [
+    {
+      label: 'Documentation coverage',
+      value: docsPages === null ? '…' : formatNumber(docsPages),
+      caption:
+        docsPages === null
+          ? 'Reading docs repo…'
+          : endpoints.length
+            ? `${formatNumber(endpoints.length)} endpoints discovered`
+            : 'MDX pages published',
+    },
+    {
+      label: 'SDK languages',
+      value: enabledLanguages.length
+        ? `${publishedLanguages.length} / ${enabledLanguages.length}`
+        : formatNumber(publishedLanguages.length),
+      caption: publishedLanguages.length ? publishedLanguages.join(', ') : 'No SDKs published',
+    },
+    {
+      label: 'Docs freshness',
+      value: lastDocsAt ? timeAgo(lastDocsAt) : '—',
+      caption: docsStale
+        ? 'Stale — spec updated after last build'
+        : lastDocsAt
+          ? 'Up to date'
+          : 'No docs published yet',
+    },
+    {
+      label: 'Build health',
+      value: lastBuildValue,
+      caption: builds.length ? `${formatNumber(succeeded)} / ${formatNumber(builds.length)} builds succeeded` : 'No builds yet',
+    },
   ]
 
   const recentVersions = versions.slice(0, 8)
 
   return (
     <div className="min-w-0">
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {stats.map((s) => (
-          <StatCard key={s.label} {...s} />
+      {/* Team health cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {cards.map((c) => (
+          <StatCard key={c.label} {...c} />
         ))}
       </div>
 
@@ -201,7 +292,7 @@ export function ProjectOverview({
                           aria-label={`Actions for v${v.version}`}
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <MoreHorizontalIcon />
+                          <EllipsisHorizontalIcon className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52">
@@ -209,25 +300,25 @@ export function ProjectOverview({
                           disabled={!v.artifactUrl}
                           onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
                         >
-                          <GitBranchIcon />
+                          <CodeBracketIcon className="size-4" />
                           View repo
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={!v.artifactUrl}
                           onClick={() => v.artifactUrl && window.open(v.artifactUrl, '_blank', 'noreferrer')}
                         >
-                          <PackageIcon />
+                          <CubeIcon className="size-4" />
                           View package
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {v.artifactType === 'sdk' ? (
                           <DropdownMenuItem onClick={onPublishSdk} disabled={publishingSdk}>
-                            <RocketIcon />
+                            <RocketLaunchIcon className="size-4" />
                             {publishingSdk ? 'Publishing…' : 'Publish SDK'}
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={onPublishDocs} disabled={publishingDocs}>
-                            <RocketIcon />
+                            <RocketLaunchIcon className="size-4" />
                             {publishingDocs ? 'Publishing…' : 'Publish docs'}
                           </DropdownMenuItem>
                         )}

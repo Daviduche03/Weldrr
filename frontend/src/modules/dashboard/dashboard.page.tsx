@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
 import {
-  ArrowUpRight01Icon,
-  CheckmarkBadge01Icon,
-  BookOpen01Icon,
-  Alert01Icon,
-  Clock01Icon,
-  Add01Icon,
-  Refresh01Icon,
-} from 'hugeicons-react'
-import { LoaderCircle } from 'lucide-react'
+  ArrowPathIcon,
+  ArrowUpRightIcon,
+  ArrowsRightLeftIcon,
+  BookOpenIcon,
+  CheckBadgeIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  PlusIcon,
+} from '@heroicons/react/24/solid'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useDashboard } from '@/lib/queries'
 import type { Activity, DashboardMetrics } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { SetupChecklist } from './setup-checklist'
 
 const activityMeta: Record<string, { label: string; dot: string }> = {
   generated: { label: 'Generated', dot: 'bg-emerald-500' },
@@ -47,7 +48,7 @@ function formatNumber(n: number): string {
   return String(n)
 }
 
-const usageColors = ['#f97316', '#06b6d4', '#f59e0b', '#10b981'] as const
+const usageColors = ['#c05621', '#06b6d4', '#f59e0b', '#10b981'] as const
 
 const statusCards = [
   {
@@ -55,21 +56,21 @@ const statusCards = [
     value: (m: DashboardMetrics) => m.readyProjects,
     hint: 'Docs, SDKs, and CLI are live',
     to: '/projects',
-    icon: CheckmarkBadge01Icon,
+    icon: CheckBadgeIcon,
   },
   {
     label: 'Generating',
     value: (m: DashboardMetrics) => m.generatingProjects,
     hint: 'Regenerating from latest spec',
     to: '/projects',
-    icon: LoaderCircle,
+    icon: ArrowPathIcon,
   },
   {
     label: 'Needs attention',
     value: (m: DashboardMetrics) => m.failedProjects,
     hint: 'Generation failed — check the spec',
     to: '/projects',
-    icon: Alert01Icon,
+    icon: ExclamationTriangleIcon,
   },
 ]
 
@@ -185,11 +186,13 @@ export function DashboardPage() {
         </div>
         <Button size="lg" asChild>
           <Link to="/projects/new">
-            <Add01Icon />
+            <PlusIcon />
             New project
           </Link>
         </Button>
       </div>
+
+      <SetupChecklist />
 
       {/* Status + metrics + usage */}
       <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 xl:grid-cols-4">
@@ -245,7 +248,7 @@ export function DashboardPage() {
             className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-muted"
           >
             All projects
-            <ArrowUpRight01Icon className="size-4" />
+            <ArrowUpRightIcon className="size-4" />
           </Link>
         </div>
         <Table>
@@ -284,7 +287,7 @@ export function DashboardPage() {
         </Table>
         {!loading && activity.length === 0 && (
           <EmptyState
-            icon={<Clock01Icon className="size-6" />}
+            icon={<ClockIcon className="size-6" />}
             title="No activity yet"
             description="Connect your first spec to get started."
             className="py-12"
@@ -295,9 +298,9 @@ export function DashboardPage() {
       {/* Quick actions */}
       <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border">
         {[
-          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: Add01Icon },
-          { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpen01Icon },
-          { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: Refresh01Icon },
+          { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: PlusIcon },
+          { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpenIcon },
+          { title: 'Regenerate all', desc: 'Re-run generation for every project.', to: '/projects', icon: ArrowsRightLeftIcon },
         ].map((action) => {
           const Icon = action.icon
           return (

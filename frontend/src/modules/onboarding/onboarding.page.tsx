@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { BookOpen01Icon, PuzzleIcon, SparklesIcon } from 'hugeicons-react'
+import {
+  BoltIcon,
+  BookOpenIcon,
+  BuildingOffice2Icon,
+  CheckIcon,
+  CircleStackIcon,
+  CodeBracketIcon,
+  CubeIcon,
+  ServerStackIcon,
+  ShareIcon,
+  SparklesIcon,
+  UserGroupIcon,
+  UserIcon,
+} from '@heroicons/react/24/solid'
 import { LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +27,14 @@ import { cn } from '@/lib/utils'
 
 type Product = 'docs' | 'sdk' | 'both'
 
-const steps = ['Identity', 'Workspace', 'Product', 'GitHub', 'Team'] as const
+const steps = [
+  { label: 'Identity', icon: UserIcon },
+  { label: 'Workspace', icon: BuildingOffice2Icon },
+  { label: 'Product', icon: SparklesIcon },
+  { label: 'Features', icon: BoltIcon },
+  { label: 'GitHub', icon: CodeBracketIcon },
+  { label: 'Team', icon: UserGroupIcon },
+] as const
 
 function slugify(value: string): string {
   return value
@@ -34,11 +54,85 @@ function parseEmails(text: string): string[] {
     .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
 }
 
+const accountOptions: { value: 'developer' | 'team'; label: string; desc: string | null; icon: ComponentType<{ className?: string }> }[] = [
+  { value: 'developer', label: 'Developer', desc: null, icon: UserIcon },
+  { value: 'team', label: 'Team', desc: 'Building with a company', icon: UserGroupIcon },
+]
+
 const productOptions: { value: Product; label: string; desc: string; icon: ComponentType<{ className?: string }> }[] = [
-  { value: 'docs', label: 'Docs', desc: 'A hosted documentation site for your API.', icon: BookOpen01Icon },
-  { value: 'sdk', label: 'SDKs', desc: 'Type-safe client libraries for your API.', icon: PuzzleIcon },
+  { value: 'docs', label: 'Docs', desc: 'A hosted documentation site for your API.', icon: BookOpenIcon },
+  { value: 'sdk', label: 'SDKs', desc: 'Type-safe client libraries for your API.', icon: CubeIcon },
   { value: 'both', label: 'Both', desc: 'Documentation and SDKs, generated together.', icon: SparklesIcon },
 ]
+
+const apiTypeOptions: { value: 'openapi' | 'graphql' | 'grpc' | 'asyncapi'; label: string; desc: string; icon: ComponentType<{ className?: string }> }[] = [
+  { value: 'openapi', label: 'REST API', desc: 'OpenAPI spec', icon: ServerStackIcon },
+  { value: 'graphql', label: 'GraphQL', desc: 'Schema-based', icon: ShareIcon },
+  { value: 'grpc', label: 'gRPC', desc: 'Protobuf services', icon: CircleStackIcon },
+  { value: 'asyncapi', label: 'Events', desc: 'Async / streaming', icon: BoltIcon },
+]
+
+const featureOptions: { id: string; label: string; tier: 'Pro' | 'Enterprise'; desc: string }[] = [
+  { id: 'domain', label: 'Custom docs domain', tier: 'Pro', desc: 'docs.yourcompany.com' },
+  { id: 'branding', label: 'Branding & logo', tier: 'Pro', desc: 'Your colors and logo on the docs site' },
+  { id: 'languages', label: 'More SDK languages', tier: 'Pro', desc: 'Go, Java, Ruby, and more' },
+  { id: 'cli', label: 'CLI & CI workflows', tier: 'Pro', desc: 'Generate and publish from your pipeline' },
+  { id: 'versioning', label: 'API versioning', tier: 'Enterprise', desc: 'Docs pinned per API version' },
+  { id: 'private', label: 'Private docs', tier: 'Enterprise', desc: 'Auth-gated documentation for your team' },
+]
+
+function DocsPreview({ domain }: { domain: string }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-background text-left shadow-sm">
+      <div className="flex items-center gap-1.5 border-b border-border bg-muted px-4 py-2.5">
+        <span className="size-2.5 rounded-full bg-red-400" />
+        <span className="size-2.5 rounded-full bg-amber-400" />
+        <span className="size-2.5 rounded-full bg-emerald-400" />
+        <span className="ml-2 truncate rounded-md bg-background px-3 py-1 font-mono text-[11px] text-muted-foreground">
+          {domain}
+        </span>
+      </div>
+      <div className="flex">
+        <div className="hidden w-44 shrink-0 border-r border-border p-3 sm:block">
+          <div className="space-y-1.5">
+            <div className="rounded bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Getting started
+            </div>
+            <div className="rounded bg-accent px-2 py-1 text-[11px] font-medium text-foreground">
+              Quickstart
+            </div>
+            <div className="px-2 py-1 text-[11px] text-muted-foreground">Authentication</div>
+            <div className="mt-2 rounded bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Reference
+            </div>
+            <div className="px-2 py-1 text-[11px] text-muted-foreground">Health</div>
+            <div className="px-2 py-1 text-[11px] text-muted-foreground">Agents</div>
+            <div className="px-2 py-1 text-[11px] text-muted-foreground">Chat</div>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1 p-4">
+          <div className="rounded-md bg-muted px-3 py-2 text-[11px] font-medium">
+            POST /v1/chat/completions
+          </div>
+          <div className="mt-3 h-2 w-3/4 rounded bg-muted" />
+          <div className="mt-2 h-2 w-1/2 rounded bg-muted" />
+          <div className="mt-4 space-y-1.5">
+            <div className="rounded-lg border border-border p-2.5">
+              <div className="h-2 w-16 rounded bg-brand/60" />
+              <div className="mt-2 h-2 w-full rounded bg-muted" />
+              <div className="mt-1.5 h-2 w-2/3 rounded bg-muted" />
+            </div>
+            <div className="rounded-lg border border-border p-2.5">
+              <div className="h-2 w-16 rounded bg-brand/60" />
+              <div className="mt-2 h-2 w-full rounded bg-muted" />
+              <div className="mt-1.5 h-2 w-3/4 rounded bg-muted" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function OnboardingPage() {
   const navigate = useNavigate()
@@ -56,6 +150,8 @@ export function OnboardingPage() {
   const [slug, setSlug] = useState('')
 
   const [product, setProduct] = useState<Product>('both')
+  const [apiType, setApiType] = useState<'openapi' | 'graphql' | 'grpc' | 'asyncapi'>('openapi')
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
 
   const [inviteText, setInviteText] = useState('')
 
@@ -104,10 +200,12 @@ export function OnboardingPage() {
       case 1:
         return name.trim().length > 0
       case 2:
-        return product !== null
+        return true
       case 3:
-        return githubConnected
+        return selectedFeatures.length > 0
       case 4:
+        return githubConnected
+      case 5:
         return true
       default:
         return true
@@ -163,38 +261,50 @@ export function OnboardingPage() {
     direction === 'fwd' ? 'wf-step--fwd' : 'wf-step--back',
   )
 
-  const previewPrefill = product === 'sdk' || product === 'both' ? 'SDKs' : product === 'docs' ? 'Docs' : ''
+  const previewPrefill = product === 'both' ? 'docs & SDKs' : product === 'docs' ? 'Docs' : 'SDKs'
+
+  const previewDomain = `${slug.trim() || name.trim() || 'your-api'}.weldrr.app`
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-xl">
-        {!done && (
-          <div className="mb-8 flex items-center gap-3">
-            <span className="inline-flex size-11 shrink-0 items-center justify-center text-brand">
-              <LogoMark className="size-10" />
-            </span>
-            <div className="text-2xl">
-              <div className="font-semibold tracking-tight">Welcome to Weldrr</div>
-              <div className="mt-1 text-sm text-muted-foreground">Let’s set up your workspace.</div>
-            </div>
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="grid min-h-[calc(100vh-2rem)] grid-cols-1 gap-6 sm:min-h-[calc(100vh-3rem)] lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
+        <div
+          className="relative hidden flex-col justify-between overflow-hidden rounded-2xl border border-border bg-muted p-8 lg:flex sm:p-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
+            backgroundSize: '16px 16px',
+          }}
+        >
+          <div className="flex items-center gap-2 text-brand">
+            <LogoMark className="size-8" />
+            <span className="text-lg font-semibold tracking-tight text-foreground">Weldrr</span>
           </div>
-        )}
+          <div className="my-10">
+            <DocsPreview domain={previewDomain} />
+          </div>
+          <div>
+            <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
+              Your docs and SDKs, generated from one source of truth
+            </h2>
+            <p className="mt-3 text-pretty text-sm text-muted-foreground">
+              Hosted docs, type-safe SDKs, and a CLI for your API — up in minutes, not weeks.
+            </p>
+          </div>
+        </div>
 
-        {!done && (
+        <div className="flex flex-col justify-center p-6 sm:p-10">
+          <div className="mx-auto flex h-[38rem] w-full max-w-xl flex-col">
+            {!done && (
           <div className="mb-8 flex items-center gap-2">
-            {steps.map((label, i) => (
+            {steps.map(({ label, icon: StepIcon }, i) => (
               <div key={label} className="flex flex-1 items-center gap-2">
                 <span
                   className={cn(
-                    'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                    i < step
-                      ? 'bg-brand text-brand-foreground'
-                      : i === step
-                        ? 'border border-brand bg-brand-soft text-brand'
-                        : 'bg-muted text-muted-foreground',
+                    'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors',
+                    i <= step ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground',
                   )}
                 >
-                  {i + 1}
+                  <StepIcon className="size-4" />
                 </span>
                 <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
                   {label}
@@ -211,20 +321,22 @@ export function OnboardingPage() {
             {step === 0 && 'Tell us about you'}
             {step === 1 && 'Name your workspace'}
             {step === 2 && 'What are you building?'}
-            {step === 3 && 'Connect GitHub'}
-            {step === 4 && 'Invite your team'}
+            {step === 3 && 'Which features matter to you?'}
+            {step === 4 && 'Connect GitHub'}
+            {step === 5 && 'Invite your team'}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {step === 0 && 'This helps us tailor the experience.'}
             {step === 1 && 'This is where your projects and docs live.'}
             {step === 2 && 'Pick what Weldrr should help you ship.'}
-            {step === 3 && 'Build your SDKs and docs straight from your repos.'}
-            {step === 4 && 'You can always add members later.'}
+            {step === 3 && 'These are included in Pro and Enterprise. Pick what you’d actually use.'}
+            {step === 4 && 'Build your SDKs and docs straight from your repos.'}
+            {step === 5 && 'You can always add members later.'}
           </p>
         </div>
       )}
 
-        <div className="space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
             {step === 0 && (
               <div className={cn('space-y-5', stepCls)}>
                 <div>
@@ -239,27 +351,30 @@ export function OnboardingPage() {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Account type</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {(
-                      [
-                        { value: 'developer', label: 'Developer', desc: 'Building on my own' },
-                        { value: 'team', label: 'Team', desc: 'Building with a company' },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setAccountType(opt.value)}
-                        className={cn(
-                          'rounded-lg border px-4 py-3 text-left transition-colors',
-                          accountType === opt.value
-                            ? 'border-brand bg-brand-soft'
-                            : 'border-border bg-background hover:bg-muted',
-                        )}
-                      >
-                        <div className="text-base font-medium">{opt.label}</div>
-                        <div className="mt-0.5 text-sm text-muted-foreground">{opt.desc}</div>
-                      </button>
-                    ))}
+                    {accountOptions.map((opt) => {
+                      const Icon = opt.icon
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setAccountType(opt.value)}
+                          className={cn(
+                            'rounded-lg border px-4 py-3 text-left transition-colors',
+                            accountType === opt.value
+                              ? 'bg-muted text-foreground'
+                              : 'border-border bg-background hover:bg-muted',
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="size-4 shrink-0 text-brand" />
+                            <span className="text-sm font-medium">{opt.label}</span>
+                          </div>
+                          {opt.desc && (
+                            <div className="mt-1 text-xs text-muted-foreground">{opt.desc}</div>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 {accountType === 'team' && (
@@ -272,6 +387,37 @@ export function OnboardingPage() {
                     />
                   </div>
                 )}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">What will you build?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {apiTypeOptions.map((opt) => {
+                      const Icon = opt.icon
+                      const active = apiType === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setApiType(opt.value)}
+                          className={cn(
+                            'rounded-lg border px-4 py-3 text-left transition-colors',
+                            active
+                              ? 'bg-muted text-foreground'
+                              : 'border-border bg-background hover:bg-muted',
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="size-4 shrink-0 text-brand" />
+                            <span className="text-sm font-medium">{opt.label}</span>
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">{opt.desc}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    We’ll tailor the generated docs and SDKs to this type.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -317,39 +463,14 @@ export function OnboardingPage() {
                       className={cn(
                         'flex w-full cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors',
                         active
-                          ? 'border-brand bg-brand-soft'
+                          ? 'bg-muted text-foreground'
                           : 'border-border bg-background hover:bg-muted',
                       )}
                     >
-                      <span
-                        className={cn(
-                          'shrink-0 transition-colors',
-                          active ? 'text-brand' : 'text-muted-foreground',
-                        )}
-                      >
-                        {<opt.icon className="size-6" />}
-                      </span>
+                      <opt.icon className="size-5 shrink-0 text-brand" />
                       <span className="flex-1">
-                        <span className="block text-base font-medium">{opt.label}</span>
-                        <span className="mt-0.5 block text-sm text-muted-foreground">{opt.desc}</span>
-                      </span>
-                      <span
-                        className={cn(
-                          'flex size-4 shrink-0 items-center justify-center rounded-full border',
-                          active ? 'border-brand bg-brand text-brand-foreground' : 'border-border',
-                        )}
-                      >
-                        {active && (
-                          <svg viewBox="0 0 16 16" fill="none" className="size-3" aria-hidden="true">
-                            <path
-                              d="M3.5 8.5l3 3 6-7"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                  </svg>
-                        )}
+                        <span className="block text-sm font-medium">{opt.label}</span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">{opt.desc}</span>
                       </span>
                     </button>
                   )
@@ -359,8 +480,67 @@ export function OnboardingPage() {
 
             {step === 3 && (
               <div className={cn('space-y-3', stepCls)}>
+                {featureOptions.map((f) => {
+                  const active = selectedFeatures.includes(f.id)
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedFeatures((prev) =>
+                          active ? prev.filter((id) => id !== f.id) : [...prev, f.id],
+                        )
+                      }
+                      className={cn(
+                        'flex w-full cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors',
+                        active
+                          ? 'bg-muted text-foreground'
+                          : 'border-border bg-background hover:bg-muted',
+                      )}
+                    >
+                      <span className="flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{f.label}</span>
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                              f.tier === 'Pro'
+                                ? 'bg-brand-soft text-brand'
+                                : 'bg-muted text-muted-foreground',
+                            )}
+                          >
+                            {f.tier}
+                          </span>
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">{f.desc}</span>
+                      </span>
+                      <span
+                        className={cn(
+                          'flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors',
+                          active ? 'border-brand bg-brand text-brand-foreground' : 'border-border',
+                        )}
+                      >
+                        {active && <CheckIcon className="size-3.5" />}
+                      </span>
+                    </button>
+                  )
+                })}
+                <p className="text-xs text-muted-foreground">
+                  {selectedFeatures.length > 0
+                    ? `Picked ${selectedFeatures.length}. These ship with ${
+                        selectedFeatures.some((id) => featureOptions.find((f) => f.id === id)?.tier === 'Enterprise')
+                          ? 'Enterprise'
+                          : 'Pro'
+                      } — you’ll get them when you upgrade.`
+                    : 'Pick at least one — these are the upgrades that ship with paid plans.'}
+                </p>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className={cn('space-y-3', stepCls)}>
                 {!githubConnected ? (
-                  <div className="rounded-xl border border-border bg-background p-5 text-center">
+                  <div className="rounded-xl border border-border bg-muted p-5 text-center">
                     <p className="text-sm text-muted-foreground">
                       Connect GitHub to generate docs and SDKs straight from your repositories.
                     </p>
@@ -379,7 +559,7 @@ export function OnboardingPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-border bg-background p-5">
+                  <div className="rounded-xl border border-border bg-muted p-5">
                     <div className="flex items-center gap-3">
                       <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
                         {(githubLogin ?? '?').charAt(0).toUpperCase()}
@@ -401,7 +581,7 @@ export function OnboardingPage() {
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div className={cn('space-y-3', stepCls)}>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Teammate emails</label>
@@ -430,30 +610,23 @@ export function OnboardingPage() {
             )}
 
             {done && (
-              <div className={cn('py-4 text-center', stepCls)}>
-                <span className="inline-flex size-14 items-center justify-center rounded-full bg-brand/10 text-brand">
-                  <svg viewBox="0 0 24 24" fill="none" className="size-7" aria-hidden="true">
-                    <path
-                      d="M5 13l4 4 10-11"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <h2 className="mt-6 text-2xl font-semibold tracking-tight">You’re all set</h2>
-                <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-                  Your workspace <span className="font-medium text-foreground">{name.trim()}</span> is ready for{' '}
-                  {previewPrefill || 'docs & SDKs'}. Create your first project to start generating.
-                </p>
-                <div className="mt-8 flex items-center justify-center gap-3">
-                  <Button size="lg" onClick={() => navigate('/projects/new')}>
-                    Create your first project
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>
-                    Go to dashboard
-                  </Button>
+              <div className={cn('flex h-full flex-col items-center justify-center', stepCls)}>
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold tracking-tight">You’re all set</h2>
+                  <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                    Your workspace{' '}
+                    <span className="font-medium text-foreground">{name.trim()}</span> is ready for{' '}
+                    {previewPrefill || 'docs & SDKs'} — generated for a{' '}
+                    {apiTypeOptions.find((o) => o.value === apiType)?.label} like this.
+                  </p>
+                  <div className="mt-8 flex items-center justify-center gap-3">
+                    <Button size="lg" onClick={() => navigate('/projects/new')}>
+                      Create your first project
+                    </Button>
+                    <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>
+                      Go to dashboard
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -465,15 +638,17 @@ export function OnboardingPage() {
                 Back
               </Button>
               <Button
-                onClick={step === 4 ? submit : goNext}
-                disabled={step === 4 ? busy : !canContinue || busy}
+                onClick={step === 5 ? submit : goNext}
+                disabled={step === 5 ? busy : !canContinue || busy}
               >
                 {busy && <LoaderCircle className="size-4 animate-spin" />}
-                {step === 4 ? 'Finish' : 'Continue'}
+                {step === 5 ? 'Finish' : 'Continue'}
               </Button>
             </div>
           )}
+            </div>
+          </div>
         </div>
-    </div>
+      </div>
   )
 }

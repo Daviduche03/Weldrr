@@ -2,17 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeft01Icon,
-  FileUnknownIcon,
-  GitBranchIcon,
-  Refresh01Icon,
-  RocketIcon,
-} from 'hugeicons-react'
-import {
-  Braces,
-  ExternalLink,
-  Trash2,
-} from 'lucide-react'
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  CodeBracketIcon,
+  DocumentMagnifyingGlassIcon,
+  RocketLaunchIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -301,7 +298,7 @@ export function ProjectDetailPage() {
   if (error) {
     return (
       <EmptyState
-        icon={<FileUnknownIcon className="size-6" />}
+        icon={<DocumentMagnifyingGlassIcon className="size-6" />}
         title="Project not found"
         description="It may have been deleted, or the link is incorrect."
         action={
@@ -326,7 +323,7 @@ export function ProjectDetailPage() {
             to="/projects"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft01Icon className="size-4" />
+            <ArrowLeftIcon className="size-4" />
             Projects
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -341,9 +338,9 @@ export function ProjectDetailPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <GitBranchIcon className="size-3.5" />
+                <CodeBracketIcon className="size-3.5" />
                 {project.gitRepo.fullName}
-                <ExternalLink className="size-3" />
+                <ArrowTopRightOnSquareIcon className="size-3" />
               </a>
             )}
           </div>
@@ -354,11 +351,11 @@ export function ProjectDetailPage() {
             onClick={handleRegenerate}
             className="text-muted-foreground"
           >
-            <Refresh01Icon className={cn(project.status === 'generating' && 'animate-spin')} />
+            <ArrowPathIcon className={cn('size-4', project.status === 'generating' && 'animate-spin')} />
             Re-run discovery
           </Button>
           <Button onClick={publishSdk} disabled={publishing || !project.sdkLanguages.length && !project.gitRepo}>
-            <RocketIcon />
+            <RocketLaunchIcon className="size-4" />
             {publishing ? 'Publishing…' : 'Publish SDK'}
           </Button>
         </div>
@@ -387,6 +384,7 @@ export function ProjectDetailPage() {
         <div className={cn(tab === 'Overview' ? '' : 'hidden')}>
           {/* Metrics dashboard */}
           <ProjectOverview
+            projectId={project.id}
             project={project}
             endpoints={discovery?.endpoints ?? []}
             sdks={sdkList}
@@ -401,7 +399,16 @@ export function ProjectDetailPage() {
 
         <div className={cn(tab === 'Docs' ? '' : 'hidden')}>
           <div className="space-y-4">
-            {!discovery || discovery.status === 'failed' ? (
+            {project.docsUrl || (discovery && discovery.status !== 'failed') ? (
+              <DocsEditor
+                projectId={project.id}
+                docsUrl={project.docsUrl}
+                onPublished={() => {
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.project(id ?? '') })
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.projectVersions(id ?? '') })
+                }}
+              />
+            ) : (
               <Card
                 title={`${project.name} · docs`}
                 action={
@@ -413,7 +420,7 @@ export function ProjectDetailPage() {
                       className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand-muted"
                     >
                       Open docs
-                      <ExternalLink className="size-4" />
+                      <ArrowTopRightOnSquareIcon className="size-4" />
                     </a>
                   ) : undefined
                 }
@@ -441,21 +448,12 @@ export function ProjectDetailPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    icon={<FileUnknownIcon className="size-6" />}
+                    icon={<DocumentMagnifyingGlassIcon className="size-6" />}
                     title="Docs couldn't be generated"
                     description={discovery.error ?? 'Discovery failed for this project.'}
                   />
                 )}
               </Card>
-            ) : (
-              <DocsEditor
-                projectId={project.id}
-                docsUrl={project.docsUrl}
-                onPublished={() => {
-                  void queryClient.invalidateQueries({ queryKey: queryKeys.project(id ?? '') })
-                  void queryClient.invalidateQueries({ queryKey: queryKeys.projectVersions(id ?? '') })
-                }}
-              />
             )}
           </div>
         </div>
@@ -472,7 +470,7 @@ export function ProjectDetailPage() {
             <Card title="SDKs" action={<span className="text-xs text-muted-foreground">{project.sdkLanguages.length} language{project.sdkLanguages.length === 1 ? '' : 's'}</span>}>
               {project.sdkLanguages.length === 0 ? (
                 <EmptyState
-                  icon={<Braces className="size-6" />}
+                  icon={<CodeBracketIcon className="size-6" />}
                   title="No SDKs yet"
                   description="Generate an SDK in the language your users need."
                 />
@@ -502,7 +500,7 @@ export function ProjectDetailPage() {
                               className="text-muted-foreground hover:text-destructive"
                               onClick={() => removeSdk(sdk)}
                             >
-                              <Trash2 />
+                              <TrashIcon className="size-4" />
                             </Button>
                           )}
                         </div>
@@ -559,7 +557,7 @@ export function ProjectDetailPage() {
         }}
         title="Delete project?"
         description={`This permanently deletes "${project.name}" and all its generated artifacts, versions, and build history. This cannot be undone.`}
-        icon={<Trash2 className="size-6" />}
+        icon={<TrashIcon className="size-6" />}
         tone="danger"
         confirmLabel="Delete project"
         loading={deleting}
