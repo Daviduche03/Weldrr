@@ -1,23 +1,27 @@
-import { CodeSquareIcon, MagicWand02Icon, PackageSent01Icon } from 'hugeicons-react'
+import {
+  ArrowsRightLeftIcon,
+  CodeBracketSquareIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/solid'
 
 const steps = [
   {
     title: 'Point Weldrr at your code',
     description:
       'Connect your repository — or paste an OpenAPI, GraphQL, or gRPC spec. Weldrr reads the source and maps every endpoint, schema, and auth flow.',
-    icon: CodeSquareIcon,
+    icon: CodeBracketSquareIcon,
   },
   {
     title: 'Weldrr generates everything',
     description:
       'Docs, SDKs, and a CLI are generated from your code — consistent, type-safe, and always in sync with what you actually ship.',
-    icon: MagicWand02Icon,
+    icon: SparklesIcon,
   },
   {
     title: 'Ship and stay in sync',
     description:
       'Publish to your own git repositories and package registries. Every API change is detected and regenerated automatically.',
-    icon: PackageSent01Icon,
+    icon: ArrowsRightLeftIcon,
   },
 ]
 

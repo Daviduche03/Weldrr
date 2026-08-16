@@ -1,4 +1,4 @@
-import { CreditCardIcon, Download01Icon } from 'hugeicons-react'
+import { ArrowDownTrayIcon, CreditCardIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { Plan } from '@/lib/types'
@@ -122,9 +122,9 @@ export function BillingSection({
               <div className="flex items-center gap-3">
                 <Badge variant="secondary">{invoice.status}</Badge>
                 <span className="text-sm font-medium tabular-nums">{invoice.amount}</span>
-                <Button size="icon-sm" variant="ghost" aria-label={`Download ${invoice.period} invoice`}>
-                  <Download01Icon />
-                </Button>
+                  <Button size="icon-sm" variant="ghost" aria-label={`Download ${invoice.period} invoice`}>
+                  <ArrowDownTrayIcon className="size-4" />
+                  </Button>
               </div>
             </li>
           ))}

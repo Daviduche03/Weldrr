@@ -1,16 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  ArrowUpTrayIcon,
+  BoltIcon,
+  BookOpenIcon,
+  CircleStackIcon,
+  CodeBracketIcon,
+  DocumentTextIcon,
+  FolderIcon,
+  LinkIcon,
+  ServerStackIcon,
+  ShareIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { projectApi } from '@/lib/api/projects'
 import { githubApi } from '@/lib/api/github'
 import type { GitRepo, GitHubRepo, SpecType } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const specTypes: { value: SpecType; label: string; hint: string }[] = [
-  { value: 'openapi', label: 'OpenAPI', hint: 'REST APIs' },
-  { value: 'graphql', label: 'GraphQL', hint: 'Schemas' },
-  { value: 'grpc', label: 'gRPC', hint: 'Protobuf' },
-  { value: 'asyncapi', label: 'AsyncAPI', hint: 'Events' },
+const specTypes: { value: SpecType; label: string; hint: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'openapi', label: 'OpenAPI', hint: 'REST APIs', icon: ServerStackIcon },
+  { value: 'graphql', label: 'GraphQL', hint: 'Schemas', icon: ShareIcon },
+  { value: 'grpc', label: 'gRPC', hint: 'Protobuf', icon: CircleStackIcon },
+  { value: 'asyncapi', label: 'AsyncAPI', hint: 'Events', icon: BoltIcon },
 ]
 
 const languages: { id: string; label: string }[] = [
@@ -26,17 +39,25 @@ const languages: { id: string; label: string }[] = [
   { id: 'csharp', label: 'C#' },
 ]
 
-const sources = [
-  { value: 'paste', label: 'Paste a spec', hint: 'Copy your spec in' },
-  { value: 'url', label: 'From a URL', hint: 'Fetch remotely' },
-  { value: 'upload', label: 'Upload a file', hint: 'JSON or YAML' },
-  { value: 'github', label: 'Connect a GitHub repo', hint: 'Build from your codebase' },
-  { value: 'mintlify', label: 'Import from Mintlify', hint: 'Port existing docs' },
-] as const
+const sources: {
+  value: 'url' | 'upload' | 'github' | 'mintlify'
+  label: string
+  hint: string
+  icon: React.ComponentType<{ className?: string }>
+}[] = [
+  { value: 'url', label: 'From a URL', hint: 'Fetch remotely', icon: LinkIcon },
+  { value: 'upload', label: 'Upload a file', hint: 'JSON or YAML', icon: ArrowUpTrayIcon },
+  { value: 'github', label: 'GitHub repo', hint: 'Build from your codebase', icon: CodeBracketIcon },
+  { value: 'mintlify', label: 'Import from Mintlify', hint: 'Port existing docs', icon: BookOpenIcon },
+]
 
 type SourceValue = (typeof sources)[number]['value']
 
-const steps = ['Project', 'Spec', 'Generate'] as const
+const steps = [
+  { label: 'Project', icon: FolderIcon },
+  { label: 'Spec', icon: DocumentTextIcon },
+  { label: 'Generate', icon: SparklesIcon },
+] as const
 
 
 export function NewProjectPage() {
@@ -46,7 +67,7 @@ export function NewProjectPage() {
   const [direction, setDirection] = useState<'fwd' | 'back'>('fwd')
   const [name, setName] = useState('')
   const [specType, setSpecType] = useState<SpecType>('openapi')
-  const [source, setSource] = useState<SourceValue>('paste')
+  const [source, setSource] = useState<SourceValue>('url')
   const [specText, setSpecText] = useState('')
   const [gitRepo, setGitRepo] = useState<GitRepo | null>(null)
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['typescript'])
@@ -126,7 +147,7 @@ export function NewProjectPage() {
         cliEnabled: true,
         generateDocs,
         ...(source === 'url' ? { specUrl: specText.trim() } : {}),
-        ...(source === 'paste' || source === 'upload'
+        ...(source === 'upload'
           ? { specRaw: specText }
           : {}),
         ...(source === 'mintlify' ? { specUrl: specText.trim() } : {}),
@@ -158,15 +179,15 @@ export function NewProjectPage() {
   return (
     <div className="wf-enter mx-auto max-w-2xl">
       <div className="mb-8 flex items-center gap-2">
-        {steps.map((label, i) => (
+        {steps.map(({ label, icon: StepIcon }, i) => (
           <div key={label} className="flex flex-1 items-center gap-2">
             <span
               className={cn(
-                'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors',
                 i <= step ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground',
               )}
             >
-              {i + 1}
+              <StepIcon className="size-4" />
             </span>
             <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
               {label}
@@ -197,22 +218,28 @@ export function NewProjectPage() {
               <div>
                 <label className="mb-2 block text-sm font-medium">Spec type</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {specTypes.map((t) => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => setSpecType(t.value)}
-                      className={cn(
-                        'rounded-lg border px-4 py-3 text-left transition-colors',
-                        specType === t.value
-                          ? 'border-brand bg-brand-soft'
-                          : 'border-border bg-background hover:bg-muted',
-                      )}
-                    >
-                      <div className="text-sm font-medium">{t.label}</div>
-                      <div className="text-xs text-muted-foreground">{t.hint}</div>
-                    </button>
-                  ))}
+                  {specTypes.map((t) => {
+                    const Icon = t.icon
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setSpecType(t.value)}
+                        className={cn(
+                          'rounded-lg border px-4 py-3 text-left transition-colors',
+                          specType === t.value
+                            ? 'bg-muted text-foreground'
+                            : 'border-border bg-background hover:bg-muted',
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="size-4 shrink-0 text-brand" />
+                          <span className="text-sm font-medium">{t.label}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">{t.hint}</div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -230,22 +257,28 @@ export function NewProjectPage() {
               </div>
               <div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {sources.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => setSource(s.value)}
-                      className={cn(
-                        'rounded-lg border px-3 py-3 text-left transition-colors',
-                        source === s.value
-                          ? 'border-brand bg-brand-soft'
-                          : 'border-border bg-background hover:bg-muted',
-                      )}
-                    >
-                      <div className="text-sm font-medium">{s.label}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">{s.hint}</div>
-                    </button>
-                  ))}
+                  {sources.map((s) => {
+                    const Icon = s.icon
+                    return (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => setSource(s.value)}
+                        className={cn(
+                          'rounded-lg border px-3 py-3 text-left transition-colors',
+                          source === s.value
+                            ? 'bg-muted text-foreground'
+                            : 'border-border bg-background hover:bg-muted',
+                        )}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Icon className="size-4 shrink-0 text-brand" />
+                          <span className="text-sm font-medium">{s.label}</span>
+                        </span>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{s.hint}</div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -373,36 +406,24 @@ export function NewProjectPage() {
               ) : (
                 <div>
                   <label className="mb-2 block text-sm font-medium">
-                    {source === 'paste'
-                      ? 'Paste your spec'
-                      : source === 'url'
-                        ? 'Spec URL'
-                        : source === 'mintlify'
-                          ? 'Mintlify repo URL'
-                          : 'File contents'}
+                    {source === 'url'
+                      ? 'Spec URL'
+                      : source === 'mintlify'
+                        ? 'Mintlify repo URL'
+                        : 'File contents'}
                   </label>
-                  {source === 'paste' ? (
-                    <textarea
-                      value={specText}
-                      onChange={(e) => setSpecText(e.target.value)}
-                      placeholder={'openapi: 3.1.0\ninfo:\n  title: My API\n  version: 1.0.0\npaths: {}'}
-                      rows={10}
-                      className="w-full rounded-lg border border-input bg-background px-4 py-3 font-mono text-sm outline-none transition-colors focus:border-ring focus:ring-[3px] focus:ring-ring/50"
-                    />
-                  ) : (
-                    <input
-                      value={specText}
-                      onChange={(e) => setSpecText(e.target.value)}
-                      placeholder={
-                        source === 'url'
-                          ? 'https://api.example.com/openapi.json'
-                          : source === 'mintlify'
-                            ? 'https://github.com/acme/docs'
-                            : 'Paste or drag a file…'
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-ring focus:ring-[3px] focus:ring-ring/50"
-                    />
-                  )}
+                  <input
+                    value={specText}
+                    onChange={(e) => setSpecText(e.target.value)}
+                    placeholder={
+                      source === 'url'
+                        ? 'https://api.example.com/openapi.json'
+                        : source === 'mintlify'
+                          ? 'https://github.com/acme/docs'
+                          : 'Paste or drag a file…'
+                    }
+                    className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-ring focus:ring-[3px] focus:ring-ring/50"
+                  />
                   {source === 'mintlify' && (
                     <p className="mt-1.5 text-xs text-muted-foreground">
                       We&apos;ll port the Mintlify pages and branding into your Weldrr docs
@@ -427,15 +448,13 @@ export function NewProjectPage() {
                 <div className="text-sm font-semibold tracking-tight">{name}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
                   {specType.toUpperCase()} ·{' '}
-                  {source === 'paste'
-                    ? 'Pasted spec'
-                    : source === 'url'
-                      ? 'Spec URL'
-                      : source === 'github'
-                        ? `GitHub repo${gitRepo ? ` · ${gitRepo.fullName}` : ''}`
-                        : source === 'mintlify'
-                          ? `Mintlify repo${specText.trim() ? ` · ${specText.trim()}` : ''}`
-                          : 'Uploaded file'}
+                  {source === 'url'
+                    ? 'Spec URL'
+                    : source === 'github'
+                      ? `GitHub repo${gitRepo ? ` · ${gitRepo.fullName}` : ''}`
+                      : source === 'mintlify'
+                        ? `Mintlify repo${specText.trim() ? ` · ${specText.trim()}` : ''}`
+                        : 'Uploaded file'}
                 </div>
                 {gitRepo && (
                   <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground">

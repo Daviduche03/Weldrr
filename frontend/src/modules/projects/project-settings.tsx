@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { Check, ExternalLink, LoaderCircle, Save, Trash2 } from 'lucide-react'
+import {
+  ArrowDownOnSquareIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  CheckIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { BrandingSection } from '@/modules/projects/docs-editor/branding-section'
 import type { ArtifactVersion, Project, Sdk } from '@/lib/types'
@@ -106,12 +112,12 @@ export function ProjectSettings({
                 disabled={saving || name.trim() === project.name}
                 className="shrink-0"
               >
-                {saving ? <LoaderCircle className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                {saving ? <ArrowPathIcon className="size-3.5 animate-spin" /> : <ArrowDownOnSquareIcon className="size-3.5" />}
                 Save
               </Button>
               {saved && (
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                  <Check className="size-3.5" /> Saved
+                  <CheckIcon className="size-3.5" /> Saved
                 </span>
               )}
             </div>
@@ -159,11 +165,11 @@ export function ProjectSettings({
             </div>
             {publishSaving ? (
               <span className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <LoaderCircle className="size-3 animate-spin" /> Saving…
+                <ArrowPathIcon className="size-3 animate-spin" /> Saving…
               </span>
             ) : publishSaved ? (
               <span className="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                <Check className="size-3.5" /> Saved
+                <CheckIcon className="size-3.5" /> Saved
               </span>
             ) : null}
           </div>
@@ -195,7 +201,7 @@ export function ProjectSettings({
                   className="inline-flex max-w-full items-center gap-1 text-foreground transition-opacity hover:opacity-70"
                 >
                   <span className="truncate">{repoFullName}</span>
-                  <ExternalLink className="size-3 shrink-0" />
+                  <ArrowTopRightOnSquareIcon className="size-3 shrink-0" />
                 </a>
               </Meta>
             )}
@@ -234,7 +240,7 @@ export function ProjectSettings({
               disabled={deleting}
               className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              {deleting ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+              {deleting ? <ArrowPathIcon className="size-3.5 animate-spin" /> : <TrashIcon className="size-3.5" />}
               Delete project
             </Button>
           </div>

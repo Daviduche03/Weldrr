@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Folder02Icon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CodeBracketIcon,
+  CodeBracketSquareIcon,
+  FolderIcon,
   FolderOpenIcon,
-  Refresh01Icon,
-  CodeSquareIcon,
-} from 'hugeicons-react'
-import {
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  Braces,
-} from 'lucide-react'
+} from '@heroicons/react/24/solid'
 import { useSdkTree, useSdkFile } from '@/lib/queries'
 import type { SdkLanguage } from '@/lib/types'
 import type { SdkTreeNode } from '@/lib/api/sdks'
@@ -117,8 +115,8 @@ export function SdkViewer({
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
               style={{ paddingLeft: `${depth * 12 + 8}px` }}
             >
-              {open ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
-              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <Folder02Icon className="size-4 shrink-0 text-muted-foreground" />}
+              {open ? <ChevronDownIcon className="size-3.5 shrink-0" /> : <ChevronRightIcon className="size-3.5 shrink-0" />}
+              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <FolderIcon className="size-4 shrink-0 text-muted-foreground" />}
               <span className="truncate">{node.name}</span>
             </button>
             {open && <div>{renderChildren(childPath, depth + 1)}</div>}
@@ -143,7 +141,7 @@ export function SdkViewer({
           )}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
-          <CodeSquareIcon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
+          <CodeBracketSquareIcon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
           <span className="truncate">{node.name}</span>
           {badge && (
             <span className="ml-auto font-mono text-[10px] uppercase text-muted-foreground/60">{badge}</span>
@@ -162,7 +160,7 @@ export function SdkViewer({
             {language} · source
           </span>
           <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void treeQuery.refetch()} className="text-muted-foreground">
-            <Refresh01Icon className={cn('size-3.5', loadingTree && 'animate-spin')} />
+            <ArrowPathIcon className={cn('size-3.5', loadingTree && 'animate-spin')} />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
@@ -200,11 +198,11 @@ export function SdkViewer({
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                Open repo <ExternalLink className="size-3" />
+                Open repo <ArrowTopRightOnSquareIcon className="size-3" />
               </a>
             )}
             <Button size="sm" variant="outline" onClick={onBack}>
-              <Braces className="size-3.5" />
+              <CodeBracketIcon className="size-3.5" />
               Back to SDKs
             </Button>
           </div>
@@ -231,7 +229,7 @@ export function SdkViewer({
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
             <div>
-              <CodeSquareIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+              <CodeBracketSquareIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
               Select a file from the tree to view its source.
             </div>
           </div>

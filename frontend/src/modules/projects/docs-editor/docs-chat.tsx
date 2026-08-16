@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ArrowUp01Icon, File02Icon, SparklesIcon, SquareIcon } from 'hugeicons-react'
-import { ExternalLink } from 'lucide-react'
+import {
+  ArrowTopRightOnSquareIcon,
+  ArrowUpIcon,
+  DocumentIcon,
+  SparklesIcon,
+  StopIcon,
+} from '@heroicons/react/24/solid'
 import { http } from '@/lib/http'
 import { getTokens } from '@/lib/tokens'
 import { cn } from '@/lib/utils'
@@ -85,14 +90,14 @@ export function DocsChat({
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            Open site <ExternalLink className="size-3" />
+            Open site <ArrowTopRightOnSquareIcon className="size-3" />
           </a>
         )}
       </div>
 
       {activePath && (
         <div className="flex items-center gap-1.5 border-b border-border bg-muted/30 px-3 py-1.5">
-          <File02Icon className="size-3 shrink-0 text-muted-foreground" />
+          <DocumentIcon className="size-3 shrink-0 text-muted-foreground" />
           <span className="truncate font-mono text-[10px] text-muted-foreground" title={activePath}>
             {activePath}
           </span>
@@ -176,7 +181,7 @@ export function DocsChat({
               aria-label="Stop generating"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive text-white transition-colors hover:opacity-90"
             >
-              <SquareIcon className="size-3.5" />
+              <StopIcon className="size-3.5" />
             </button>
           ) : (
             <button
@@ -185,7 +190,7 @@ export function DocsChat({
               aria-label="Send message"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ArrowUp01Icon className="size-4" />
+              <ArrowUpIcon className="size-4" />
             </button>
           )}
         </div>

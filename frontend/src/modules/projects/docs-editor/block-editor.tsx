@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { HashtagIcon, LeftToRightListBulletIcon, Add01Icon } from 'hugeicons-react'
-import { Braces, GripVertical, Quote, Rows3, Trash2 } from 'lucide-react'
+import {
+  ChatBubbleOvalLeftEllipsisIcon,
+  CodeBracketIcon,
+  EllipsisVerticalIcon,
+  HashtagIcon,
+  PlusIcon,
+  QueueListIcon,
+  TrashIcon,
+  ViewColumnsIcon,
+} from '@heroicons/react/24/solid'
 import {
   type Block,
   type BlockType,
@@ -13,11 +21,11 @@ import { cn } from '@/lib/utils'
 
 const ADD_OPTIONS: { type: BlockType; label: string; icon: React.ReactNode }[] = [
   { type: 'heading', label: 'Heading', icon: <HashtagIcon className="size-3.5" /> },
-  { type: 'paragraph', label: 'Paragraph', icon: <Braces className="size-3.5" /> },
-  { type: 'code', label: 'Code block', icon: <Braces className="size-3.5" /> },
-  { type: 'list', label: 'List', icon: <LeftToRightListBulletIcon className="size-3.5" /> },
-  { type: 'table', label: 'Table', icon: <Rows3 className="size-3.5" /> },
-  { type: 'quote', label: 'Quote', icon: <Quote className="size-3.5" /> },
+  { type: 'paragraph', label: 'Paragraph', icon: <CodeBracketIcon className="size-3.5" /> },
+  { type: 'code', label: 'Code block', icon: <CodeBracketIcon className="size-3.5" /> },
+  { type: 'list', label: 'List', icon: <QueueListIcon className="size-3.5" /> },
+  { type: 'table', label: 'Table', icon: <ViewColumnsIcon className="size-3.5" /> },
+  { type: 'quote', label: 'Quote', icon: <ChatBubbleOvalLeftEllipsisIcon className="size-3.5" /> },
 ]
 
 function blockStyle(type: BlockType, level?: number): string {
@@ -217,7 +225,7 @@ function BlockRow({
           title="Drag to reorder"
           className="flex size-7 cursor-grab items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground active:cursor-grabbing"
         >
-          <GripVertical className="size-4" />
+          <EllipsisVerticalIcon className="size-4" />
         </button>
         <button
           type="button"
@@ -226,7 +234,7 @@ function BlockRow({
           title="Delete block"
           className="flex size-7 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
-          <Trash2 className="size-4" />
+          <TrashIcon className="size-4" />
         </button>
       </div>
 
@@ -279,7 +287,7 @@ function BlockRow({
                 className="flex size-5 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-brand hover:text-brand"
                 aria-label="Add block"
               >
-                <Add01Icon className="size-3" />
+                <PlusIcon className="size-3" />
               </button>
             </div>
           )}

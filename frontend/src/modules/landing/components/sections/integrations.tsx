@@ -1,31 +1,31 @@
 import {
-  AiNetworkIcon,
-  ApiIcon,
-  ComputerTerminal01Icon,
-  Database01Icon,
-  GithubIcon,
-  Link02Icon,
-  SlackIcon,
-} from 'hugeicons-react'
+  ChatBubbleBottomCenterTextIcon,
+  CircleStackIcon,
+  CodeBracketIcon,
+  CommandLineIcon,
+  LinkIcon,
+  ShareIcon,
+  Square3Stack3DIcon,
+} from '@heroicons/react/24/solid'
 
 const protocols = [
   {
     name: 'OpenAPI',
     description:
       'REST APIs defined in OpenAPI 3.0 and 3.1. Weldrr reads every endpoint, schema, and auth flow and turns it into docs, SDKs, and a CLI.',
-    icon: ApiIcon,
+    icon: Square3Stack3DIcon,
   },
   {
     name: 'GraphQL',
     description:
       'SDL-first APIs and schemas. Weldrr understands resolvers, types, and queries so your docs and clients stay perfectly typed.',
-    icon: AiNetworkIcon,
+    icon: ShareIcon,
   },
   {
     name: 'gRPC',
     description:
       'Protobuf services and streaming RPCs. Generate typed clients and interactive reference docs for your gRPC APIs.',
-    icon: Database01Icon,
+    icon: CircleStackIcon,
   },
 ]
 
@@ -33,22 +33,22 @@ const integrations = [
   {
     name: 'GitHub',
     description: 'Connect a repository and Weldrr reads your codebase, not just a spec, to keep everything in sync.',
-    icon: GithubIcon,
+    icon: CodeBracketIcon,
   },
   {
     name: 'Slack',
     description: 'Surface AI answers and release updates where your team already works.',
-    icon: SlackIcon,
+    icon: ChatBubbleBottomCenterTextIcon,
   },
   {
     name: 'Webhooks',
     description: 'Regenerate docs and SDKs automatically whenever your API changes.',
-    icon: Link02Icon,
+    icon: LinkIcon,
   },
   {
     name: 'CLI',
     description: 'Generate, preview, and publish everything straight from your terminal.',
-    icon: ComputerTerminal01Icon,
+    icon: CommandLineIcon,
   },
 ]
 

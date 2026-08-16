@@ -1,4 +1,4 @@
-import { KeyRound } from 'lucide-react'
+import { KeyIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,7 +59,7 @@ export function ProfileSection({
         <div className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-              <KeyRound className="size-4" />
+              <KeyIcon className="size-4" />
             </span>
             <div>
               <div className="text-sm font-medium">Signed in as {user?.email}</div>

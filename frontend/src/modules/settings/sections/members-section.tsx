@@ -1,5 +1,11 @@
-import { Add01Icon, UserAdd01Icon, UserGroupIcon } from 'hugeicons-react'
-import { Check, ChevronsUpDown, Trash2 } from 'lucide-react'
+import {
+  CheckIcon,
+  ChevronUpDownIcon,
+  PlusIcon,
+  TrashIcon,
+  UserGroupIcon,
+  UserPlusIcon,
+} from '@heroicons/react/24/solid'
 import { EmptyState } from '@/components/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,8 +51,7 @@ export function MembersSection({
       </div>
       {members.length === 0 ? (
         <EmptyState
-          icon={<UserGroupIcon className="size-6" />}
-          title="No members yet"
+          icon={<UserGroupIcon className="size-6" />}title="No members yet"
           description="Invite your team to collaborate on this workspace."
           className="py-12"
         />
@@ -74,14 +79,14 @@ export function MembersSection({
                       className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent"
                     >
                       {roleMeta[member.role].label}
-                      <ChevronsUpDown className="size-3.5" />
+                      <ChevronUpDownIcon className="size-3.5" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {(['admin', 'member'] as const).map((role) => (
                       <DropdownMenuItem key={role} onClick={() => onChangeRole(member.id, role)}>
                         {roleMeta[role].label}
-                        {member.role === role && <Check className="ml-auto" />}
+                        {member.role === role && <CheckIcon className="ml-auto size-4" />}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -95,7 +100,7 @@ export function MembersSection({
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => onRemove(member.id)}
                 >
-                  <Trash2 />
+                  <TrashIcon className="size-4" />
                 </Button>
               )}
             </div>
@@ -105,7 +110,7 @@ export function MembersSection({
       )}
       <div className="flex flex-wrap items-center gap-3 border-t border-border px-6 py-4">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <UserAdd01Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <UserPlusIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
@@ -115,7 +120,7 @@ export function MembersSection({
           />
         </div>
         <Button size="sm" onClick={onInvite}>
-          <Add01Icon />
+          <PlusIcon className="size-4" />
           Invite member
         </Button>
       </div>

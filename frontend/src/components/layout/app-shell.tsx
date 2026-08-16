@@ -1,15 +1,19 @@
+import type { ComponentType } from 'react'
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Building01Icon,
-  DashboardBrowsingIcon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
-  Settings01Icon,
-  Add01Icon,
-  RocketIcon,
-} from 'hugeicons-react'
-import { Check, ChevronsUpDown } from 'lucide-react'
+  Bars3Icon,
+  BuildingOfficeIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpDownIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  RocketLaunchIcon,
+  Squares2X2Icon,
+  XMarkIcon,
+} from '@heroicons/react/24/solid'
 import { Logo } from '@/components/logo'
 import { Avatar } from '@/components/avatar'
 import { Button } from '@/components/ui/button'
@@ -25,11 +29,11 @@ import { useAuth } from '@/modules/auth/auth-provider'
 import { planLabel, useWorkspace } from '@/modules/workspace/workspace-provider'
 
 const mainNav = [
-  { label: 'Overview', to: '/dashboard', icon: DashboardBrowsingIcon },
-  { label: 'Projects', to: '/projects', icon: RocketIcon },
+  { label: 'Overview', to: '/dashboard', icon: Squares2X2Icon },
+  { label: 'Projects', to: '/projects', icon: RocketLaunchIcon },
 ]
 
-const bottomNav = [{ label: 'Settings', to: '/settings', icon: Settings01Icon }]
+const bottomNav = [{ label: 'Settings', to: '/settings', icon: Cog6ToothIcon }]
 
 function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { workspace, workspaces, switchTo } = useWorkspace()
@@ -49,7 +53,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         >
           <span className="flex size-full items-center justify-center">
             <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
-              <Building01Icon className="size-4" />
+              <BuildingOfficeIcon className="size-4" />
             </span>
           </span>
           <span
@@ -69,7 +73,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
               collapsed ? 'max-w-0 opacity-0' : 'max-w-4 opacity-100',
             )}
           >
-            <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
           </span>
         </button>
       </DropdownMenuTrigger>
@@ -91,15 +95,15 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         {workspaces.map((w) => (
           <DropdownMenuItem key={w.id} onSelect={() => select(w.id)}>
             <span className="inline-flex size-5 items-center justify-center rounded bg-muted text-muted-foreground">
-              <Building01Icon className="size-3" />
+              <BuildingOfficeIcon className="size-3" />
             </span>
             <span className="min-w-0 flex-1 truncate">{w.name}</span>
-            {w.id === workspace?.id && <Check className="size-4" />}
+            {w.id === workspace?.id && <CheckIcon className="size-4" />}
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/workspaces/new')}>
-          <Add01Icon className="size-4" />
+          <PlusIcon className="size-4" />
           Create workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -109,7 +113,7 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
 }
 
 function SidebarNav({ collapsed }: { collapsed: boolean }) {
-  const renderItems = (items: { label: string; to: string; icon: typeof DashboardBrowsingIcon }[]) =>
+  const renderItems = (items: { label: string; to: string; icon: ComponentType<{ className?: string }> }[]) =>
     items.map((item) => {
       const Icon = item.icon
       return (
@@ -154,7 +158,7 @@ function SidebarNav({ collapsed }: { collapsed: boolean }) {
         className="relative grid h-9 w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-lg bg-brand text-sm font-medium text-brand-foreground transition-colors duration-300 hover:bg-brand/90"
       >
         <span className="flex size-full items-center justify-center">
-          <Add01Icon className="size-4 shrink-0" />
+          <PlusIcon className="size-4 shrink-0" />
         </span>
         <span
           className={cn(
@@ -199,7 +203,7 @@ export function AppShell() {
                 aria-label="Close menu"
                 className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <PanelLeftCloseIcon className="size-5" />
+                <XMarkIcon className="size-5" />
               </button>
             </div>
             <SidebarNav collapsed={false} />
@@ -246,9 +250,9 @@ export function AppShell() {
               className="text-muted-foreground hover:text-foreground"
             >
               {collapsed ? (
-                <PanelLeftOpenIcon className="size-4 mr-4" />
+                <ChevronRightIcon className="size-4 mr-4" />
               ) : (
-                <PanelLeftCloseIcon className="size-4 " />
+                <ChevronLeftIcon className="size-4 " />
               )}
             </Button>
           </span>
@@ -296,7 +300,7 @@ export function AppShell() {
             aria-label="Open menu"
             className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground lg:hidden"
           >
-            <PanelLeftOpenIcon className="size-4" />
+            <Bars3Icon className="size-4" />
             Menu
           </button>
           <div className="flex min-h-[calc(100vh-1.5rem)] flex-col rounded-2xl border border-border bg-muted p-1">

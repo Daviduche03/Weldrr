@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Check } from 'lucide-react'
+import { CheckIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -93,7 +93,7 @@ export function SaveButton({
 }) {
   return (
     <Button size="sm" onClick={onClick}>
-      {saved ? <Check /> : null}
+      {saved ? <CheckIcon className="size-4" /> : null}
       {saved ? 'Saved' : children}
     </Button>
   )

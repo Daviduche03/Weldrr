@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react'
+import { TrashIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, SaveButton, Section } from '@/modules/settings/settings/ui'
@@ -58,7 +58,7 @@ export function WorkspaceSection({
             className="text-destructive hover:bg-destructive/10"
             onClick={onDelete}
           >
-            <Trash2 />
+            <TrashIcon className="size-4" />
             Delete workspace
           </Button>
         </div>

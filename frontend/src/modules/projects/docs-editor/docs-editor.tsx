@@ -1,22 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  File02Icon,
-  Folder02Icon,
+  ArrowDownOnSquareIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CodeBracketIcon,
+  DocumentIcon,
+  FolderIcon,
   FolderOpenIcon,
-  Add01Icon,
-  RocketIcon,
-  Refresh01Icon,
-  GitBranchIcon,
-} from 'hugeicons-react'
-import {
-  ChevronDown,
-  ChevronRight,
-  Trash2,
-  Save,
-  ExternalLink,
-  LoaderCircle,
-  Check,
-} from 'lucide-react'
+  PlusIcon,
+  RocketLaunchIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import { docsApi, type DocsTreeNode } from '@/lib/api/docs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -234,8 +231,8 @@ export function DocsEditor({
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
               style={{ paddingLeft: `${depth * 12 + 8}px` }}
             >
-              {open ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
-              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <Folder02Icon className="size-4 shrink-0 text-muted-foreground" />}
+              {open ? <ChevronDownIcon className="size-3.5 shrink-0" /> : <ChevronRightIcon className="size-3.5 shrink-0" />}
+              {open ? <FolderOpenIcon className="size-4 shrink-0 text-brand" /> : <FolderIcon className="size-4 shrink-0 text-muted-foreground" />}
               <span className="truncate">{node.name}</span>
             </button>
             {open && <div>{renderChildren(childPath, depth + 1)}</div>}
@@ -257,7 +254,7 @@ export function DocsEditor({
           )}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
-          <File02Icon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
+          <DocumentIcon className={cn('size-4 shrink-0', isActive ? 'text-brand' : 'text-muted-foreground')} />
           <span className="truncate">{node.name}</span>
           {node.kind === 'mdx' && (
             <span className="ml-auto font-mono text-[10px] uppercase text-muted-foreground/60">mdx</span>
@@ -276,10 +273,10 @@ export function DocsEditor({
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pages</span>
             <div className="flex items-center gap-1">
               <Button size="icon-sm" variant="ghost" aria-label="Refresh" onClick={() => void loadTree()} className="text-muted-foreground">
-                <Refresh01Icon className={cn('size-3.5', loadingTree && 'animate-spin')} />
+                <ArrowPathIcon className={cn('size-3.5', loadingTree && 'animate-spin')} />
               </Button>
               <Button size="icon-sm" variant="ghost" aria-label="New page" onClick={() => setShowNewPage((s) => !s)}>
-                <Add01Icon className="size-3.5" />
+                <PlusIcon className="size-3.5" />
               </Button>
             </div>
           </div>
@@ -299,7 +296,7 @@ export function DocsEditor({
                   className="h-8 text-xs"
                 />
                 <Button size="icon-sm" onClick={() => void handleCreatePage()} disabled={creating || !newPath.trim()}>
-                  {creating ? <LoaderCircle className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+                  {creating ? <ArrowPathIcon className="size-3.5 animate-spin" /> : <CheckIcon className="size-3.5" />}
                 </Button>
               </div>
               <p className="mt-1.5 px-0.5 text-[10px] text-muted-foreground">
@@ -336,12 +333,12 @@ export function DocsEditor({
               </span>
               {saveState === 'saved' && (
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                  <Check className="size-3" /> Saved
+                  <CheckIcon className="size-3" /> Saved
                 </span>
               )}
               {saveState === 'saving' && (
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                  <LoaderCircle className="size-3 animate-spin" /> Saving…
+                  <ArrowPathIcon className="size-3 animate-spin" /> Saving…
                 </span>
               )}
               {saveState === 'dirty' && (
@@ -358,11 +355,11 @@ export function DocsEditor({
                 disabled={!activePath || !dirty || saveState === 'saving'}
                 onClick={() => void handleSaveNow()}
               >
-                <Save className="size-3.5" />
+                <ArrowDownOnSquareIcon className="size-3.5" />
                 Save now
               </Button>
               <Button size="sm" disabled={!activePath || publishing} onClick={() => void handlePublish()}>
-                {publishing ? <LoaderCircle className="size-3.5 animate-spin" /> : <RocketIcon className="size-3.5" />}
+                {publishing ? <ArrowPathIcon className="size-3.5 animate-spin" /> : <RocketLaunchIcon className="size-3.5" />}
                 {publishing ? 'Publishing…' : 'Publish'}
               </Button>
               {activePath && (
@@ -373,7 +370,7 @@ export function DocsEditor({
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => setConfirmDelete(true)}
                 >
-                  <Trash2 className="size-3.5" />
+                  <TrashIcon className="size-3.5" />
                 </Button>
               )}
             </div>
@@ -381,14 +378,14 @@ export function DocsEditor({
 
           {publishVersion && (
             <div className="flex items-center gap-2 border-b border-border bg-emerald-500/5 px-4 py-2 text-xs text-emerald-600 dark:text-emerald-400">
-              <Check className="size-3.5" />
+              <CheckIcon className="size-3.5" />
               Published v{publishVersion} — the docs site will redeploy shortly.
             </div>
           )}
 
           {prInfo && (
             <div className="flex items-center gap-2 border-b border-border bg-sky-500/5 px-4 py-2 text-xs text-sky-600 dark:text-sky-400">
-              <GitBranchIcon className="size-3.5 shrink-0" />
+              <CodeBracketIcon className="size-3.5 shrink-0" />
               <span>
                 Saved as PR{' '}
                 <span className="font-mono font-medium">#{prInfo.prNumber}</span> — review and merge
@@ -400,7 +397,7 @@ export function DocsEditor({
                 rel="noreferrer"
                 className="ml-auto inline-flex shrink-0 items-center gap-1 font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
               >
-                Open PR <ExternalLink className="size-3" />
+                Open PR <ArrowTopRightOnSquareIcon className="size-3" />
               </a>
             </div>
           )}
@@ -459,7 +456,7 @@ export function DocsEditor({
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
               <div>
-                <File02Icon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+                <DocumentIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
                 Select a page from the tree to edit it, or create a new one.
               </div>
             </div>
@@ -475,7 +472,7 @@ export function DocsEditor({
         onOpenChange={setConfirmDelete}
         title="Delete this page?"
         description={`"${activePath}" will be removed from the docs repo. This cannot be undone.`}
-        icon={<Trash2 className="size-4" />}
+        icon={<TrashIcon className="size-4" />}
         confirmLabel={deleting ? 'Deleting…' : 'Delete'}
         loading={deleting}
         onConfirm={() => void handleDelete()}

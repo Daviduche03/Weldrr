@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { UserRemove01Icon } from 'hugeicons-react'
-import { Trash2 } from 'lucide-react'
+import { UserMinusIcon } from '@heroicons/react/24/solid'
+import { TrashIcon } from '@heroicons/react/24/solid'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog, type ConfirmDialogTone } from '@/components/ui/confirm-dialog'
 import { workspaceApi } from '@/lib/api/workspace'
@@ -202,7 +202,7 @@ export function SettingsPage() {
         return {
           title: 'Remove member?',
           description: `${pending.member.email} will immediately lose access to this workspace and all of its projects.`,
-          icon: <UserRemove01Icon />,
+          icon: <UserMinusIcon className="size-5" />,
           tone: 'danger',
           confirmLabel: 'Remove member',
           onConfirm: confirmRemoveMember,
@@ -211,7 +211,7 @@ export function SettingsPage() {
         return {
           title: 'Delete workspace?',
           description: `${workspace?.name ?? 'This workspace'} and all of its projects, SDKs, and docs will be permanently deleted. This cannot be undone.`,
-          icon: <Trash2 />,
+          icon: <TrashIcon className="size-5" />,
           tone: 'danger',
           confirmLabel: 'Delete workspace',
           onConfirm: confirmDeleteWorkspace,

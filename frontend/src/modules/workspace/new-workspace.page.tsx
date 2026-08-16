@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LoaderCircle } from 'lucide-react'
+import { ArrowPathIcon, BuildingOfficeIcon, UserPlusIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { workspaceApi } from '@/lib/api/workspace'
 import { ApiError } from '@/lib/http'
@@ -25,7 +25,10 @@ function parseEmails(text: string): string[] {
     .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
 }
 
-const steps = ['Details', 'Invite'] as const
+const steps = [
+  { label: 'Details', icon: BuildingOfficeIcon },
+  { label: 'Invite', icon: UserPlusIcon },
+] as const
 
 export function NewWorkspacePage() {
   const navigate = useNavigate()
@@ -84,15 +87,15 @@ export function NewWorkspacePage() {
   return (
     <div className="wf-enter mx-auto max-w-2xl">
       <div className="mb-8 flex items-center gap-2">
-        {steps.map((label, i) => (
+        {steps.map(({ label, icon: StepIcon }, i) => (
           <div key={label} className="flex flex-1 items-center gap-2">
             <span
               className={cn(
-                'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors',
                 i <= step ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground',
               )}
             >
-              {i + 1}
+              <StepIcon className="size-4" />
             </span>
             <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
               {label}
@@ -181,7 +184,7 @@ export function NewWorkspacePage() {
           </Button>
         ) : (
           <Button onClick={handleCreate} disabled={creating}>
-            {creating && <LoaderCircle className="size-4 animate-spin" />}
+            {creating && <ArrowPathIcon className="size-4 animate-spin" />}
             Create workspace
           </Button>
         )}

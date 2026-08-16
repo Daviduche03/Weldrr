@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LoaderCircle, Check } from 'lucide-react'
+import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BrandIcon } from '@/components/brand-icon'
@@ -159,7 +159,7 @@ export function ConnectionsSection() {
                       {meta.label}
                       {connected && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                          <Check className="size-2.5" /> Connected
+                          <CheckIcon className="size-2.5" /> Connected
                         </span>
                       )}
                     </div>
@@ -180,12 +180,12 @@ export function ConnectionsSection() {
                       onClick={() => void disconnect('github')}
                       disabled={busy === 'github'}
                     >
-                      {busy === 'github' && <LoaderCircle className="size-3.5 animate-spin" />}
+                      {busy === 'github' && <ArrowPathIcon className="size-3.5 animate-spin" />}
                       Disconnect
                     </Button>
                   ) : (
                     <Button size="sm" onClick={() => void connectGithub()} disabled={busy === 'github'}>
-                      {busy === 'github' && <LoaderCircle className="size-3.5 animate-spin" />}
+                      {busy === 'github' && <ArrowPathIcon className="size-3.5 animate-spin" />}
                       Connect GitHub
                     </Button>
                   )
@@ -196,7 +196,7 @@ export function ConnectionsSection() {
                     onClick={() => void disconnect(meta.provider)}
                     disabled={busy === meta.provider}
                   >
-                    {busy === meta.provider && <LoaderCircle className="size-3.5 animate-spin" />}
+                    {busy === meta.provider && <ArrowPathIcon className="size-3.5 animate-spin" />}
                     Disconnect
                   </Button>
                 ) : (
@@ -215,7 +215,7 @@ export function ConnectionsSection() {
                       onClick={() => void saveToken(meta.provider)}
                       disabled={saving === meta.provider || !(tokenDraft[meta.provider] ?? '').trim()}
                     >
-                      {saving === meta.provider && <LoaderCircle className="size-3.5 animate-spin" />}
+                      {saving === meta.provider && <ArrowPathIcon className="size-3.5 animate-spin" />}
                       Save
                     </Button>
                   </div>
