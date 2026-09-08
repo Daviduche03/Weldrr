@@ -237,7 +237,7 @@ export function DashboardPage() {
             )}
           </div>
         )}
-      </div>
+        </div>
 
       {/* Recent activity */}
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
