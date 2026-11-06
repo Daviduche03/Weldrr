@@ -167,7 +167,11 @@ export function useRerunDiscovery() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => projectApi.rerunDiscovery(id),
-    onSuccess: (_data, id) => void qc.invalidateQueries({ queryKey: queryKeys.projectDiscovery(id) }),
+    onSuccess: (_data, id) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.projectDiscovery(id) })
+      void qc.invalidateQueries({ queryKey: queryKeys.project(id) })
+      void qc.invalidateQueries({ queryKey: ['projects'] })
+    },
   })
 }
 

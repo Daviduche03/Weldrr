@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useProjects } from '@/lib/queries'
+import { useProjects, useRerunDiscovery } from '@/lib/queries'
 import type { Project } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -62,13 +62,32 @@ function RowSkeleton() {
       <TableCell className="text-right">
         <Skeleton className="ml-auto h-4 w-16" />
       </TableCell>
+      <TableCell className="text-right">
+        <Skeleton className="ml-auto h-4 w-24" />
+      </TableCell>
     </TableRow>
   )
 }
 
 export function ProjectsPage() {
   const { data: projects, error, refetch } = useProjects()
+  const rerunDiscovery = useRerunDiscovery()
   const [query, setQuery] = useState('')
+  const [restarting, setRestarting] = useState<string | null>(null)
+  const [restartError, setRestartError] = useState<string | null>(null)
+
+  const restartDiscovery = async (id: string) => {
+    if (restarting) return
+    setRestarting(id)
+    setRestartError(null)
+    try {
+      await rerunDiscovery.mutateAsync(id)
+    } catch (err) {
+      setRestartError(err instanceof Error ? err.message : 'Could not restart discovery')
+    } finally {
+      setRestarting(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     if (!projects) return null
@@ -114,6 +133,12 @@ export function ProjectsPage() {
           </div>
         </div>
 
+        {restartError && (
+          <p className="border-b border-border bg-destructive/5 px-6 py-2 text-sm text-destructive">
+            {restartError}
+          </p>
+        )}
+
         {error ? (
           <EmptyState
             icon={<ExclamationTriangleIcon className="size-6" />}
@@ -137,6 +162,7 @@ export function ProjectsPage() {
                   <TableHead>SDKs</TableHead>
                   <TableHead>CLI</TableHead>
                   <TableHead className="text-right">Updated</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -176,6 +202,7 @@ export function ProjectsPage() {
                   <TableHead>SDKs</TableHead>
                   <TableHead>CLI</TableHead>
                   <TableHead className="text-right">Updated</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -235,6 +262,26 @@ export function ProjectsPage() {
                       </TableCell>
                       <TableCell className="text-right text-sm text-muted-foreground">
                         {relativeTime(project.updatedAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground"
+                          onClick={() => void restartDiscovery(project.id)}
+                          disabled={restarting !== null}
+                          title="Restart discovery for this project"
+                        >
+                          <ArrowPathIcon
+                            className={cn(
+                              'size-3.5',
+                              restarting === project.id && 'animate-spin',
+                            )}
+                          />
+                          <span className="hidden sm:inline">
+                            {restarting === project.id ? 'Restarting…' : 'Restart discovery'}
+                          </span>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )

@@ -98,6 +98,8 @@ export const projectService = {
     const project = await projectRepository.findById(workspaceId, id)
     if (!project) throw new NotFoundError('Project not found')
 
+    await projectRepository.update(workspaceId, id, { status: 'generating' })
+
     if (project.specSource === 'paste' || project.specSource === 'upload') {
       void discoveryService.run(project.id)
     } else {
