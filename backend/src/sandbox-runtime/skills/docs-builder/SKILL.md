@@ -40,6 +40,12 @@ You are generating comprehensive API documentation from an API specification.
    - Reference: **one page per endpoint** under `reference/`.
    - Name folders so alphabetical order reads well (Home is pinned first): e.g. `getting-started`, `reference`, `sdk`, `resources`.
    - Each section folder should have an `index.mdx` overview landing page.
+   - **Cross-page links MUST be absolute doc slugs** (`/docs/<section>/<page>`,
+      e.g. `[Policies](/docs/reference/policies)`). Never use bare relative links
+      like `[Policies](policies)` — the section landing URL has no trailing
+      slash, so a relative link resolves one level too high (`/docs/policies`)
+      and 404s. This applies to table cells, lists, and "Related"/"See also"
+      lines alike.
    - Produce docs covering:
    - Getting started / quickstart with real request examples.
    - Authentication guide matching the spec's auth schemes.
