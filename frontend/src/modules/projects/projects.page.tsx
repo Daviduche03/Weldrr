@@ -110,7 +110,7 @@ export function ProjectsPage() {
             All your API specs and generated artifacts.
           </p>
         </div>
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="w-full sm:w-auto">
           <Link to="/projects/new">New project</Link>
         </Button>
       </div>

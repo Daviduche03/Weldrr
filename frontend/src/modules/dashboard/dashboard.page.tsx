@@ -177,14 +177,14 @@ export function DashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4 px-6 sm:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here&apos;s what needs attention across your projects.
           </p>
         </div>
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="w-full sm:w-auto">
           <Link to="/projects/new">
             <PlusIcon />
             New project
@@ -251,6 +251,7 @@ export function DashboardPage() {
             <ArrowUpRightIcon className="size-4" />
           </Link>
         </div>
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -285,6 +286,7 @@ export function DashboardPage() {
                 })}
           </TableBody>
         </Table>
+        </div>
         {!loading && activity.length === 0 && (
           <EmptyState
             icon={<ClockIcon className="size-6" />}
@@ -296,7 +298,7 @@ export function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border">
+      <div className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">
         {[
           { title: 'Connect a spec', desc: 'Generate docs, SDKs, and a CLI.', to: '/projects/new', icon: PlusIcon },
           { title: 'View docs', desc: 'Open your published documentation.', to: '/projects', icon: BookOpenIcon },
