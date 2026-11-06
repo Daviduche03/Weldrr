@@ -1,14 +1,16 @@
 import { useEffect, type ReactNode } from 'react'
 import { useWorkspaceStore, planLabel } from '@/lib/stores/workspace-store'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
 export { planLabel }
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const initialize = useWorkspaceStore((s) => s.initialize)
+  const status = useAuthStore((s) => s.status)
 
   useEffect(() => {
-    void initialize()
-  }, [initialize])
+    if (status === 'authenticated') void initialize()
+  }, [status, initialize])
 
   return <>{children}</>
 }
