@@ -46,7 +46,7 @@ export function DocsChat({
   const { messages, status, error, sendMessage, stop } = useChat({
     transport: new DefaultChatTransport({
       api: `${http.url}/api/projects/${projectId}/docs/chat`,
-      headers: () => {
+      headers: (): Record<string, string> => {
         const tokens = getTokens()
         return tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {}
       },

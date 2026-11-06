@@ -134,7 +134,6 @@ export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<(typeof tabs)[number]>('Overview')
-  const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingDocs, setPublishingDocs] = useState(false)
@@ -185,10 +184,6 @@ export function ProjectDetailPage() {
     }, 8000)
     return () => clearInterval(timer)
   }, [buildActive, latestBuild, docsBuild, id, queryClient])
-
-  useEffect(() => {
-    if (project) setName(project.name)
-  }, [project])
 
   const sdkList = sdks ?? []
   const versionList = useMemo(() => versions ?? [], [versions])
@@ -264,7 +259,6 @@ export function ProjectDetailPage() {
     setSaving(true)
     try {
       await updateProject.mutateAsync({ id: project.id, input: { name: trimmed } })
-      setName(trimmed)
     } finally {
       setSaving(false)
     }
