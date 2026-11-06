@@ -516,8 +516,12 @@ export const sandboxService = {
       : undefined
     const isMintlify = project?.specSource === 'mintlify' && !!project?.specUrl
 
-    // Mintlify projects have no discovery run, so there's nothing to wait for.
-    const docsMarkdown = isMintlify ? undefined : await waitForDiscovery(row.projectId, 30_000)
+    // Discovery sandboxes are the thing being waited on; they have no
+    // docs.md to wait for. Mintlify projects have no discovery run either.
+    const docsMarkdown =
+      row.jobType === 'discovery' || isMintlify
+        ? undefined
+        : await waitForDiscovery(row.projectId, 30_000)
 
     let spec = row.spec ?? undefined
     let gitTemplate = ''

@@ -4,7 +4,14 @@ import { fileURLToPath } from 'node:url'
 import { config } from '@/config'
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
-const runtimeDir = path.resolve(currentDir, '../sandbox-runtime')
+// In dev this file lives in src/services, but in the bundled build it is
+// dist/index.js and tsup copies the runtime assets to dist/sandbox-runtime.
+const runtimeDir =
+  [
+    path.resolve(currentDir, '../sandbox-runtime'),
+    path.resolve(currentDir, 'sandbox-runtime'),
+  ].find((dir) => fs.existsSync(path.join(dir, 'startup.sh'))) ??
+  path.resolve(currentDir, '../sandbox-runtime')
 
 export type BootstrapInput = {
   model: string
