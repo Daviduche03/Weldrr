@@ -621,16 +621,20 @@ function Brand({ config, onClick }: { config: BrandingConfig; onClick?: () => vo
     <Link
       to="/docs/index"
       onClick={onClick}
-      className="group flex shrink-0 items-center gap-2.5"
+      className="group flex min-w-0 items-center gap-2.5"
     >
       {logoUrl ? (
-        <img src={logoUrl} alt="" className="h-7 w-auto max-w-28 object-contain" />
+        <img
+          src={logoUrl}
+          alt=""
+          className="h-7 w-auto max-w-28 shrink-0 object-contain"
+        />
       ) : (
-        <span className="flex size-8 items-center justify-center rounded-[10px] border border-border bg-card shadow-soft transition-colors group-hover:border-primary/30">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card shadow-soft transition-colors group-hover:border-primary/30">
           <WMark className="size-4 text-primary" />
         </span>
       )}
-      <span className="text-[14.5px] font-semibold tracking-[-0.01em] text-foreground">
+      <span className="min-w-0 truncate text-[14.5px] font-semibold tracking-[-0.01em] text-foreground">
         {config.siteName ?? "API Docs"}
       </span>
     </Link>
@@ -971,7 +975,7 @@ function ExploreGrid({ entries }: { entries: DocEntry[] }) {
 
 function DocShell() {
   const { "*": splat } = useParams();
-  const slug = (splat || "index").replace(/\/$/, "");
+  const slug = (splat || "index").replace(/\/+$/, "") || "index";
   const location = useLocation();
   const articleRef = useRef<HTMLElement>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
@@ -1162,7 +1166,7 @@ function Header({
               to={`/docs/${item.slug}`}
               className={({ isActive }) =>
                 cn(
-                  "rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+                  "rounded-lg px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors",
                   isActive
                     ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
@@ -1174,11 +1178,11 @@ function Header({
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={onOpenSearch}
-            className="hidden h-9 w-52 items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2.5 text-left text-[12.5px] text-muted-foreground transition-colors hover:border-border hover:bg-muted sm:flex xl:w-64"
+            className="hidden h-9 w-52 items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2.5 text-left text-[12.5px] text-muted-foreground transition-colors hover:border-border hover:bg-muted lg:flex xl:w-64"
           >
             <Search size={14} className="shrink-0" />
             <span className="flex-1 truncate">Search docs…</span>
@@ -1188,7 +1192,7 @@ function Header({
             type="button"
             onClick={onOpenSearch}
             aria-label="Search documentation"
-            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
           >
             <Search size={16} />
           </button>
