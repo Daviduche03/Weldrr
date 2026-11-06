@@ -129,7 +129,7 @@ const cards: { title: string; description: string; svg: ReactNode }[] = [
 
 export function Benefits() {
   return (
-    <section className="py-36">
+    <section className="py-20 sm:py-28 lg:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl text-left">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -142,13 +142,7 @@ export function Benefits() {
         </div>
       </div>
 
-      <div
-        className="mt-16"
-        style={{
-          marginLeft: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-          marginRight: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-        }}
-      >
+      <div className="mx-4 mt-10 sm:mx-6 sm:mt-16 lg:mx-[max(2rem,calc((100vw-80rem)/2-2rem))]">
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2">
           {cards.map((card) => (
               <div

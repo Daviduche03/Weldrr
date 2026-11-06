@@ -22,32 +22,13 @@ const rows: FeatureRow[] = [
   { label: 'Support', values: ['Community', 'Priority', 'Dedicated & SLA'] },
 ]
 
-function Check() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-      className="size-4 text-brand"
-    >
-      <path
-        d="M3.5 8.5l3 3 6-7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function Dash() {
   return <span className="text-muted-foreground/50">—</span>
 }
 
 export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-20 py-36">
+    <section id="pricing" className="scroll-mt-20 py-20 sm:py-28 lg:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -59,13 +40,7 @@ export function Pricing() {
         </div>
       </div>
 
-      <div
-        className="mt-16"
-        style={{
-          marginLeft: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-          marginRight: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-        }}
-      >
+      <div className="mx-4 mt-10 sm:mx-6 sm:mt-16 lg:mx-[max(2rem,calc((100vw-80rem)/2-2rem))]">
         <div className="overflow-hidden rounded-2xl border border-border bg-background">
           <div className="hidden grid-cols-12 gap-px bg-border md:grid">
             <div className="col-span-3 bg-background p-6" />
@@ -117,7 +92,7 @@ export function Pricing() {
           </div>
 
           <div className="grid grid-cols-1 gap-px bg-border md:hidden">
-            {tiers.map((tier) => (
+            {tiers.map((tier, tierIndex) => (
               <div key={tier.name} className="bg-background p-6">
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-semibold tracking-tight">{tier.name}</h3>
@@ -132,10 +107,10 @@ export function Pricing() {
                   {rows.map((row) => (
                     <li key={row.label} className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">{row.label}</span>
-                      {row.values[tiers.indexOf(tier)] === '—' ? (
+                      {row.values[tierIndex] === '—' ? (
                         <Dash />
                       ) : (
-                        <Check />
+                        <span className="text-right font-medium">{row.values[tierIndex]}</span>
                       )}
                     </li>
                   ))}

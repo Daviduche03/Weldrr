@@ -2,9 +2,9 @@ import { logos } from '@/modules/landing/data/logos'
 
 export function LogoStrip() {
   return (
-    <section className="py-20">
+    <section className="py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="ml-auto max-w-2xl text-right">
+        <div className="ml-auto max-w-2xl text-left md:text-right">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             Trusted by engineering teams shipping AI-native products
           </h2>
@@ -15,13 +15,7 @@ export function LogoStrip() {
         </div>
       </div>
 
-      <div
-        className="mt-16"
-        style={{
-          marginLeft: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-          marginRight: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-        }}
-      >
+      <div className="mx-4 mt-10 sm:mx-6 sm:mt-16 lg:mx-[max(2rem,calc((100vw-80rem)/2-2rem))]">
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
           {logos.map((logo) => (
             <div

@@ -33,19 +33,19 @@ export function LandingPage() {
       <SiteFooter />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 left-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 w-px border-l border-border"
+        className="pointer-events-none fixed inset-y-0 left-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 hidden w-px border-l border-border lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 right-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 w-px border-r border-border"
+        className="pointer-events-none fixed inset-y-0 right-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 hidden w-px border-r border-border lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 left-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 w-px border-l border-border/70"
+        className="pointer-events-none fixed inset-y-0 left-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 hidden w-px border-l border-border/70 lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 right-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 w-px border-r border-border/70"
+        className="pointer-events-none fixed inset-y-0 right-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 hidden w-px border-r border-border/70 lg:block"
       />
     </div>
   )

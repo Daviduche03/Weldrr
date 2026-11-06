@@ -45,7 +45,7 @@ export function SiteHeader() {
                 <Menu01Icon className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[340px]">
+            <SheetContent side="right" className="w-[300px] p-6 sm:w-[340px]">
               <div className="mb-6">
                 <Logo />
               </div>
