@@ -266,6 +266,7 @@ const CUSTOM_PROVIDERS: Record<
     npm: '@ai-sdk/openai-compatible',
     baseURL: 'https://opencode.ai/zen/go/v1',
     models: {
+      'deepseek-v4.1-flash': { name: 'DeepSeek V4.1 Flash' },
       'deepseek-v4-flash': { name: 'DeepSeek V4 Flash' },
     },
   },
