@@ -1,14 +1,67 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import mdx from "@mdx-js/rollup";
 import remarkGfm from "remark-gfm";
 import rehypePrettyCode from "rehype-pretty-code";
 import path from "node:path";
-import { copyFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+
+/**
+ * Exposes the raw MDX sources as a virtual module (`virtual:docs-search`) so
+ * the client can build a full-text search index without pulling the MDX
+ * pipeline into raw imports.
+ */
+function docsSourcePlugin(): Plugin {
+  const virtualId = "virtual:docs-search";
+  const resolvedId = `\0${virtualId}`;
+  const docsDir = path.resolve(__dirname, "src/docs");
+
+  function readDocs(dir: string, base = dir): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        Object.assign(out, readDocs(full, base));
+      } else if (entry.name.endsWith(".mdx")) {
+        const slug = path
+          .relative(base, full)
+          .replace(/\\/g, "/")
+          .replace(/\.mdx$/, "");
+        out[slug] = readFileSync(full, "utf8");
+      }
+    }
+    return out;
+  }
+
+  return {
+    name: "weldrr-docs-source",
+    resolveId(id) {
+      if (id === virtualId) return resolvedId;
+    },
+    load(id) {
+      if (id === resolvedId) {
+        return `export default ${JSON.stringify(readDocs(docsDir))}`;
+      }
+    },
+    configureServer(server) {
+      server.watcher.add(docsDir);
+      const reload = (file: string) => {
+        if (!file.startsWith(docsDir) || !file.endsWith(".mdx")) return;
+        const mod = server.moduleGraph.getModuleById(resolvedId);
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        server.ws.send({ type: "full-reload" });
+      };
+      server.watcher.on("add", reload);
+      server.watcher.on("change", reload);
+      server.watcher.on("unlink", reload);
+    },
+  };
+}
 
 export default defineConfig({
   base: "/",
   plugins: [
+    docsSourcePlugin(),
     {
       enforce: "pre",
       ...mdx({
@@ -18,7 +71,10 @@ export default defineConfig({
           [
             rehypePrettyCode,
             {
-              theme: "github-dark",
+              theme: {
+                light: "github-light",
+                dark: "github-dark",
+              },
               keepBackground: false,
             },
           ],

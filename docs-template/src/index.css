@@ -1,159 +1,332 @@
-/* Prose styles for MDX content */
+/* ------------------------------------------------------------------ */
+/* Prose — the typography for everything rendered from MDX             */
+/* ------------------------------------------------------------------ */
+
 .prose {
-  color: hsl(var(--foreground));
+  color: hsl(var(--muted-foreground));
+  font-size: 15.5px;
   line-height: 1.75;
-}
-.prose h1 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid hsl(var(--border));
-}
-.prose h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-top: 2.5rem;
-  margin-bottom: 0.75rem;
-}
-.prose h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-top: 2rem;
-  margin-bottom: 0.5rem;
-}
-.prose p {
-  margin-bottom: 1rem;
-  color: hsl(var(--muted-foreground));
-}
-.prose code {
-  background: hsl(var(--accent));
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-.prose pre {
-  background: hsl(var(--muted));
-  padding: 0;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  margin-bottom: 1.25rem;
-  border: 1px solid hsl(var(--border));
-}
-.prose pre code {
-  background: none;
-  padding: 0;
-  border-radius: 0;
-  font-weight: 400;
-  display: block;
-  overflow-x: auto;
-}
-/* Syntax highlighting - rehype-pretty-code */
-.prose pre [data-rehype-pretty-code-title] {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.375rem 0.75rem;
-  border-bottom: 1px solid hsl(var(--border));
-  color: hsl(var(--muted-foreground));
-}
-.prose code[data-language] {
-  padding: 0.625rem 0.75rem;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-}
-.prose code[data-language]::before {
-  content: attr(data-language);
-  display: inline-block;
-  font-size: 0.625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  margin-bottom: 0.5rem;
-}
-.prose ul {
-  list-style: disc;
-  padding-left: 1.5rem;
-  margin-bottom: 1.25rem;
-  color: hsl(var(--muted-foreground));
-}
-.prose ol {
-  list-style: decimal;
-  padding-left: 1.5rem;
-  margin-bottom: 1.25rem;
-  color: hsl(var(--muted-foreground));
-}
-.prose li {
-  margin-bottom: 0.375rem;
-}
-.prose a {
-  color: hsl(var(--foreground));
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-.prose a:hover {
-  opacity: 0.7;
-}
-.prose .underline {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.prose table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1.5rem;
-  font-size: 0.875rem;
-}
-.prose thead th {
-  border-bottom: 2px solid hsl(var(--border));
-  padding: 0.625rem 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: hsl(var(--muted-foreground));
-}
-.prose tbody td {
-  border-bottom: 1px solid hsl(var(--border));
-  padding: 0.625rem 0.75rem;
-  text-align: left;
-}
-.prose tbody tr:last-child td {
-  border-bottom: none;
-}
-.prose blockquote {
-  border-left: 3px solid hsl(var(--border));
-  padding: 0.5rem 1rem;
-  margin: 1.25rem 0;
-  color: hsl(var(--muted-foreground));
-  font-style: italic;
-  background: hsl(var(--muted));
-  border-radius: 0 0.375rem 0.375rem 0;
-}
-.prose hr {
-  border: none;
-  border-top: 1px solid hsl(var(--border));
-  margin: 2rem 0;
-}
-.prose strong {
-  font-weight: 600;
-}
-.prose img {
-  border-radius: 0.5rem;
-  border: 1px solid hsl(var(--border));
-  max-width: 100%;
+  text-wrap: pretty;
 }
 
-/* Keep headings clear of the sticky header when jumping via the on-this-page TOC */
+.prose > :first-child {
+  margin-top: 0 !important;
+}
+
+.prose > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Headings ---------------------------------------------------------- */
+
+.prose h1,
 .prose h2,
-.prose h3 {
+.prose h3,
+.prose h4 {
+  color: hsl(var(--foreground));
+  font-weight: 640;
+  text-wrap: balance;
+}
+
+.prose h1 {
+  margin: 0 0 0.85rem;
+  font-size: clamp(2.15rem, 4vw, 2.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.prose h2 {
+  position: relative;
+  margin: 2.9rem 0 0.9rem;
+  padding-top: 0.15rem;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
   scroll-margin-top: 6rem;
+}
+
+.prose h3 {
+  position: relative;
+  margin: 2.1rem 0 0.65rem;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 6rem;
+}
+
+.prose h4 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* A quiet anchor affordance on section headings */
+.prose h2::before,
+.prose h3::before {
+  content: "#";
+  position: absolute;
+  left: -1.2rem;
+  top: 0.32rem;
+  font-weight: 500;
+  color: hsl(var(--primary));
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.prose h2:hover::before,
+.prose h3:hover::before {
+  opacity: 0.45;
+}
+
+/* The paragraph directly under the page title reads as a lead-in */
+.prose h1 + p {
+  margin-top: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 1.05rem;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+/* Body -------------------------------------------------------------- */
+
+.prose p {
+  margin: 0 0 1.15rem;
+}
+
+.prose strong {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose a {
+  color: hsl(var(--primary));
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--primary) / 0.32);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.prose a:hover {
+  color: hsl(var(--primary));
+  text-decoration-color: hsl(var(--primary));
+}
+
+.prose a:has(> code) {
+  text-decoration: none;
+}
+
+/* Lists ------------------------------------------------------------- */
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1.2rem;
+  padding-left: 1.3rem;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li {
+  margin-bottom: 0.4rem;
+  padding-left: 0.2rem;
+}
+
+.prose li::marker {
+  color: hsl(var(--primary) / 0.55);
+  font-weight: 600;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin: 0.4rem 0 0.4rem;
+}
+
+.prose li > p {
+  margin-bottom: 0.5rem;
+}
+
+/* Inline code ------------------------------------------------------- */
+
+.prose code {
+  padding: 0.14em 0.4em;
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: 0.375rem;
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 500;
+  white-space: break-spaces;
+}
+
+.prose a code {
+  color: inherit;
+}
+
+/* Code blocks are rendered by <CodeBlock>, keep prose out of the way */
+.prose pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.prose pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: inherit;
+  font-weight: inherit;
+  white-space: pre;
+}
+
+/* Blockquotes / callouts -------------------------------------------- */
+
+.prose blockquote {
+  margin: 1.6rem 0;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid hsl(var(--border) / 0.9);
+  border-left: 3px solid hsl(var(--primary) / 0.55);
+  border-radius: 0 0.75rem 0.75rem 0;
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+}
+
+.prose blockquote p {
+  margin: 0;
+  color: inherit;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.prose blockquote p + p {
+  margin-top: 0.55rem;
+}
+
+.prose blockquote strong {
+  color: hsl(var(--foreground));
+}
+
+.prose blockquote code {
+  background: hsl(var(--background) / 0.7);
+}
+
+/* Tinted callouts (Note / Tip / Warning / Caution) */
+.prose .callout p {
+  margin: 0;
+  color: inherit;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.prose .callout p + p {
+  margin-top: 0.5rem;
+}
+
+.prose .callout strong {
+  color: hsl(var(--foreground));
+}
+
+.prose .callout a {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
+.prose .callout ul,
+.prose .callout ol {
+  margin: 0.45rem 0 0;
+  font-size: 13.5px;
+}
+
+.prose .callout code {
+  background: hsl(var(--background) / 0.75);
+}
+
+/* Tables ------------------------------------------------------------ */
+
+.prose table {
+  width: 100%;
+  margin: 1.6rem 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.prose thead th {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.55);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.prose tbody td {
+  padding: 0.72rem 0.9rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.prose tbody tr:hover td {
+  background: hsl(var(--muted) / 0.3);
+}
+
+/* Misc -------------------------------------------------------------- */
+
+.prose hr {
+  margin: 2.5rem 0;
+  border: 0;
+  border-top: 1px solid hsl(var(--border) / 0.85);
+}
+
+.prose img {
+  max-width: 100%;
+  margin: 1.6rem 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.85rem;
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04),
+    0 8px 24px -16px hsl(var(--foreground) / 0.2);
+}
+
+.prose kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid hsl(var(--border));
+  border-bottom-width: 2px;
+  border-radius: 0.35rem;
+  background: hsl(var(--muted));
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  color: hsl(var(--foreground));
+}
+
+.prose > *:first-child {
+  margin-top: 0;
 }

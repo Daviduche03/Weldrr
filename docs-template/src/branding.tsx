@@ -42,7 +42,9 @@ function applyBranding(cfg: BrandingConfig) {
 
   // Colors -> CSS variables (hex input)
   if (cfg.colors?.primary) {
-    root.style.setProperty("--primary", hexToHsl(cfg.colors.primary));
+    const primary = hexToHsl(cfg.colors.primary);
+    root.style.setProperty("--primary", primary);
+    root.style.setProperty("--ring", primary);
   }
   if (cfg.colors?.accent) {
     root.style.setProperty("--accent", hexToHsl(cfg.colors.accent));
@@ -77,7 +79,7 @@ function applyBranding(cfg: BrandingConfig) {
 /** Convert a #rrggbb hex to an HSL "h s% l%" string used by the CSS vars. */
 export function hexToHsl(hex: string): string {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return "262 100% 65%";
+  if (!m) return "166 84% 26%";
   const n = parseInt(m[1], 16);
   const r = ((n >> 16) & 255) / 255;
   const g = ((n >> 8) & 255) / 255;
