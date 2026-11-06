@@ -206,6 +206,9 @@ export function AppShell() {
                 <XMarkIcon className="size-5" />
               </button>
             </div>
+            <div className="px-3 pb-1">
+              <WorkspaceSwitcher collapsed={false} />
+            </div>
             <SidebarNav collapsed={false} />
             <div className="p-3">
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/60 p-2.5">
@@ -294,15 +297,18 @@ export function AppShell() {
         )}
       >
         <main className="mx-auto max-w-full py-3 lg:px-4">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
-            className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground lg:hidden"
-          >
-            <Bars3Icon className="size-4" />
-            Menu
-          </button>
+          <header className="sticky top-0 z-40 mb-3 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/90 px-4 backdrop-blur lg:hidden">
+            <Logo />
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Bars3Icon className="size-4" />
+              Menu
+            </button>
+          </header>
           <div className="flex min-h-[calc(100vh-1.5rem)] flex-col rounded-2xl border border-border bg-muted p-1">
             <div className="flex h-full flex-1 flex-col rounded-xl border border-border bg-background">
               <div className="flex h-12 items-center gap-2 rounded-t-xl border-b border-border bg-muted px-6">
