@@ -102,7 +102,7 @@ export const connectionService = {
     })
   },
 
-  async githubAuthorizeUrl(workspaceId: string): Promise<GithubConnectInfo> {
+  async githubAuthorizeUrl(userId: string, workspaceId: string): Promise<GithubConnectInfo> {
     if (!config.github.clientId) {
       throw new AppError(503, 'GitHub integration is not configured on this server')
     }
@@ -110,7 +110,7 @@ export const connectionService = {
       client_id: config.github.clientId,
       redirect_uri: config.github.callbackUrl,
       scope: GITHUB_SCOPES.join(' '),
-      state: signState('connect', workspaceId),
+      state: signState(userId, workspaceId),
     })
     return { url: `${GITHUB_AUTHORIZE}?${params.toString()}` }
   },

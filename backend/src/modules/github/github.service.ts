@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import { config } from '@/config'
 import { AppError } from '@/middleware/errorHandler'
 import { githubRepository } from '@/modules/github/github.repository'
+import { connectionService } from '@/modules/connections/connections.service'
 import { workspaceConnectionRepository } from '@/modules/connections/connections.repository'
 import { getGitHubUser, listGitHubRepos } from '@/services/github'
 import type { GitHubRepo } from '@/services/github'
@@ -16,17 +17,17 @@ const GITHUB_TOKEN = 'https://github.com/login/oauth/access_token'
 
 const GITHUB_SCOPES = ['repo'] as const
 
-type GithubStatePayload = { userId: string }
+type GithubStatePayload = { userId?: string; workspaceId?: string }
 
 function signState(userId: string): string {
   return jwt.sign({ userId }, config.jwt.secret, { expiresIn: '10m' })
 }
 
-function verifyState(state: string): string {
+function verifyState(state: string): GithubStatePayload {
   try {
     const payload = jwt.verify(state, config.jwt.secret) as GithubStatePayload
-    if (!payload.userId) throw new Error('missing userId')
-    return payload.userId
+    if (!payload.userId && !payload.workspaceId) throw new Error('missing payload')
+    return payload
   } catch {
     throw new AppError(400, 'Invalid or expired OAuth state')
   }
@@ -107,7 +108,18 @@ export const githubService = {
     code: string,
     state: string,
   ): Promise<{ redirectUrl: string }> {
-    const userId = verifyState(state)
+    const payload = verifyState(state)
+
+    // Settings → Connections starts a workspace-scoped OAuth flow. GitHub
+    // redirects both flows to the same callback URL, so hand those states to
+    // the workspace connection handler instead of treating them as user IDs.
+    if (payload.workspaceId) {
+      return connectionService.githubCallback(code, state)
+    }
+
+    const userId = payload.userId
+    if (!userId) throw new AppError(400, 'Invalid or expired OAuth state')
+
     const { accessToken, scopes } = await exchangeCode(code)
 
     const user = await getGitHubUser(accessToken)

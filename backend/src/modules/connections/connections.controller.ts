@@ -27,7 +27,10 @@ export const connectionController = {
   },
 
   async githubAuthUrl(req: WorkspaceRequest, res: Response<ApiResponse<{ url: string }>>) {
-    const data = await connectionService.githubAuthorizeUrl(req.workspace.workspaceId)
+    const data = await connectionService.githubAuthorizeUrl(
+      req.user.sub,
+      req.workspace.workspaceId,
+    )
     res.json({ status: 'success', data })
   },
 
