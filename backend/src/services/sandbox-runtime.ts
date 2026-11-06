@@ -277,6 +277,15 @@ const CUSTOM_PROVIDERS: Record<
       'deepseek-v4-flash': { name: 'DeepSeek V4 Flash' },
     },
   },
+  meta: {
+    name: 'Meta Model API',
+    npm: '@ai-sdk/openai-compatible',
+    baseURL: 'https://api.meta.ai/v1',
+    models: {
+      'muse-spark-1.3-contributor': { name: 'Muse Spark 1.3 Contributor' },
+      'muse-spark-1.3': { name: 'Muse Spark 1.3' },
+    },
+  },
 }
 
 export const runtimeInfo = {
