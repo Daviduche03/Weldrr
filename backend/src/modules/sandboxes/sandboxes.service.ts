@@ -44,10 +44,14 @@ function randomToken(): string {
 
 function publicBaseUrl(): string {
   if (config.sandbox.callbackUrl) {
-    const base = config.sandbox.callbackUrl.replace(/\/api\/sandboxes\/callback$/, '')
+    // Tolerate whitespace and a full callback path in SANDBOX_CALLBACK_URL.
+    const configured = config.sandbox.callbackUrl.replace(/\s+/g, '')
+    const base = configured
+      .replace(/\/api\/sandboxes\/callback\/?$/, '')
+      .replace(/\/+$/, '')
     if (base) return base
   }
-  return config.appUrl
+  return config.appUrl.replace(/\/+$/, '')
 }
 
 function templateFor(jobType: string, language?: string): string {

@@ -54,7 +54,7 @@ const envSchema = z.object({
   MODAL_IMAGE_NAME: z.string().default('weldrr-sandbox-runtime'),
 
   SANDBOX_PROVIDER_API_KEY: z.string().default(''),
-  SANDBOX_OPENCODE_MODEL: z.string().default('opencode-go/deepseek-v4-flash'),
+  SANDBOX_OPENCODE_MODEL: z.string().default('opencode-go/deepseek-v4.1-flash'),
   SANDBOX_OPENCODE_PORT: z.coerce.number().int().positive().default(4096),
   SANDBOX_TIMEOUT_MS: z.coerce.number().int().positive().default(60 * 60 * 1000),
   SANDBOX_IDLE_TIMEOUT_MS: z.coerce
