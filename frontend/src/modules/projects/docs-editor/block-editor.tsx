@@ -88,7 +88,7 @@ export function BlockEditor({
   }
 
   return (
-    <div className="docs-prose min-h-0 flex-1 overflow-y-auto px-8 py-8">
+    <div className="docs-prose min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8">
       <div className="relative">
         {blocks.map((block, i) => (
           <BlockRow

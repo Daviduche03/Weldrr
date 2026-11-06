@@ -77,7 +77,7 @@ export function DocsChat({
   }
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-border">
+    <aside className="flex h-[28rem] w-full shrink-0 flex-col border-t border-border lg:h-auto lg:w-80 lg:border-l lg:border-t-0">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
         <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           <SparklesIcon className="size-3 text-brand" />

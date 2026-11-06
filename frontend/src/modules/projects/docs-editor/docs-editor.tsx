@@ -265,10 +265,10 @@ export function DocsEditor({
   }
 
   return (
-    <div className="flex h-[calc(100vh-20rem)] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border bg-background">
+    <div className="flex h-auto min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border bg-background lg:h-[calc(100vh-20rem)]">
       {/* Tree */}
-      <div className="flex min-h-0 flex-1">
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className="flex w-full shrink-0 flex-col border-b border-border lg:w-64 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Pages</span>
             <div className="flex items-center gap-1">
@@ -305,7 +305,7 @@ export function DocsEditor({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="max-h-52 overflow-y-auto p-2 lg:max-h-none lg:flex-1">
             {loadingTree ? (
               <div className="space-y-1 p-1">
                 {[0, 1, 2, 3, 4, 5, 6].map((i) => (
@@ -325,8 +325,8 @@ export function DocsEditor({
         </aside>
 
         {/* Editor */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+        <div className="flex h-[32rem] min-w-0 flex-1 flex-col lg:h-auto">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate font-mono text-xs text-muted-foreground">
                 {activePath ?? 'Select a page to edit'}

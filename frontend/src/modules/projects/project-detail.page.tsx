@@ -439,7 +439,7 @@ export function ProjectDetailPage() {
                     <p className="mt-1.5 text-xs text-destructive">{deployError}</p>
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex flex-wrap shrink-0 items-center gap-2">
                   {project.breezeDocsUrl && (
                     <Button size="sm" variant="outline" asChild>
                       <a href={project.breezeDocsUrl} target="_blank" rel="noreferrer">
@@ -490,8 +490,8 @@ export function ProjectDetailPage() {
                 }
               >
                 {!discovery ? (
-                  <div className="grid h-96 grid-cols-[16rem_1fr_20rem] gap-0 p-4">
-                    <div className="space-y-2 border-r border-border pr-4">
+                  <div className="grid h-96 grid-cols-1 lg:grid-cols-[16rem_1fr_20rem] gap-0 p-4">
+                    <div className="hidden space-y-2 border-r border-border pr-4 lg:block">
                       <Skeleton className="h-4 w-20" />
                       {[0, 1, 2, 3, 4, 5].map((i) => (
                         <Skeleton key={i} className={cn('h-5', i % 3 === 0 ? 'w-4/5' : i % 3 === 1 ? 'w-3/5' : 'w-2/3')} />
