@@ -292,21 +292,25 @@ export function OnboardingPage() {
           </div>
         </div>
 
-        <div className="flex flex-col justify-center p-6 sm:p-10">
-          <div className="mx-auto flex h-[38rem] w-full max-w-xl flex-col">
+        <div className="flex flex-col justify-center p-4 sm:p-10">
+          <div className="mx-auto mb-8 flex w-full max-w-xl items-center gap-2 text-brand lg:hidden">
+            <LogoMark className="size-8" />
+            <span className="text-lg font-semibold tracking-tight text-foreground">Weldrr</span>
+          </div>
+          <div className="mx-auto flex w-full max-w-xl flex-col lg:h-[38rem]">
             {!done && (
           <div className="mb-8 flex items-center gap-2">
             {steps.map(({ label, icon: StepIcon }, i) => (
-              <div key={label} className="flex flex-1 items-center gap-2">
+              <div key={label} className="flex flex-1 items-center gap-1.5 sm:gap-2">
                 <span
                   className={cn(
-                    'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors',
+                    'flex size-7 shrink-0 items-center justify-center rounded-full transition-colors sm:size-8',
                     i <= step ? 'bg-brand text-brand-foreground' : 'bg-muted text-muted-foreground',
                   )}
                 >
-                  <StepIcon className="size-4" />
+                  <StepIcon className="size-3.5 sm:size-4" />
                 </span>
-                <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
+                <span className="hidden text-xs font-medium text-muted-foreground 2xl:inline">
                   {label}
                 </span>
                 {i < steps.length - 1 && <div className="h-px flex-1 bg-border" />}
@@ -359,7 +363,7 @@ export function OnboardingPage() {
                           type="button"
                           onClick={() => setAccountType(opt.value)}
                           className={cn(
-                            'rounded-lg border px-4 py-3 text-left transition-colors',
+                            'rounded-lg border px-3 py-3 text-left transition-colors',
                             accountType === opt.value
                               ? 'bg-muted text-foreground'
                               : 'border-border bg-background hover:bg-muted',
@@ -399,7 +403,7 @@ export function OnboardingPage() {
                           type="button"
                           onClick={() => setApiType(opt.value)}
                           className={cn(
-                            'rounded-lg border px-4 py-3 text-left transition-colors',
+                            'rounded-lg border px-3 py-3 text-left transition-colors',
                             active
                               ? 'bg-muted text-foreground'
                               : 'border-border bg-background hover:bg-muted',
@@ -619,11 +623,11 @@ export function OnboardingPage() {
                     {previewPrefill || 'docs & SDKs'} — generated for a{' '}
                     {apiTypeOptions.find((o) => o.value === apiType)?.label} like this.
                   </p>
-                  <div className="mt-8 flex items-center justify-center gap-3">
-                    <Button size="lg" onClick={() => navigate('/projects/new')}>
+                  <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+                    <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate('/projects/new')}>
                       Create your first project
                     </Button>
-                    <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/dashboard')}>
                       Go to dashboard
                     </Button>
                   </div>

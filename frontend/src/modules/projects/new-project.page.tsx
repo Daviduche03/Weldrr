@@ -177,7 +177,7 @@ export function NewProjectPage() {
   )
 
   return (
-    <div className="wf-enter mx-auto max-w-2xl">
+    <div className="wf-enter mx-auto w-full max-w-2xl px-6 sm:px-8">
       <div className="mb-8 flex items-center gap-2">
         {steps.map(({ label, icon: StepIcon }, i) => (
           <div key={label} className="flex flex-1 items-center gap-2">

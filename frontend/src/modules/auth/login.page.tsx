@@ -64,16 +64,10 @@ export function LoginPage() {
         </Link>
       </header>
 
-      <main
-        className="flex min-h-[calc(100vh-4rem)]"
-        style={{
-          marginLeft: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-          marginRight: 'max(2rem, calc((100vw - 80rem) / 2 - 2rem))',
-        }}
-      >
+      <main className="mx-4 mb-4 flex min-h-[calc(100vh-5rem)] sm:mx-6 sm:mb-6 sm:min-h-[calc(100vh-5.5rem)] lg:mx-[max(2rem,calc((100vw-80rem)/2-2rem))]">
         <div className="grid w-full grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-2">
           <div
-            className="flex flex-col justify-between bg-background p-10 sm:p-14"
+            className="hidden flex-col justify-between overflow-hidden bg-background p-10 lg:flex xl:p-14"
             style={{
               backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
               backgroundSize: '16px 16px',
@@ -127,7 +121,7 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center bg-background p-10 sm:p-14">
+          <div className="flex flex-col justify-center bg-background p-6 sm:p-10 xl:p-14">
             <h1 className="text-balance text-3xl font-semibold tracking-tight">
               Welcome to Weldrr
             </h1>
@@ -265,19 +259,19 @@ export function LoginPage() {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 left-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 w-px border-l border-border"
+        className="pointer-events-none fixed inset-y-0 left-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 hidden w-px border-l border-border lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 right-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 w-px border-r border-border"
+        className="pointer-events-none fixed inset-y-0 right-[max(1rem,calc((100vw-80rem)/2-2rem))] z-50 hidden w-px border-r border-border lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 left-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 w-px border-l border-border/70"
+        className="pointer-events-none fixed inset-y-0 left-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 hidden w-px border-l border-border/70 lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 right-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 w-px border-r border-border/70"
+        className="pointer-events-none fixed inset-y-0 right-[max(2rem,calc((100vw-80rem)/2-5rem))] z-50 hidden w-px border-r border-border/70 lg:block"
       />
     </div>
   )
