@@ -872,6 +872,10 @@ export async function issueDiscoverySandbox(projectId: string): Promise<void> {
   const callbackUrl = `${baseUrl}/api/sandboxes/callback`
   const bootstrapUrl = `${baseUrl}/api/sandboxes/${sandbox.id}/bootstrap?token=${callbackToken}`
   const gitTemplate = project.gitRepo?.cloneUrl ?? ''
+  const gitTemplateToken = project.gitRepo
+    ? ((await connectionService.getToken(project.workspaceId, 'github').catch(() => undefined)) ??
+      undefined)
+    : undefined
 
   try {
     const provisioned = await provisionSandbox({
@@ -881,6 +885,7 @@ export async function issueDiscoverySandbox(projectId: string): Promise<void> {
       callbackToken,
       bootstrapUrl,
       gitTemplate,
+      ...(gitTemplateToken ? { gitTemplateToken } : {}),
       opencodePassword,
       discoveryTarget: project.specUrl ?? undefined,
     })

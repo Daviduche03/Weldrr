@@ -14,9 +14,13 @@ cd /workspace
 
 if [ -n "${WELDRR_GIT_TEMPLATE:-}" ]; then
   log "Cloning git template from ${WELDRR_GIT_TEMPLATE}"
+  CLONE_URL="${WELDRR_GIT_TEMPLATE}"
+  if [ -n "${WELDRR_GIT_TEMPLATE_TOKEN:-}" ]; then
+    CLONE_URL="https://x-access-token:${WELDRR_GIT_TEMPLATE_TOKEN}@${WELDRR_GIT_TEMPLATE#https://}"
+  fi
   # Full clone (not --depth 1): a shallow history breaks pushing to the target
   # repo ("index-pack failed" / "did not receive expected object").
-  if git clone --quiet "${WELDRR_GIT_TEMPLATE}" /tmp/weldrr-template; then
+  if git clone --quiet "${CLONE_URL}" /tmp/weldrr-template; then
     cp -a /tmp/weldrr-template/. /workspace/
     rm -rf /tmp/weldrr-template
   else

@@ -47,6 +47,8 @@ export type SandboxProvisionInput = {
   callbackToken: string
   bootstrapUrl: string
   gitTemplate: string
+  /** Token used to clone a private git template, never logged. */
+  gitTemplateToken?: string
   opencodePassword: string
   discoveryTarget?: string
   gitRemote?: string
@@ -76,6 +78,7 @@ export async function provisionSandbox(input: SandboxProvisionInput): Promise<Sa
     WELDRR_CALLBACK_TOKEN: input.callbackToken,
     WELDRR_BOOTSTRAP_URL: input.bootstrapUrl,
     WELDRR_GIT_TEMPLATE: input.gitTemplate,
+    ...(input.gitTemplateToken ? { WELDRR_GIT_TEMPLATE_TOKEN: input.gitTemplateToken } : {}),
     WELDRR_OPENCODE_PASSWORD: input.opencodePassword,
     WELDRR_OPENCODE_MODEL: config.sandbox.opencodeModel,
     ...(input.discoveryTarget ? { WELDRR_DISCOVERY_TARGET: input.discoveryTarget } : {}),
