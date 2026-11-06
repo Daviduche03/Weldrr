@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/solid'
+import { ArrowPathIcon, CheckIcon, CloudArrowUpIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BrandIcon } from '@/components/brand-icon'
@@ -23,6 +23,14 @@ const providerMeta: ProviderMeta[] = [
     label: 'GitHub',
     desc: 'Build projects from an existing codebase and push generated docs/SDKs.',
     icon: <BrandIcon name="github" />,
+  },
+  {
+    provider: 'breezecloud',
+    label: 'BreezeCloud',
+    desc: 'Deploy generated docs to BreezeCloud automatically. Create a token with operate scope in Members & access.',
+    icon: <CloudArrowUpIcon className="size-4" />,
+    tokenLabel: 'BreezeCloud API token',
+    tokenPlaceholder: 'Paste your BreezeCloud token',
   },
   {
     provider: 'npm',

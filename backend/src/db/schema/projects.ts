@@ -31,6 +31,9 @@ export const projects = pgTable(
       .notNull()
       .default('generating'),
     docsUrl: text('docs_url').notNull().default(''),
+    /** BreezeCloud app that serves this project's generated docs. */
+    breezeAppId: text('breeze_app_id'),
+    breezeDocsUrl: text('breeze_docs_url'),
     sdkVersion: text('sdk_version'),
     docsVersion: text('docs_version'),
     sdkLanguages: jsonb('sdk_languages')

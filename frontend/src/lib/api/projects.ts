@@ -29,5 +29,8 @@ export const projectApi = {
   rerunDiscovery: (id: string): Promise<void> =>
     http.post<void>(`/api/projects/${id}/discovery`),
 
+  deployDocs: (id: string): Promise<{ appId: string; url: string }> =>
+    http.post<{ appId: string; url: string }>(`/api/projects/${id}/docs/deploy`),
+
   remove: (id: string): Promise<void> => http.remove<void>(`/api/projects/${id}`),
 }

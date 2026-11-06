@@ -32,6 +32,7 @@ import { connectionService } from '@/modules/connections/connections.service'
 import { createGitHubRepo, getGitHubRepo } from '@/services/github'
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
+import { breezecloudService } from '@/services/breezecloud'
 
 function sha256(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex')
@@ -678,6 +679,9 @@ export const sandboxService = {
       await projectRepository.update(row.workspaceId, row.projectId, {
         docsUrl: input.artifactUrl,
       })
+      // Ensure a BreezeCloud app exists for this docs repo. Creating it queues
+      // the first release; later pushes deploy automatically.
+      void breezecloudService.ensureDocsDeployment(row.workspaceId, row.projectId)
       // Record a version for agent-generated docs too, so a finished build is
       // tagged (0.0.1 first time, minor bump after that).
       const project = await projectRepository.findByIdGlobal(row.projectId)

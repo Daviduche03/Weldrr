@@ -5,14 +5,14 @@ import type { ApiResponse, ApiMessageResponse } from '@/shared/types/response'
 import { z } from 'zod'
 
 const saveTokenSchema = z.object({
-  provider: z.enum(['npm', 'pypi', 'goproxy', 'maven', 'rubygems']),
+  provider: z.enum(['npm', 'pypi', 'goproxy', 'maven', 'rubygems', 'breezecloud']),
   token: z.string().trim().min(1),
   accountLogin: z.string().trim().max(200).optional(),
   accountName: z.string().trim().max(200).optional(),
 })
 
 const providerParamSchema = z.object({
-  provider: z.enum(['github', 'npm', 'pypi', 'goproxy', 'maven', 'rubygems']),
+  provider: z.enum(['github', 'npm', 'pypi', 'goproxy', 'maven', 'rubygems', 'breezecloud']),
 })
 
 const githubCallbackQuerySchema = z.object({

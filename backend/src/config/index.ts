@@ -29,6 +29,11 @@ const envSchema = z.object({
     .or(z.literal(''))
     .default(''),
 
+  BREEZECLOUD_API_URL: z
+    .string()
+    .url('BREEZECLOUD_API_URL must be a valid URL')
+    .default('https://breezecloud.app/v1'),
+
   ZEPTOMAIL_TOKEN: z.string().default(''),
   ZEPTOMAIL_FROM: z.string().default(''),
   ZEPTOMAIL_FROM_NAME: z.string().default('Weldrr'),
@@ -109,6 +114,9 @@ export const config = {
     clientSecret: env.GITHUB_CLIENT_SECRET,
     callbackUrl:
       env.GITHUB_CALLBACK_URL || `${publicUrl}/api/github/callback`,
+  },
+  breezecloud: {
+    apiUrl: env.BREEZECLOUD_API_URL.replace(/\/+$/, ''),
   },
   zeptomail: {
     token: env.ZEPTOMAIL_TOKEN,

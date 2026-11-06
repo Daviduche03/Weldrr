@@ -5,6 +5,7 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
+  CloudArrowUpIcon,
   CodeBracketIcon,
   DocumentMagnifyingGlassIcon,
   RocketLaunchIcon,
@@ -31,6 +32,8 @@ import {
   useStartSandbox,
   useAddSdk,
   useRemoveSdk,
+  useConnections,
+  useDeployDocs,
   queryKeys,
 } from '@/lib/queries'
 import type {
@@ -137,6 +140,7 @@ export function ProjectDetailPage() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingDocs, setPublishingDocs] = useState(false)
+  const [deployError, setDeployError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [viewingSdkLang, setViewingSdkLang] = useState<Sdk['language'] | null>(null)
@@ -201,6 +205,10 @@ export function ProjectDetailPage() {
   const startSandbox = useStartSandbox()
   const addSdkMutation = useAddSdk()
   const removeSdkMutation = useRemoveSdk()
+  const deployDocsMutation = useDeployDocs()
+  const connectionsQuery = useConnections()
+  const breezeConnected =
+    connectionsQuery.data?.some((c) => c.provider === 'breezecloud' && c.connected) ?? false
 
   const publishSdk = async () => {
     if (!project || publishing) return
@@ -250,6 +258,16 @@ export function ProjectDetailPage() {
       updateProject.mutateAsync({ id: project.id, input: { status: 'generating' } }),
       rerunDiscovery.mutateAsync(project.id),
     ])
+  }
+
+  const deployBreezeDocs = async () => {
+    if (!project) return
+    setDeployError(null)
+    try {
+      await deployDocsMutation.mutateAsync(project.id)
+    } catch (err) {
+      setDeployError(err instanceof Error ? err.message : 'Could not deploy docs to BreezeCloud')
+    }
   }
 
   const handleSaveName = async (nextName: string) => {
@@ -337,6 +355,18 @@ export function ProjectDetailPage() {
                 <ArrowTopRightOnSquareIcon className="size-3" />
               </a>
             )}
+            {project.breezeDocsUrl && (
+              <a
+                href={project.breezeDocsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand transition-colors hover:text-brand-muted"
+              >
+                <CloudArrowUpIcon className="size-3.5" />
+                Live docs
+                <ArrowTopRightOnSquareIcon className="size-3" />
+              </a>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -393,6 +423,46 @@ export function ProjectDetailPage() {
 
         <div className={cn(tab === 'Docs' ? '' : 'hidden')}>
           <div className="space-y-4">
+            {(project.breezeDocsUrl || (breezeConnected && project.docsUrl)) && (
+              <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CloudArrowUpIcon className="size-4 text-brand" />
+                    BreezeCloud docs hosting
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {project.breezeDocsUrl
+                      ? 'Generated docs deploy automatically to BreezeCloud on every publish.'
+                      : 'Deploy this project’s generated docs to a live BreezeCloud URL.'}
+                  </div>
+                  {deployError && (
+                    <p className="mt-1.5 text-xs text-destructive">{deployError}</p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {project.breezeDocsUrl && (
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={project.breezeDocsUrl} target="_blank" rel="noreferrer">
+                        Open live docs
+                        <ArrowTopRightOnSquareIcon className="size-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                  {breezeConnected && project.docsUrl && (
+                    <Button
+                      size="sm"
+                      onClick={() => void deployBreezeDocs()}
+                      disabled={deployDocsMutation.isPending}
+                    >
+                      <ArrowPathIcon
+                        className={cn('size-3.5', deployDocsMutation.isPending && 'animate-spin')}
+                      />
+                      {project.breezeDocsUrl ? 'Redeploy' : 'Deploy'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             {project.docsUrl || (discovery && discovery.status !== 'failed') ? (
               <DocsEditor
                 projectId={project.id}

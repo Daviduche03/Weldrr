@@ -1,6 +1,6 @@
 import { http } from '@/lib/http'
 
-export type ConnectionProvider = 'github' | 'npm' | 'pypi' | 'goproxy' | 'maven' | 'rubygems'
+export type ConnectionProvider = 'github' | 'npm' | 'pypi' | 'goproxy' | 'maven' | 'rubygems' | 'breezecloud'
 
 export type ConnectionInfo = {
   provider: ConnectionProvider

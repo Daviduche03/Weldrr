@@ -9,6 +9,7 @@ export const connectionProviders = [
   'goproxy',
   'maven',
   'rubygems',
+  'breezecloud',
 ] as const
 
 export type ConnectionProvider = (typeof connectionProviders)[number]

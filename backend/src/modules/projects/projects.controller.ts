@@ -45,6 +45,15 @@ export const projectController = {
     res.json({ status: 'success', data })
   },
 
+  async deployDocs(
+    req: WorkspaceRequest,
+    res: Response<ApiResponse<{ appId: string; url: string }>>,
+  ) {
+    const { id } = projectParamsSchema.parse(req.params)
+    const data = await projectService.deployDocs(req.workspace.workspaceId, id)
+    res.status(202).json({ status: 'success', data })
+  },
+
   async create(req: WorkspaceRequest, res: Response<ApiResponse<ProjectResponse>>) {
     const input = createProjectSchema.parse(req.body)
     const data = await projectService.create(req.workspace.workspaceId, input)

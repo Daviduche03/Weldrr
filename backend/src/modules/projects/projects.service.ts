@@ -14,6 +14,7 @@ import type {
   UpdateProjectInput,
   ProjectQuery,
 } from '@/modules/projects/projects.types'
+import { breezecloudService } from '@/services/breezecloud'
 import type { Project } from '@/db/schema'
 
 function toResponse(project: Project): ProjectResponse {
@@ -25,6 +26,8 @@ function toResponse(project: Project): ProjectResponse {
     status: project.status,
     publishMode: project.publishMode,
     docsUrl: project.docsUrl,
+    breezeAppId: project.breezeAppId,
+    breezeDocsUrl: project.breezeDocsUrl,
     sdkVersion: project.sdkVersion,
     docsVersion: project.docsVersion,
     sdkLanguages: project.sdkLanguages,
@@ -63,6 +66,15 @@ export const projectService = {
     const project = await projectRepository.findById(workspaceId, id)
     if (!project) throw new NotFoundError('Project not found')
     return toResponse(project)
+  },
+
+  async deployDocs(
+    workspaceId: string,
+    id: string,
+  ): Promise<{ appId: string; url: string }> {
+    const project = await projectRepository.findById(workspaceId, id)
+    if (!project) throw new NotFoundError('Project not found')
+    return breezecloudService.deployDocs(workspaceId, id)
   },
 
   async getDiscovery(workspaceId: string, id: string) {

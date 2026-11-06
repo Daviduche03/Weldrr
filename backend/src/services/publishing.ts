@@ -16,6 +16,7 @@ import {
 import { versionRepository } from '@/modules/versions/versions.repository'
 import { nextVersion } from '@/services/versioning'
 import { logger } from '@/utils/logger'
+import { breezecloudService } from '@/services/breezecloud'
 import type { Project } from '@/db/schema'
 
 type RepoRef = { fullName: string; accessToken: string; branch: string }
@@ -272,6 +273,12 @@ export const publishingService = {
     await projectRepository.update(project.workspaceId, project.id, {
       ...(kind === 'docs' ? { docsVersion: version } : { sdkVersion: version }),
     })
+
+    if (kind === 'docs') {
+      // The PR merge pushed to the docs repo; make sure a BreezeCloud app is
+      // pointing at it so the merged docs are served.
+      void breezecloudService.ensureDocsDeployment(project.workspaceId, project.id)
+    }
 
     logger.info({ projectId: project.id, kind, version }, 'Artifact version recorded after merge')
     return version

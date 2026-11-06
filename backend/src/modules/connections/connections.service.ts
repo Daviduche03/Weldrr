@@ -88,7 +88,7 @@ async function exchangeGithubCode(code: string): Promise<{ accessToken: string; 
 export const connectionService = {
   async list(workspaceId: string): Promise<ConnectionInfo[]> {
     const rows = await workspaceConnectionRepository.listForWorkspace(workspaceId)
-    const providers: ConnectionProvider[] = ['github', 'npm', 'pypi', 'goproxy', 'maven', 'rubygems']
+    const providers: ConnectionProvider[] = ['github', 'npm', 'pypi', 'goproxy', 'maven', 'rubygems', 'breezecloud']
     return providers.map((provider) => {
       const row = rows.find((r) => r.provider === provider)
       return {

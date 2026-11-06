@@ -171,6 +171,14 @@ export function useRerunDiscovery() {
   })
 }
 
+export function useDeployDocs() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => projectApi.deployDocs(id),
+    onSuccess: (_data, id) => void qc.invalidateQueries({ queryKey: queryKeys.project(id) }),
+  })
+}
+
 export function useIssueSandbox() {
   const qc = useQueryClient()
   return useMutation({

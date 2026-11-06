@@ -22,6 +22,8 @@ export type ProjectResponse = {
   status: ProjectStatus
   publishMode: PublishMode
   docsUrl: string
+  breezeAppId: string | null
+  breezeDocsUrl: string | null
   sdkVersion: string | null
   docsVersion: string | null
   sdkLanguages: string[]
