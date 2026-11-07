@@ -77,10 +77,27 @@ if [ -n "${WELDRR_GIT_REMOTE:-}" ] && [ -n "${WELDRR_GIT_TOKEN:-}" ]; then
   # In PR mode the agent works on a weldrr feature branch (reviewed before merge);
   # otherwise push to main as before.
   GIT_BRANCH="${WELDRR_GIT_BRANCH:-main}"
-  git checkout -b "${GIT_BRANCH}" 2>/dev/null || git checkout "${GIT_BRANCH}" 2>/dev/null || true
   git remote remove origin 2>/dev/null || true
   # x-access-token is a GitHub-accepted placeholder username for OAuth/PAT tokens.
   git remote add origin "https://x-access-token:${WELDRR_GIT_TOKEN}@${WELDRR_GIT_REMOTE#https://}"
+  # Fetch the artifact repo so update runs continue on the existing branch
+  # instead of a new local branch with unrelated history (whose push would be
+  # rejected, stranding the agent's work on a stray branch).
+  git fetch origin --quiet 2>/dev/null || true
+  if git show-ref --verify --quiet "refs/remotes/origin/${GIT_BRANCH}"; then
+    git checkout -B "${GIT_BRANCH}" "origin/${GIT_BRANCH}"
+  elif [ "${GIT_BRANCH}" = "main" ] || [ "${GIT_BRANCH}" = "master" ]; then
+    git checkout -b "${GIT_BRANCH}" 2>/dev/null || git checkout "${GIT_BRANCH}" 2>/dev/null || true
+  else
+    # New PR branch: base it on the artifact repo's default branch when there
+    # is one, so the branch shares history with the repo it will merge into.
+    BASE="$(git symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || true)"
+    if [ -n "${BASE}" ] && git show-ref --verify --quiet "refs/remotes/origin/${BASE}"; then
+      git checkout -b "${GIT_BRANCH}" "origin/${BASE}"
+    else
+      git checkout -b "${GIT_BRANCH}" 2>/dev/null || git checkout "${GIT_BRANCH}" 2>/dev/null || true
+    fi
+  fi
 fi
 
 export OPENCODE_SERVER_PASSWORD="${WELDRR_OPENCODE_PASSWORD:-}"
