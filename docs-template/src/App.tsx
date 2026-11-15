@@ -1083,13 +1083,6 @@ function DocShell() {
   return (
     <div className="flex min-w-0 flex-1">
       <main className="relative min-w-0 flex-1">
-        {isIndex && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(55%_100%_at_50%_0%,hsl(var(--primary)/0.08),transparent_75%)]"
-          />
-        )}
-
         <div className="relative mx-auto w-full max-w-content px-6 pb-16 pt-10 sm:px-10 sm:pt-14">
           <div className="mb-6 flex items-center justify-between gap-4">
             <nav className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-muted-foreground">
