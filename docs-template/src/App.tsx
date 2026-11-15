@@ -453,7 +453,7 @@ function SearchDialog({
       role="presentation"
     >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-border/80 bg-popover shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-border/80 bg-popover animate-in fade-in zoom-in-95 duration-150"
         onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -660,7 +660,7 @@ function Brand({ config, onClick }: { config: BrandingConfig; onClick?: () => vo
           className="h-7 w-auto max-w-28 shrink-0 object-contain"
         />
       ) : (
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card shadow-soft transition-colors group-hover:border-primary/30">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card transition-colors group-hover:border-primary/30">
           <WMark className="size-4 text-primary" />
         </span>
       )}
@@ -802,7 +802,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
         onClick={onClose}
         role="presentation"
       />
-      <aside className="absolute inset-y-0 left-0 flex w-[19rem] max-w-[86vw] flex-col border-r border-border bg-background shadow-2xl animate-in slide-in-from-left duration-200">
+      <aside className="absolute inset-y-0 left-0 flex w-[19rem] max-w-[86vw] flex-col border-r border-border bg-background animate-in slide-in-from-left duration-200">
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-border/70 px-4">
           <Brand config={config} onClick={onClose} />
           <button
@@ -1115,7 +1115,7 @@ function DocShell() {
               {previous ? (
                 <Link
                   to={`/docs/${previous.slug}`}
-                  className="group flex flex-col rounded-xl border border-border/80 bg-card px-4 py-3 shadow-soft transition-all hover:border-primary/35 hover:shadow-md"
+                  className="group flex flex-col rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40 hover:bg-muted/30"
                 >
                   <span className="flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
                     <ArrowLeft size={11} className="transition-transform group-hover:-translate-x-0.5" />
@@ -1132,7 +1132,7 @@ function DocShell() {
               {next ? (
                 <Link
                   to={`/docs/${next.slug}`}
-                  className="group flex flex-col items-end rounded-xl border border-border/80 bg-card px-4 py-3 text-right shadow-soft transition-all hover:border-primary/35 hover:shadow-md sm:col-start-2"
+                  className="group flex flex-col items-end rounded-xl border border-border bg-card px-4 py-3 text-right transition-colors hover:border-primary/40 hover:bg-muted/30 sm:col-start-2"
                 >
                   <span className="flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
                     Next
@@ -1227,7 +1227,7 @@ function Header({
 
           <Link
             to={`/docs/${getStartedSlug}`}
-            className="hidden h-9 items-center gap-1 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 sm:inline-flex"
+            className="hidden h-9 items-center gap-1 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 sm:inline-flex"
           >
             Get started
             <ChevronRight size={13} />

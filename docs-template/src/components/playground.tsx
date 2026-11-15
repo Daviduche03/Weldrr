@@ -47,7 +47,7 @@ const methodChip: Record<string, string> = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[12.5px] text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/15";
+  "w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[12.5px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/15";
 
 function prettyJson(text: string): string {
   try {
@@ -602,7 +602,7 @@ export function Playground() {
                 type="button"
                 onClick={send}
                 disabled={loading}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[12.5px] font-semibold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[12.5px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {loading ? (
                   <LoaderCircle size={13} className="animate-spin" />

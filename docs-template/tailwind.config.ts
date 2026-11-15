@@ -51,9 +51,6 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      boxShadow: {
-        soft: "0 1px 2px hsl(var(--foreground) / 0.04), 0 12px 32px -20px hsl(var(--foreground) / 0.18)",
-      },
       maxWidth: {
         content: "47rem",
       },
