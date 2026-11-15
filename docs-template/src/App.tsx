@@ -778,7 +778,7 @@ function SidebarFooter() {
 
 function Sidebar() {
   return (
-    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-64 shrink-0 flex-col border-r border-border/70 bg-sidebar lg:flex">
+    <aside className="sticky top-[6.875rem] hidden h-[calc(100vh-6.875rem)] w-64 shrink-0 flex-col border-r border-border/70 bg-sidebar lg:flex">
       <div className="flex-1 overflow-y-auto px-3 py-5">
         <SidebarNav />
       </div>
@@ -877,7 +877,7 @@ function OnThisPage({ toc }: { toc: TocItem[] }) {
   if (toc.length === 0) return null;
 
   return (
-    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[18rem] shrink-0 xl:block">
+    <aside className="sticky top-[6.875rem] hidden h-[calc(100vh-6.875rem)] w-[18rem] shrink-0 xl:block">
       <div className="flex h-full flex-col overflow-y-auto px-5 py-10">
         <p className="mb-3 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
           <List size={12} />
@@ -1088,8 +1088,8 @@ function DocShell() {
 
   return (
     <div className="flex min-w-0 flex-1">
-      <main className="relative min-w-0 flex-1">
-        <div className="relative mx-auto w-full max-w-content px-6 pb-16 pt-10 sm:px-8 sm:pt-12">
+      <main className="relative flex min-h-[calc(100vh-6.875rem)] min-w-0 flex-1 flex-col">
+        <div className="relative mx-auto w-full max-w-content flex-1 px-6 pt-10 sm:px-8 sm:pt-12">
           <div className="mb-5 flex items-center justify-between gap-4">
             <Link
               to={`/docs/${groupLanding}`}
@@ -1151,7 +1151,10 @@ function DocShell() {
             </nav>
           )}
 
-          <footer className="mt-12 flex flex-col gap-2 border-t border-border/70 pt-6 text-[12px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        </div>
+
+        <footer className="mx-auto mt-auto w-full max-w-content px-6 pb-8 pt-12 sm:px-8">
+          <div className="flex flex-col gap-2 border-t border-border/60 pt-6 text-[12px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               © {new Date().getFullYear()} {config.siteName ?? "API Docs"}
             </span>
@@ -1164,8 +1167,8 @@ function DocShell() {
               <WMark className="size-3.5 text-primary" />
               Built with Weldrr
             </a>
-          </footer>
-        </div>
+          </div>
+        </footer>
       </main>
       <OnThisPage toc={toc} />
     </div>
@@ -1303,7 +1306,7 @@ export default function App() {
     <div className="min-h-screen bg-background text-foreground">
       <Header onOpenSearch={() => setSearchOpen(true)} onOpenDrawer={() => setDrawerOpen(true)} />
 
-      <div className="mx-auto flex min-h-[calc(100vh-6.75rem)] w-full max-w-[80rem] items-start">
+      <div className="mx-auto flex min-h-[calc(100vh-6.875rem)] w-full max-w-[80rem] items-start">
         {!isPlayground && <Sidebar />}
 
         <Routes>
