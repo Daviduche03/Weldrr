@@ -753,7 +753,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarFooter() {
   const config = useBrandingConfig();
   return (
-    <div className="border-t border-border/70 p-3">
+    <div className="p-3">
       <div className="rounded-lg border border-border bg-card p-3">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
           <WMark className="size-3 text-primary" />
@@ -877,7 +877,7 @@ function OnThisPage({ toc }: { toc: TocItem[] }) {
   if (toc.length === 0) return null;
 
   return (
-    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[18rem] shrink-0 border-l border-border/70 xl:block">
+    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[18rem] shrink-0 xl:block">
       <div className="flex h-full flex-col overflow-y-auto px-5 py-10">
         <p className="mb-3 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
           <List size={12} />
@@ -1303,7 +1303,7 @@ export default function App() {
     <div className="min-h-screen bg-background text-foreground">
       <Header onOpenSearch={() => setSearchOpen(true)} onOpenDrawer={() => setDrawerOpen(true)} />
 
-      <div className="mx-auto flex min-h-[calc(100vh-6.75rem)] w-full max-w-[80rem] items-start lg:border-x lg:border-border">
+      <div className="mx-auto flex min-h-[calc(100vh-6.75rem)] w-full max-w-[80rem] items-start">
         {!isPlayground && <Sidebar />}
 
         <Routes>
