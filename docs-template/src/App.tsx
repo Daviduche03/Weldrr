@@ -30,6 +30,7 @@ import {
   Copy,
   CornerDownLeft,
   Hash,
+  List,
 } from "lucide-react";
 import { Playground } from "./components/playground";
 import { useBrandingConfig, brandLogoUrl, type BrandingConfig } from "./branding";
@@ -54,7 +55,7 @@ type DocEntry = {
 };
 
 const SLUG_LABELS: Record<string, string> = {
-  index: "Overview",
+  index: "Introduction",
   "getting-started": "Getting started",
   "api-reference": "API reference",
   reference: "Reference",
@@ -76,7 +77,7 @@ function prettifySlug(slug: string): string {
 }
 
 function groupForSlug(slug: string): string {
-  if (slug === "index") return "Overview";
+  if (slug === "index") return "Get started";
   const top = slug.split("/")[0];
   if (top === "getting-started" || top === "guides") return "Get started";
   if (top === "api-reference") return "API reference";
@@ -177,7 +178,6 @@ const docEntries: DocEntry[] = Object.entries(docs)
   });
 
 const GROUP_ORDER = [
-  "Overview",
   "Get started",
   "Guides",
   "Reference",
@@ -208,19 +208,17 @@ const navigationTargets = [
 
 const headerNav = [
   { slug: "index", label: "Docs" },
-  ...docGroups
-    .filter(([label]) => label !== "Overview")
-    .slice(0, 4)
-    .map(([label, entries]) => ({
-      slug: entries[0]?.slug ?? "index",
-      label,
-    })),
+  ...docGroups.slice(0, 4).map(([label, entries]) => ({
+    slug: entries.find((entry) => entry.slug !== "index")?.slug ?? entries[0]?.slug ?? "index",
+    label,
+  })),
   { slug: "playground", label: "Playground" },
 ];
 
 const getStartedSlug =
-  docGroups.find(([label]) => label === "Get started" || label === "Guides")?.[1][0]
-    ?.slug ??
+  docGroups
+    .find(([label]) => label === "Get started" || label === "Guides")?.[1]
+    .find((entry) => entry.slug !== "index")?.slug ??
   docEntries.find((entry) => entry.slug !== "index")?.slug ??
   "index";
 
@@ -702,7 +700,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     <div className="space-y-7">
       {docGroups.map(([label, entries]) => (
         <div key={label}>
-          <p className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+          <p className="mb-2 px-2.5 text-[13px] font-semibold text-foreground/90">
             {label}
           </p>
           <ul className="space-y-0.5">
@@ -713,7 +711,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] leading-5 transition-colors",
+                      "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] leading-5 transition-colors",
                       isActive
                         ? "bg-primary/[0.09] font-medium text-primary"
                         : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -729,7 +727,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ))}
 
       <div>
-        <p className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+        <p className="mb-2 px-2.5 text-[13px] font-semibold text-foreground/90">
           Tools
         </p>
         <NavLink
@@ -737,7 +735,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] leading-5 transition-colors",
+              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] leading-5 transition-colors",
               isActive
                 ? "bg-primary/[0.09] font-medium text-primary"
                 : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -753,29 +751,34 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SidebarFooter() {
+  const config = useBrandingConfig();
   return (
     <div className="border-t border-border/70 p-3">
-      <a
-        href="https://weldrr.app"
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[11.5px] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-      >
-        <span className="flex size-6 items-center justify-center rounded-md border border-border bg-card">
+      <div className="rounded-lg border border-border bg-card p-3">
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
           <WMark className="size-3 text-primary" />
-        </span>
-        <span className="flex-1">
-          Powered by <span className="font-medium text-foreground">Weldrr</span>
-        </span>
-        <ArrowUpRight size={12} />
-      </a>
+          {config.siteName ?? "API Docs"}
+        </div>
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          Documentation generated from your API source.
+        </p>
+        <a
+          href="https://weldrr.app"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium text-primary transition-opacity hover:opacity-80"
+        >
+          weldrr.app
+          <ArrowUpRight size={11} />
+        </a>
+      </div>
     </div>
   );
 }
 
 function Sidebar() {
   return (
-    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[16.5rem] shrink-0 flex-col border-r border-border/70 bg-sidebar lg:flex">
+    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-64 shrink-0 flex-col border-r border-border/70 bg-sidebar lg:flex">
       <div className="flex-1 overflow-y-auto px-3 py-5">
         <SidebarNav />
       </div>
@@ -874,9 +877,10 @@ function OnThisPage({ toc }: { toc: TocItem[] }) {
   if (toc.length === 0) return null;
 
   return (
-    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-56 shrink-0 border-l border-border/70 xl:block">
+    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[18rem] shrink-0 border-l border-border/70 xl:block">
       <div className="flex h-full flex-col overflow-y-auto px-5 py-10">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+        <p className="mb-3 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+          <List size={12} />
           On this page
         </p>
         <ul className="border-l border-border/80">
@@ -895,7 +899,7 @@ function OnThisPage({ toc }: { toc: TocItem[] }) {
                     setActive(item.id);
                   }}
                   className={cn(
-                    "-ml-px block border-l-2 py-1 text-[12.5px] leading-5 transition-colors",
+                    "-ml-px block border-l-2 py-1 text-[13px] leading-5 transition-colors",
                     item.level === 2 ? "pl-3" : "pl-6",
                     isActive
                       ? "border-primary font-medium text-foreground"
@@ -1069,6 +1073,8 @@ function DocShell() {
 
   const isIndex = slug === "index";
   const exploreEntries = docEntries.filter((doc) => doc.slug !== "index");
+  const groupLanding =
+    docEntries.find((doc) => doc.group === entry.group)?.slug ?? "index";
 
   async function copyPage() {
     try {
@@ -1083,15 +1089,14 @@ function DocShell() {
   return (
     <div className="flex min-w-0 flex-1">
       <main className="relative min-w-0 flex-1">
-        <div className="relative mx-auto w-full max-w-content px-6 pb-16 pt-10 sm:px-10 sm:pt-14">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <nav className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-muted-foreground">
-              <Link to="/docs/index" className="transition-colors hover:text-foreground">
-                Docs
-              </Link>
-              <ChevronRight size={12} className="text-muted-foreground/50" />
-              <span className="truncate font-medium text-foreground/80">{entry.title}</span>
-            </nav>
+        <div className="relative mx-auto w-full max-w-content px-6 pb-16 pt-10 sm:px-8 sm:pt-12">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <Link
+              to={`/docs/${groupLanding}`}
+              className="truncate text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {entry.group}
+            </Link>
             <button
               type="button"
               onClick={() => void copyPage()}
@@ -1187,7 +1192,7 @@ function Header({
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[80rem] items-center gap-3 px-4 sm:px-6">
         <button
           type="button"
           onClick={onOpenDrawer}
@@ -1236,14 +1241,14 @@ function Header({
       </div>
 
       <div className="border-t border-border/60">
-        <nav className="no-scrollbar flex h-11 items-center gap-1 overflow-x-auto px-4 sm:px-6">
+        <nav className="no-scrollbar mx-auto flex h-11 w-full max-w-[80rem] items-center gap-1 overflow-x-auto px-4 sm:px-6">
           {headerNav.map((item) => {
             const isActive =
               item.slug === "index"
-                ? activeGroup === "Overview"
+                ? currentSlug === "index"
                 : item.slug === "playground"
                   ? currentSlug === "playground"
-                  : item.label === activeGroup;
+                  : currentSlug !== "index" && item.label === activeGroup;
             return (
               <Link
                 key={item.slug}
@@ -1298,7 +1303,7 @@ export default function App() {
     <div className="min-h-screen bg-background text-foreground">
       <Header onOpenSearch={() => setSearchOpen(true)} onOpenDrawer={() => setDrawerOpen(true)} />
 
-      <div className="flex items-start">
+      <div className="mx-auto flex min-h-[calc(100vh-6.75rem)] w-full max-w-[80rem] items-start lg:border-x lg:border-border">
         {!isPlayground && <Sidebar />}
 
         <Routes>
