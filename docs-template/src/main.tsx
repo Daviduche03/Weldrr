@@ -6,6 +6,8 @@ import App from "./App";
 import { CodeBlock } from "./components/code-block";
 import { Callout } from "./components/callout";
 import { BrandingProvider } from "./branding";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./globals.css";
 import "./index.css";
 

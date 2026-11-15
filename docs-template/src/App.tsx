@@ -24,10 +24,10 @@ import {
   Play,
   Menu,
   X,
-  Sparkles,
   ThumbsUp,
   ThumbsDown,
   Check,
+  Copy,
   CornerDownLeft,
   Hash,
 } from "lucide-react";
@@ -49,19 +49,16 @@ type DocEntry = {
   title: string;
   description: string;
   group: string;
+  raw: string;
   Component: React.ComponentType;
 };
 
 const SLUG_LABELS: Record<string, string> = {
-  index: "Introduction",
+  index: "Overview",
   "getting-started": "Getting started",
   "api-reference": "API reference",
-};
-
-const ORDER: Record<string, number> = {
-  index: 0,
-  "getting-started": 1,
-  "api-reference": 2,
+  reference: "Reference",
+  sdk: "SDK",
 };
 
 function prettifySlug(slug: string): string {
@@ -72,15 +69,18 @@ function prettifySlug(slug: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .replace(/\bApi\b/g, "API")
     .replace(/\bSdk\b/g, "SDK")
-    .replace(/\bCli\b/g, "CLI");
+    .replace(/\bCli\b/g, "CLI")
+    .replace(/\bHttp\b/g, "HTTP")
+    .replace(/\bJson\b/g, "JSON")
+    .replace(/\bUrl\b/g, "URL");
 }
 
 function groupForSlug(slug: string): string {
-  if (slug === "index" || slug === "getting-started") return "Get started";
-  if (slug.includes("/")) {
-    return prettifySlug(slug.split("/")[0]);
-  }
-  return "Reference";
+  if (slug === "index") return "Overview";
+  const top = slug.split("/")[0];
+  if (top === "getting-started" || top === "guides") return "Get started";
+  if (top === "api-reference") return "API reference";
+  return prettifySlug(top);
 }
 
 function stripInline(text: string): string {
@@ -150,23 +150,41 @@ function firstParagraph(raw: string): string {
 
 const docEntries: DocEntry[] = Object.entries(docs)
   .map(([filepath, mod]) => {
-    const slug = filepath.replace("./docs/", "").replace(/\.mdx$/, "");
+    const rel = filepath.replace("./docs/", "").replace(/\.mdx$/, "");
+    const parts = rel.split("/");
+    const isIndex = parts[parts.length - 1] === "index";
+    // `getting-started/index.mdx` is the section landing page, so its slug is
+    // `getting-started` — not `getting-started/index` (relative links depend
+    // on the folder URL).
+    const slug = isIndex
+      ? parts.length > 1
+        ? parts.slice(0, -1).join("/")
+        : "index"
+      : rel;
     return {
       slug,
       title: SLUG_LABELS[slug] ?? prettifySlug(slug),
-      description: firstParagraph(rawDocs[slug] ?? ""),
+      description: firstParagraph(rawDocs[rel] ?? ""),
       group: groupForSlug(slug),
+      raw: rawDocs[rel] ?? "",
       Component: mod.default,
     };
   })
   .sort((a, b) => {
-    const ao = ORDER[a.slug] ?? 50;
-    const bo = ORDER[b.slug] ?? 50;
-    if (ao !== bo) return ao - bo;
+    if (a.slug === "index") return -1;
+    if (b.slug === "index") return 1;
     return a.slug.localeCompare(b.slug);
   });
 
-const GROUP_ORDER = ["Get started", "Reference"];
+const GROUP_ORDER = [
+  "Overview",
+  "Get started",
+  "Guides",
+  "Reference",
+  "API reference",
+  "SDK",
+  "CLI",
+];
 
 const docGroups = (() => {
   const map = new Map<string, DocEntry[]>();
@@ -189,10 +207,22 @@ const navigationTargets = [
 ];
 
 const headerNav = [
-  { slug: "getting-started", label: "Guides" },
-  { slug: "api-reference", label: "API reference" },
+  { slug: "index", label: "Docs" },
+  ...docGroups
+    .filter(([label]) => label !== "Overview")
+    .slice(0, 4)
+    .map(([label, entries]) => ({
+      slug: entries[0]?.slug ?? "index",
+      label,
+    })),
   { slug: "playground", label: "Playground" },
 ];
+
+const getStartedSlug =
+  docGroups.find(([label]) => label === "Get started" || label === "Guides")?.[1][0]
+    ?.slug ??
+  docEntries.find((entry) => entry.slug !== "index")?.slug ??
+  "index";
 
 function slugify(text: string): string {
   return text
@@ -669,10 +699,10 @@ function ThemeToggle() {
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {docGroups.map(([label, entries]) => (
         <div key={label}>
-          <p className="mb-1.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground/80">
+          <p className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
             {label}
           </p>
           <ul className="space-y-0.5">
@@ -683,9 +713,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
+                      "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] leading-5 transition-colors",
                       isActive
-                        ? "bg-primary/[0.08] font-medium text-primary"
+                        ? "bg-primary/[0.09] font-medium text-primary"
                         : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                     )
                   }
@@ -699,7 +729,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ))}
 
       <div>
-        <p className="mb-1.5 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground/80">
+        <p className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
           Tools
         </p>
         <NavLink
@@ -707,9 +737,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
+              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] leading-5 transition-colors",
               isActive
-                ? "bg-primary/[0.08] font-medium text-primary"
+                ? "bg-primary/[0.09] font-medium text-primary"
                 : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
             )
           }
@@ -745,8 +775,8 @@ function SidebarFooter() {
 
 function Sidebar() {
   return (
-    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-[17.5rem] shrink-0 flex-col border-r border-border/70 bg-sidebar/40 lg:flex">
-      <div className="flex-1 overflow-y-auto px-3 py-6">
+    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-[16.5rem] shrink-0 flex-col border-r border-border/70 bg-sidebar lg:flex">
+      <div className="flex-1 overflow-y-auto px-3 py-5">
         <SidebarNav />
       </div>
       <SidebarFooter />
@@ -841,54 +871,51 @@ function OnThisPage({ toc }: { toc: TocItem[] }) {
     };
   }, [toc]);
 
-  return (
-    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 xl:block">
-      <div className="flex h-full flex-col overflow-y-auto px-5 py-8">
-        {toc.length > 0 && (
-          <>
-            <p className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground/80">
-              On this page
-            </p>
-            <ul className="border-l border-border/80">
-              {toc.map((item) => {
-                const isActive = active === item.id;
-                return (
-                  <li key={item.id}>
-                    <a
-                      href={`#${item.id}`}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        window.history.replaceState(null, "", `#${item.id}`);
-                        document
-                          .getElementById(item.id)
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                        setActive(item.id);
-                      }}
-                      className={cn(
-                        "-ml-px block border-l-2 py-1 text-[12px] leading-5 transition-colors",
-                        item.level === 2 ? "pl-3" : "pl-6",
-                        isActive
-                          ? "border-primary font-medium text-foreground"
-                          : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                      )}
-                    >
-                      <span className="line-clamp-2">{item.text}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
+  if (toc.length === 0) return null;
 
-            <button
-              type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="mt-6 inline-flex items-center gap-1.5 self-start text-[11.5px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowUpRight size={12} className="-rotate-45" />
-              Back to top
-            </button>
-          </>
-        )}
+  return (
+    <aside className="sticky top-[6.75rem] hidden h-[calc(100vh-6.75rem)] w-56 shrink-0 border-l border-border/70 xl:block">
+      <div className="flex h-full flex-col overflow-y-auto px-5 py-10">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+          On this page
+        </p>
+        <ul className="border-l border-border/80">
+          {toc.map((item) => {
+            const isActive = active === item.id;
+            return (
+              <li key={item.id}>
+                <a
+                  href={`#${item.id}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    window.history.replaceState(null, "", `#${item.id}`);
+                    document
+                      .getElementById(item.id)
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setActive(item.id);
+                  }}
+                  className={cn(
+                    "-ml-px block border-l-2 py-1 text-[12.5px] leading-5 transition-colors",
+                    item.level === 2 ? "pl-3" : "pl-6",
+                    isActive
+                      ? "border-primary font-medium text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                  )}
+                >
+                  <span className="line-clamp-2">{item.text}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="mt-6 inline-flex items-center gap-1.5 self-start text-[11.5px] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowUpRight size={12} className="-rotate-45" />
+          Back to top
+        </button>
       </div>
     </aside>
   );
@@ -938,32 +965,33 @@ function PageFeedback() {
 function ExploreGrid({ entries }: { entries: DocEntry[] }) {
   if (entries.length === 0) return null;
   return (
-    <section className="mt-12">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="h-px flex-1 bg-border/80" />
-        <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">
+    <section className="mt-14">
+      <div className="mb-4 flex items-baseline justify-between gap-4">
+        <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
           Explore the docs
+        </h2>
+        <span className="text-[12px] text-muted-foreground">
+          {entries.length} {entries.length === 1 ? "page" : "pages"}
         </span>
-        <span className="h-px flex-1 bg-border/80" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {entries.map((entry) => (
           <Link
             key={entry.slug}
             to={`/docs/${entry.slug}`}
-            className="group rounded-xl border border-border/80 bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
+            className="group flex min-h-[9.5rem] flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-muted/30"
           >
             <div className="flex items-start justify-between">
-              <span className="flex size-8 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.07] text-primary">
+              <span className="flex size-9 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.07] text-primary">
                 <DocIcon slug={entry.slug} className="size-4" />
               </span>
               <ArrowUpRight
-                size={14}
-                className="text-muted-foreground/60 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
+                size={15}
+                className="text-muted-foreground/50 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
               />
             </div>
-            <p className="mt-3 text-[13.5px] font-semibold text-foreground">{entry.title}</p>
-            <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-4 text-[14.5px] font-semibold text-foreground">{entry.title}</p>
+            <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
               {entry.description}
             </p>
           </Link>
@@ -979,6 +1007,7 @@ function DocShell() {
   const location = useLocation();
   const articleRef = useRef<HTMLElement>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
+  const [copied, setCopied] = useState(false);
   const config = useBrandingConfig();
 
   const entry = docEntries.find((doc) => doc.slug === slug);
@@ -1041,31 +1070,44 @@ function DocShell() {
   const isIndex = slug === "index";
   const exploreEntries = docEntries.filter((doc) => doc.slug !== "index");
 
+  async function copyPage() {
+    try {
+      await navigator.clipboard.writeText(entry.raw);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Clipboard access can be denied; fail quietly.
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-1">
       <main className="relative min-w-0 flex-1">
         {isIndex && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(55%_100%_at_50%_0%,hsl(var(--primary)/0.09),transparent_75%)]"
+            className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(55%_100%_at_50%_0%,hsl(var(--primary)/0.08),transparent_75%)]"
           />
         )}
 
-        <div className="relative mx-auto max-w-content px-5 pb-14 pt-9 sm:px-8 sm:pt-11">
-          <nav className="mb-5 flex items-center gap-1.5 text-[12px] text-muted-foreground">
-            <Link to="/docs/index" className="transition-colors hover:text-foreground">
-              Docs
-            </Link>
-            <ChevronRight size={12} className="text-muted-foreground/50" />
-            <span className="truncate font-medium text-foreground/80">{entry.title}</span>
-          </nav>
-
-          {isIndex && (
-            <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.09em] text-primary">
-              <Sparkles size={11} />
-              API documentation
-            </div>
-          )}
+        <div className="relative mx-auto w-full max-w-content px-6 pb-16 pt-10 sm:px-10 sm:pt-14">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <nav className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-muted-foreground">
+              <Link to="/docs/index" className="transition-colors hover:text-foreground">
+                Docs
+              </Link>
+              <ChevronRight size={12} className="text-muted-foreground/50" />
+              <span className="truncate font-medium text-foreground/80">{entry.title}</span>
+            </nav>
+            <button
+              type="button"
+              onClick={() => void copyPage()}
+              className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+            >
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+              {copied ? "Copied" : "Copy page"}
+            </button>
+          </div>
 
           <article key={slug} ref={articleRef} className="prose animate-shimmer-in">
             <entry.Component />
@@ -1111,7 +1153,7 @@ function DocShell() {
             </nav>
           )}
 
-          <footer className="mt-10 flex flex-col gap-2 border-t border-border/70 pt-5 text-[11.5px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <footer className="mt-12 flex flex-col gap-2 border-t border-border/70 pt-6 text-[12px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               © {new Date().getFullYear()} {config.siteName ?? "API Docs"}
             </span>
@@ -1142,10 +1184,17 @@ function Header({
   onOpenDrawer: () => void;
 }) {
   const config = useBrandingConfig();
+  const location = useLocation();
+  const currentSlug =
+    location.pathname.replace(/^\/docs\/?/, "").replace(/\/+$/, "") || "index";
+  const activeGroup =
+    currentSlug === "playground"
+      ? "Playground"
+      : docEntries.find((entry) => entry.slug === currentSlug)?.group;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[110rem] items-center gap-3 px-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
         <button
           type="button"
           onClick={onOpenDrawer}
@@ -1157,42 +1206,24 @@ function Header({
 
         <Brand config={config} />
 
-        <span className="mx-1 hidden h-5 w-px bg-border md:block" />
-
-        <nav className="hidden items-center gap-0.5 md:flex">
-          {headerNav.map((item) => (
-            <NavLink
-              key={item.slug}
-              to={`/docs/${item.slug}`}
-              className={({ isActive }) =>
-                cn(
-                  "rounded-lg px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors",
-                  isActive
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                )
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        <div className="mx-auto hidden w-full max-w-sm justify-center md:flex">
           <button
             type="button"
             onClick={onOpenSearch}
-            className="hidden h-9 w-52 items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-2.5 text-left text-[12.5px] text-muted-foreground transition-colors hover:border-border hover:bg-muted lg:flex xl:w-64"
+            className="flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 text-left text-[13px] text-muted-foreground transition-colors hover:border-border hover:bg-muted"
           >
             <Search size={14} className="shrink-0" />
             <span className="flex-1 truncate">Search docs…</span>
             <Kbd>⌘K</Kbd>
           </button>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={onOpenSearch}
             aria-label="Search documentation"
-            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
           >
             <Search size={16} />
           </button>
@@ -1202,13 +1233,40 @@ function Header({
           <span className="mx-0.5 hidden h-5 w-px bg-border sm:block" />
 
           <Link
-            to="/docs/getting-started"
-            className="hidden h-9 items-center gap-1 rounded-lg bg-primary px-3.5 text-[12.5px] font-semibold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 sm:inline-flex"
+            to={`/docs/${getStartedSlug}`}
+            className="hidden h-9 items-center gap-1 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 sm:inline-flex"
           >
             Get started
             <ChevronRight size={13} />
           </Link>
         </div>
+      </div>
+
+      <div className="border-t border-border/60">
+        <nav className="no-scrollbar flex h-11 items-center gap-1 overflow-x-auto px-4 sm:px-6">
+          {headerNav.map((item) => {
+            const isActive =
+              item.slug === "index"
+                ? activeGroup === "Overview"
+                : item.slug === "playground"
+                  ? currentSlug === "playground"
+                  : item.label === activeGroup;
+            return (
+              <Link
+                key={item.slug}
+                to={`/docs/${item.slug}`}
+                className={cn(
+                  "-mb-px inline-flex h-11 items-center whitespace-nowrap border-b-2 px-3 text-[13.5px] font-medium transition-colors",
+                  isActive
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );

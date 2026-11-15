@@ -4,57 +4,57 @@
 
 @layer base {
   :root {
-    --font-sans: "Geist", "Inter", ui-sans-serif, -apple-system, "SF Pro Text",
+    --font-sans: "Geist Variable", "Inter", ui-sans-serif, -apple-system, "SF Pro Text",
       "Segoe UI", sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+    --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas,
       "Liberation Mono", monospace;
 
     --background: 0 0% 100%;
-    --foreground: 224 18% 10%;
+    --foreground: 224 15% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 18% 10%;
+    --card-foreground: 224 15% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 18% 10%;
-    --primary: 166 84% 26%;
+    --popover-foreground: 224 15% 9%;
+    --primary: 21 72% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 96%;
-    --secondary-foreground: 224 18% 10%;
-    --muted: 220 16% 96.5%;
-    --muted-foreground: 220 9% 43%;
+    --secondary-foreground: 224 15% 9%;
+    --muted: 220 14% 96.5%;
+    --muted-foreground: 220 9% 38%;
     --accent: 220 14% 94.5%;
-    --accent-foreground: 224 18% 10%;
+    --accent-foreground: 224 15% 9%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 90.5%;
-    --input: 220 13% 90.5%;
-    --ring: 166 84% 26%;
-    --sidebar: 220 24% 98.3%;
+    --border: 220 13% 89.5%;
+    --input: 220 13% 89.5%;
+    --ring: 21 72% 40%;
+    --sidebar: 220 20% 98.5%;
     --code-bg: 220 20% 98%;
-    --radius: 0.75rem;
+    --radius: 0.625rem;
   }
 
   .dark {
-    --background: 220 14% 5.5%;
-    --foreground: 220 14% 95%;
-    --card: 220 13% 7.5%;
-    --card-foreground: 220 14% 95%;
-    --popover: 220 13% 7.5%;
-    --popover-foreground: 220 14% 95%;
-    --primary: 162 62% 46%;
-    --primary-foreground: 220 20% 6%;
-    --secondary: 220 11% 12%;
-    --secondary-foreground: 220 14% 95%;
-    --muted: 220 11% 11%;
-    --muted-foreground: 220 8% 62%;
-    --accent: 220 11% 14%;
-    --accent-foreground: 220 14% 95%;
-    --destructive: 0 66% 52%;
+    --background: 220 10% 5.5%;
+    --foreground: 220 14% 96%;
+    --card: 220 9% 8%;
+    --card-foreground: 220 14% 96%;
+    --popover: 220 9% 8%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 22 85% 63%;
+    --primary-foreground: 22 48% 8%;
+    --secondary: 220 9% 12%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 220 9% 11%;
+    --muted-foreground: 220 8% 66%;
+    --accent: 220 8% 14%;
+    --accent-foreground: 220 14% 96%;
+    --destructive: 0 66% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 10% 17%;
-    --input: 220 10% 17%;
-    --ring: 162 62% 46%;
-    --sidebar: 220 14% 5%;
-    --code-bg: 220 13% 7.5%;
+    --border: 220 8% 17%;
+    --input: 220 8% 17%;
+    --ring: 22 85% 63%;
+    --sidebar: 220 10% 6%;
+    --code-bg: 220 9% 9%;
   }
 
   * {
